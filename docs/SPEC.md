@@ -39,7 +39,12 @@ Schema conformance: Threat Dragon's own sample files fail its v2 schema in exact
 tdtm's "output validates" checks use the same tolerance (see `test_spike_facts.py`) and must not
 introduce any other error. Fixture `version` values seen: `"2.0"`, `"2.1.3"`; accept any `2.x`.
 
-Process every diagram. `threatTop` is a counter Threat Dragon uses for threat `number`s; when
+Load every diagram, but generate threats only on diagrams whose `diagramType` is `STRIDE` (or
+absent). TMT's threats are STRIDE; a fixture also holds CIA, LINDDUN, DIE, PLOT4ai and Generic
+diagrams, whose threat-type lists differ, so writing STRIDE threats there would be wrong. Those
+diagrams are skipped with a warning and round-trip untouched.
+
+`threatTop` is a counter Threat Dragon uses for threat `number`s; when
 adding threats, increment it and assign `number` the way the UI does. **[verify]** in td.vue source.
 
 ### 2.2 Cells [confirmed]
@@ -57,8 +62,10 @@ Identify cell kind by `data.type`, **not** `shape`. A real fixture contains the 
 | `tm.Flow` | `flow` | edge | `source{cell}` and `target{cell}`, optional `vertices[]` |
 | `tm.Boundary` | `trust-boundary-curve` | edge (line) | `source{x,y}`, `target{x,y}`, optional `vertices[]`, `connector: "smooth"` |
 
-A flow's `source`/`target` can be a bare point `{x,y}` when it is dangling. Treat dangling flows as
-"unconnected": skip them and emit a warning.
+A flow's `source`/`target` can be a bare point `{x,y}` when it is dangling (5 such flows in
+`v2-boundary-box.json`). Treat dangling flows as unconnected: skip them and emit a warning. A
+boundary curve whose ends are attached to cells (`{cell}` rather than `{x,y}`) has no fixed
+geometry; skip it with a warning (none seen in fixtures).
 
 ### 2.3 Element properties [confirmed in samples; full list **[verify]** against schema]
 
@@ -77,6 +84,8 @@ ends are out of scope are skipped. **[verify]** what TMT does with out-of-scope 
 
 ### 2.4 Threats [confirmed]
 
+Stored at `cell.data.threats[]` in every real file. (The v2 schema declares `threats` on the cell
+itself, not inside `data`; the files disagree with the schema and the files win.)
 Schema-required: `title`, `type`, `status`, `severity`, `description`, `mitigation`.
 Optional: `modelType`, `number`, `score`, `threatId`. Samples also carry `id` (a UUID).
 Preserve whatever keys exist.

@@ -22,7 +22,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
 
 ## Phase 1: Core (no rules yet)
 
-- [ ] **1.1 `td_adapter`: load/save.** `load(path) -> (Model, Document)` and
+- [x] **1.1 `td_adapter`: load/save.** `load(path) -> (Model, Document)` and
   `save(Document, path)`. The document keeps the raw JSON; edits are patches.
   *Done when:* round-trip test on every fixture gives equal JSON; dangling flows warn;
   kinds come from `data.type`; misspelled-shape fixture loads.

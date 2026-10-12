@@ -95,6 +95,7 @@ class Element:
 class Diagram:
     id: int | str
     title: str
+    diagram_type: str = "STRIDE"  # only STRIDE diagrams get generated threats (SPEC 2.1)
     elements: dict[str, Element] = field(default_factory=dict)
 
     def of_kind(self, *kinds: Kind) -> list[Element]:
