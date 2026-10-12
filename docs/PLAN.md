@@ -26,7 +26,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
   `save(Document, path)`. The document keeps the raw JSON; edits are patches.
   *Done when:* round-trip test on every fixture gives equal JSON; dangling flows warn;
   kinds come from `data.type`; misspelled-shape fixture loads.
-- [ ] **1.2 `rules/tb7`: parse templates.** Elements with parent chain, attributes with
+- [x] **1.2 `rules/tb7`: parse templates.** Elements with parent chain, attributes with
   values/defaults/static overrides, categories, threat types with raw filter strings.
   *Done when:* tests assert 47 threat types, 7 categories, 52 stencils, `SE.P.TMCore.WebApp`
   parent is `GE.P`, Kernel Thread static `codeType=Unmanaged`.
