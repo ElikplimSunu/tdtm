@@ -10,3 +10,6 @@ vendor/
 *.bak
 report.html
 .DS_Store
+WORKLOG.md
+CLAUDE.md
+.claude/

@@ -100,8 +100,8 @@ sidecar file (section 6.3).
 ## 3. Microsoft template (`.tb7`) format [confirmed]
 
 File: `src/tdtm/data/templates/default.tb7`, the root `<KnowledgeBase>`, manifest
-name `SDL TM Knowledge Base (Core)`, version `4.1.0.11`. This is the template the ICS570
-TMT student guide tells students to choose.
+name `SDL TM Knowledge Base (Core)`, version `4.1.0.11`. This is the template TMT users pick as
+"SDL TM Knowledge Base", and the one tdtm must match.
 
 Children: `Manifest`, `ThreatMetaData`, `GenericElements`, `StandardElements`,
 `ThreatCategories`, `ThreatTypes`.
@@ -226,7 +226,7 @@ Any line in an element's `description` that starts with `@tmt:` is parsed. Tags 
 
 ```
 @tmt: WebApp
-@tmt: sanitizesInput=No; codeType=Managed
+@tmt: hasInputSanitizers=No; codeType=Managed
 @tmt: stencil=SE.P.TMCore.WebApp; hasInputSanitizers=Yes
 ```
 

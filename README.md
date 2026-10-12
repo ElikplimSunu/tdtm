@@ -1,27 +1,82 @@
 # tdtm
 
-Microsoft TMT-style automatic threat generation for [OWASP Threat Dragon](https://owasp.org/www-project-threat-dragon/) models, so you can do TMT-style threat modelling on a Mac.
+[![CI](https://github.com/ElikplimSunu/tdtm/actions/workflows/ci.yml/badge.svg)](https://github.com/ElikplimSunu/tdtm/actions/workflows/ci.yml)
 
-Draw your data-flow diagram in Threat Dragon, save it, run `tdtm analyze model.json`, and reopen
-the file: each data flow now carries the STRIDE threats Microsoft's Threat Modeling Tool would
-generate with the **SDL TM Knowledge Base** template, ready to triage in Threat Dragon.
+Automatic STRIDE threat generation for [OWASP Threat Dragon](https://owasp.org/www-project-threat-dragon/)
+models, using the same rules as Microsoft's Threat Modeling Tool (TMT). Draw on macOS or Linux, get
+the threat list TMT would give you on Windows.
 
-> Status: scaffold. See `docs/PLAN.md` for what is built and what is next.
+> **Status: early development.** The design, test fixtures and CLI skeleton are in place. The
+> commands below are the planned interface and do not work yet. Progress is tracked in
+> [docs/PLAN.md](docs/PLAN.md).
 
-## Use
+## Why
+
+TMT's best feature is rule-driven threat generation. Every data flow in the diagram is checked
+against the rules in a template, including which trust boundaries the flow crosses. TMT only runs
+on Windows.
+
+Threat Dragon runs everywhere and draws the same kind of diagram. It suggests threats one element
+at a time and does not look at trust-boundary crossings.
+
+tdtm bridges the two without modifying either. You draw in Threat Dragon. tdtm applies TMT's
+**SDL TM Knowledge Base** template and writes the threats back into your model file.
+
+## How it works
+
+```
+Threat Dragon: draw the diagram, save model.json
+      |
+tdtm analyze model.json
+  1. read the Threat Dragon v2 JSON
+  2. find the trust boundary each element sits in, and the boundaries each flow crosses
+  3. read optional @tmt tags from element descriptions (TMT stencils and attributes)
+  4. evaluate every TMT threat rule against every data flow
+  5. merge the generated threats into the model, keeping anything you edited
+      |
+Threat Dragon: reopen model.json and triage the threats
+```
+
+tdtm is being built to these rules:
+
+- **Your file loses nothing.** Unknown keys, positions and styling survive a read and write.
+- **Re-running is safe.** Generated threats have stable IDs. A threat you edited is never
+  overwritten. A threat whose rule stops firing is marked `[stale]`, not deleted. A `.bak` copy is
+  written before the model is overwritten.
+- **No `eval`.** Template filters go through tdtm's own parser. Nothing from a template or model
+  is ever executed.
+- **No runtime dependencies.** The core uses only the Python standard library.
+
+## Install
+
+Requires Python 3.11 or newer and [uv](https://docs.astral.sh/uv/). There is no PyPI release yet.
 
 ```bash
+git clone https://github.com/ElikplimSunu/tdtm.git
+cd tdtm
 uv sync
-uv run tdtm analyze path/to/model.json      # adds threats; keeps a .bak
-uv run tdtm inspect path/to/model.json      # see how elements were interpreted
-uv run tdtm stencils --kind process         # tags you can put in descriptions
-uv run tdtm report path/to/model.json       # TMT-style HTML report
+uv run tdtm --help
+```
+
+## Usage (planned)
+
+```bash
+uv run tdtm analyze model.json            # add threats to the model, keeping a .bak copy
+uv run tdtm analyze model.json --dry-run  # show what would change
+uv run tdtm inspect model.json            # how each element was read: stencil, attributes, zone
+uv run tdtm stencils --kind process       # valid @tmt stencils and attributes
+uv run tdtm report model.json             # TMT-style HTML report
+uv run tdtm coverage                      # which rules fire from Threat Dragon properties alone
 ```
 
 ### Telling tdtm what an element really is
 
-Threat Dragon has five generic shapes; TMT has 52 specific stencils with attributes. Put a line
-starting with `@tmt:` in an element's description:
+Threat Dragon has five generic shapes. TMT has 52 specific stencils, each with attributes the rules
+test. tdtm maps Threat Dragon's own properties where it can: an encrypted flow provides
+confidentiality and integrity, and a process marked as a web application becomes TMT's Web
+Application.
+
+For everything else, add a line starting with `@tmt:` to the element's description:
 
 ```
 @tmt: WebApp; hasInputSanitizers=Yes
@@ -29,16 +84,49 @@ starting with `@tmt:` in an element's description:
 @tmt: HTTPS
 ```
 
-## Develop
+A bare word names a stencil, by ID, short ID or name, in any case. `key=value` sets an attribute.
+A typo is reported as an error with a suggestion, never silently ignored. `tdtm stencils` lists
+every valid value. Tags live in the description because Threat Dragon always keeps that field.
 
-This repo is set up for Claude Code. Start with `CLAUDE.md`, then run `/next-task`.
+### Trust boundaries
+
+Draw them as usual. An element is inside a boundary box when its centre is inside the box. A flow
+crosses a box when exactly one of its ends is inside, and crosses a boundary curve when the two
+lines intersect. Boxes become TMT border boundaries; curves become line boundaries.
+
+## Documentation
+
+- [docs/SPEC.md](docs/SPEC.md): design, file format facts, rule semantics, merge behaviour.
+- [docs/PLAN.md](docs/PLAN.md): roadmap and task list with acceptance criteria.
+
+## Development
 
 ```bash
-uv sync && uv run pytest -q
+uv sync
+uv run pytest -q
+uv run ruff check . && uv run ruff format --check .
+uv sync --extra pytm   # optional OWASP pytm rule pack (not wired in yet)
 ```
 
-## Credits
+Work follows `docs/PLAN.md` from top to bottom, one task per commit. Tests come first, written from
+the task's acceptance criteria. A task that teaches something new about the file formats updates
+`docs/SPEC.md` in the same commit.
 
-- Threat rules and stencils: Microsoft `threat-modeling-templates` (MIT).
-- Test fixtures and schema: OWASP Threat Dragon (Apache-2.0).
-- See `THIRD_PARTY_NOTICES.md`.
+## Contributing
+
+Issues and pull requests are welcome. The most valuable help needs a Windows machine: the real
+acceptance test is drawing the same diagrams in TMT 7.3 with the SDL TM Knowledge Base template and
+comparing its threat report with tdtm's output (PLAN task 3.4). If you can run TMT, please open an
+issue.
+
+## License
+
+MIT, see [LICENSE](LICENSE). Bundled third-party material:
+
+- `src/tdtm/data/templates/default.tb7`: Microsoft
+  [threat-modeling-templates](https://github.com/microsoft/threat-modeling-templates), MIT.
+- `tests/fixtures/td/` and `tests/fixtures/schema/`: sample models and the v2 JSON schema from
+  [OWASP Threat Dragon](https://github.com/OWASP/threat-dragon), Apache-2.0.
+
+Details in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). tdtm is not affiliated with Microsoft
+or OWASP.
