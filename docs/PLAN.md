@@ -14,9 +14,11 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
   and on one cell's `data`) in Threat Dragon desktop 2.6.x, move one element, edit one threat's
   mitigation, save. Commit the saved file as `tests/fixtures/manual/custom-keys.saved.json`.
   *Done when:* SPEC 2.5 says kept or stripped, and SPEC 6.3 names the merge mode.
-- [ ] **0.3 Stencil hierarchy depth + defaults.** Using `rules/tb7.py` once 1.2 exists, or a
+- [x] **0.3 Stencil hierarchy depth + defaults.** Using `rules/tb7.py` once 1.2 exists, or a
   throwaway script now, confirm SPEC 3.1 [verify] items (multi-level inheritance, first value
   is default).
+  *Result:* one level, confirmed. First-value default cannot be confirmed without TMT; recorded as
+  assumed in SPEC 3.1 and left to 3.4.
 
 ## Phase 1: Core (no rules yet)
 
@@ -65,7 +67,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
 - [ ] **3.1 `tdtm stencils` and `tdtm coverage`.**
 - [ ] **3.2 `tdtm report`** HTML (SPEC 9).
 - [ ] **3.3 `tdtm analyze --watch`**: re-run when the model file changes (stdlib polling, no deps).
-- [ ] **3.4 [manual] TMT parity test.** Someone on Windows draws `tests/fixtures/golden/*`
+- [ ] **3.4 [manual, optional: needs Windows] TMT parity test.** Someone on Windows draws `tests/fixtures/golden/*`
   in TMT 7.3 with SDL TM Knowledge Base, generates the report, and the reports go into
   `tests/fixtures/parity/`. Write a test diffing per-interaction threat IDs. Fix differences or
   document them in SPEC.

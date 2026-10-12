@@ -120,16 +120,28 @@ Generic element IDs and their attributes:
 | `GE.TB.B` | border trust boundary | none |
 | `GE.A` | annotation | none |
 
-Each attribute has a `DisplayName` and a list of `AttributeValues`; the **first value is the
-default** **[verify]** against TMT behaviour. Attribute names can be GUIDs.
+Each attribute has a `DisplayName` and a list of `AttributeValues`. tdtm treats the **first value
+as the default**. That matches the file's shape (most lists start with `Not Selected` or `No`) but
+is **[assumed]**: only TMT itself can confirm it (PLAN 3.4). Exceptions worth knowing: `Cookies`
+defaults to `Yes`, `authenticatesItself` to `Not Applicable`. Attribute names can be GUIDs.
 
 `StandardElements` are stencils with a `ParentElement` (52 total): 15 under GE.P (e.g. Web
 Application `SE.P.TMCore.WebApp`, Web Server, Browser Client, Thick Client, Win32 Service),
 9 under GE.EI (Browser, Human User, External Web Service, ...), 10 under GE.DS (SQL Database,
 Cloud Storage, Cookies, ...), 10 under GE.DF (HTTP, HTTPS, IPsec, ...), 4 under GE.TB.L
 (Internet Boundary, Machine Trust Boundary, ...), 4 under GE.TB.B (CorpNet Trust Boundary, ...).
-A stencil may override inherited attributes with `Mode=Static` and a fixed value (e.g. Kernel
-Thread forces `codeType=Unmanaged`). Inheritance can be more than one level deep **[verify]**.
+Inheritance is **one level** [confirmed, `test_stencil_inheritance_is_one_level`]: every SE's
+parent is a GE, every GE's parent is `ROOT`. All GE attributes are `Mode=Dynamic` (user-selectable).
+An SE attribute is either
+- a `Mode=Static` override of a parent attribute with exactly one value, fixed for that stencil
+  (Kernel Thread and Web Application force `codeType=Unmanaged`; HTTPS forces
+  `providesConfidentiality`, `providesIntegrity` and `authenticatesDestination` to `Yes`), or
+- a new `Mode=Dynamic` attribute the parent lacks (`IsInherited=false`), e.g. Windows Store app
+  capabilities on `SE.P.TMCore.Modern`, `HTTPOnly` on Cookies, sandbox types on browser boundaries.
+
+So a stencil's attributes are: its GE's attributes, plus its own new ones, with its Static
+overrides applied. One rule tests `source.internetClient`, which only `SE.P.TMCore.Modern` has;
+on any other source that test is false (3.5: unknown attribute, no match).
 
 ### 3.2 Threat categories
 

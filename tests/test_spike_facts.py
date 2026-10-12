@@ -130,3 +130,25 @@ def test_title_placeholders():
         ("target", "name"),
         ("flow", "name"),
     }
+
+
+def test_stencil_inheritance_is_one_level():
+    # SPEC 3.1: every SE's parent is a GE (no SE -> SE chains). An SE attribute is either a Static
+    # single-value override of a parent attribute, or a new Dynamic attribute the parent lacks.
+    generic = {e.findtext("ID"): e for e in TB7.find("GenericElements")}
+    for e in generic.values():
+        assert e.findtext("ParentElement") == "ROOT"
+        assert all(a.findtext("Mode") == "Dynamic" for a in e.iter("Attribute"))
+    added = set()
+    for e in TB7.find("StandardElements"):
+        parent = generic[e.findtext("ParentElement")]
+        inherited = {a.findtext("Name") for a in parent.iter("Attribute")}
+        for a in e.iter("Attribute"):
+            name = a.findtext("Name")
+            if a.findtext("Mode") == "Static":
+                assert name in inherited and len(a.find("AttributeValues")) == 1
+            else:
+                assert name not in inherited and a.findtext("IsInherited") == "false"
+                added.add((e.findtext("ID"), name))
+    assert ("SE.P.TMCore.Modern", "internetClient") in added
+    assert ("SE.DS.TMCore.Cookie", "HTTPOnly") in added
