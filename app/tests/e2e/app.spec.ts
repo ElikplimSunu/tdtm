@@ -244,3 +244,40 @@ test("works offline after the first visit", async ({ page, context }) => {
   await page.getByRole("button", { name: /explore an example/ }).click();
   await expect(page.getByTestId("threat-count")).toHaveText("38 threats");
 });
+
+test("the first model in docs/coming-from-tmt.md works as written", async ({ page }) => {
+  await newModel(page);
+  await page.getByTestId("model-title").fill("Shop");
+  await page.getByTestId("model-title").press("Enter");
+  for (const [stencil, name] of [["Human User", "Customer"], ["Web Application", "Shop"], ["SQL Database", "Orders"]]) {
+    await page.getByRole("button", { name: new RegExp(`^${stencil}`) }).click();
+    await page.getByTestId("element-name").fill(name);
+    await page.getByTestId("element-name").press("Enter");
+  }
+  const cells = async () => (await snapshot(page)).detail.diagrams[0].cells;
+  const id = async (name: string) => (await cells()).find((c: any) => c.data.name === name).id;
+  const [customer, shop, orders] = [await id("Customer"), await id("Shop"), await id("Orders")];
+  for (const [from, side] of [[customer, "right"], [shop, "right"], [shop, "left"], [orders, "left"]]) {
+    await (await plus(page, from, side)).click();
+    await page.keyboard.press("Escape");
+  }
+  await expect(page.locator(".x6-edge")).toHaveCount(4);
+
+  const shopBox = (await page.locator(`g.x6-node[data-cell-id="${shop}"]`).boundingBox())!;
+  const canvas = page.locator(".canvaswrap");
+  const c = (await canvas.boundingBox())!;
+  await page.getByRole("button", { name: /^Generic Trust Border Boundary/ }).dragTo(canvas, {
+    targetPosition: { x: shopBox.x - c.x - 30, y: shopBox.y - c.y - 60 },
+  });
+  await expect(page.locator('g.x6-node[data-shape="trust-boundary-box"]')).toHaveCount(1);
+
+  const model = await snapshot(page);
+  const flows = model.detail.diagrams[0].cells.filter((c: any) => c.data.type === "tm.Flow");
+  expect(flows.map((f: any) => [f.source.cell, f.target.cell]).sort()).toEqual(
+    [[customer, shop], [shop, orders], [shop, customer], [orders, shop]].sort(),
+  );
+  await expect(page.getByTestId("threat-count")).not.toHaveText("0 threats");
+  // the customer's flows cross the boundary; the shop-to-orders flows do not
+  await page.locator(`g.x6-edge[data-cell-id="${flows.find((f: any) => f.source.cell === customer).id}"]`).click({ force: true });
+  await expect(page.locator(".props")).toContainText("Crosses");
+});

@@ -3,7 +3,7 @@ import type { AnalyzeResult, Model, Palette } from "../lib/types";
 
 type Pending = { resolve: (v: any) => void; reject: (e: Error) => void };
 
-export type EngineState = { status: "loading" } | { status: "ready"; version: string; ms: number }
+export type EngineState = { status: "loading" } | { status: "ready"; version: string; ms: number; phases?: Record<string, number> }
   | { status: "failed"; error: string };
 
 class Engine {
@@ -17,7 +17,7 @@ class Engine {
     this.worker.onmessage = (ev) => {
       const m = ev.data;
       if ("ready" in m) {
-        this.state = m.ready ? { status: "ready", version: m.version, ms: m.ms }
+        this.state = m.ready ? { status: "ready", version: m.version, ms: m.ms, phases: m.phases }
           : { status: "failed", error: m.error };
         this.listeners.forEach((f) => f(this.state));
         return;
