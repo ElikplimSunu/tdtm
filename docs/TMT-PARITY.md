@@ -106,9 +106,9 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
   on triage here (no user name in a browser; the desktop app could), threats added by hand.
 - [x] **1.5 Stencil icons.** `api.palette()` gives each stencil's icon (a data URL; inherited from
   the parent when missing) and where TMT puts it (`iconAt`: center, lower-right, before-label).
-- [ ] **1.6 Notes** (the `.tm7`'s `Notes`: Id, text, date, added by): import, export, keep in
-  `.json`.
-- [ ] **1.7 Threat generation on/off** (`ThreatGenerationEnabled`): honoured by analyze, kept.
+- [x] **1.6 Notes**: import, export, kept in `.json`; the Notes pane (View > Notes, toolbar).
+- [ ] **1.7 Threat generation on/off** (`ThreatGenerationEnabled`): kept through `.tm7` *(done)*;
+  left: honoured by analyze, and Settings > Enable/Disable Threat Generation.
 - [ ] **1.8 Messages.** The validation messages TMT shows in the Messages pane (e.g. flow with no
   source) **[TMT]**: list them, then generate them in the engine.
 

@@ -8,6 +8,9 @@ One version covers the app and the command-line tool. The format follows
 
 ### Added
 
+- TMT's Notes pane (View > Notes, or the toolbar): notes for the whole model, with Id, date and
+  author, kept in `.tm7` imports and exports, tabbed with the threat list as in TMT.
+
 - A threat's title, category and description can be edited, as in TMT's Threat Properties. The
   edits are kept by later analyses and written to `.tm7` exports.
 - Element properties are grouped as in TMT: Predefined Static Attributes (set by the stencil),
@@ -41,6 +44,10 @@ One version covers the app and the command-line tool. The format follows
   running past the edge. Trust boundary names are no longer bold, as in TMT.
 
 ### Fixed
+
+- Justifications typed in TMT 7.3 were lost on `.tm7` import: TMT keeps them in the threat's
+  properties, not where import looked. A model triaged in TMT, with notes, now exports back
+  unchanged.
 
 - Last Modified shows when a threat was triaged, as TMT does ("13/10/2026 9:56:59 pm"), in the
   list and the CSV; it was empty. Triage here stamps the time too, and `.tm7` exports carry it.
