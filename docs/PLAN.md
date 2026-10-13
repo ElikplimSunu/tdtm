@@ -30,7 +30,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
   values/defaults/static overrides, categories, threat types with raw filter strings.
   *Done when:* tests assert 47 threat types, 7 categories, 52 stencils, `SE.P.TMCore.WebApp`
   parent is `GE.P`, Kernel Thread static `codeType=Unmanaged`.
-- [ ] **1.3 `tags`: parse `@tmt` lines** against a loaded template (SPEC 4.3).
+- [x] **1.3 `tags`: parse `@tmt` lines** against a loaded template (SPEC 4.3).
   *Done when:* stencil by ID/suffix/name; attrs by name/display name; bad values produce errors
   with suggestions; non-tag description text is ignored.
 - [ ] **1.4 `boundaries`: zones and crossings** (SPEC 5).

@@ -256,6 +256,9 @@ Any line in an element's `description` that starts with `@tmt:` is parsed. Tags 
 - `key=value` pairs set attributes. Keys match attribute `Name` or `DisplayName`
   (case/space-insensitive). Values must match one of the attribute's `AttributeValues`
   (case-insensitive) or it is an error.
+- Attribute keys are checked against the tagged stencil's attributes, or the kind's generic
+  element's when no stencil is tagged (so `HTTPOnly` needs `@tmt: Cookies` on the same element).
+- A stencil from the wrong kind (`@tmt: SQL Database` on a process) is an error naming both kinds.
 - Unknown stencil/attribute/value is an error with a "did you mean" suggestion, not a silent skip.
 - The description field is used because Threat Dragon is guaranteed to keep it. `tdtm stencils`
   lists every valid stencil and attribute so users can copy tags.

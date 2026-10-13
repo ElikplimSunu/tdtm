@@ -27,6 +27,25 @@ TD_TYPE_TO_KIND: dict[str, Kind] = {
 
 NODE_KINDS = {Kind.ACTOR, Kind.PROCESS, Kind.STORE}
 
+# Kind -> the TMT generic element every stencil for that kind descends from (SPEC 4.1).
+KIND_ROOT: dict[Kind, str] = {
+    Kind.ACTOR: "GE.EI",
+    Kind.PROCESS: "GE.P",
+    Kind.STORE: "GE.DS",
+    Kind.FLOW: "GE.DF",
+    Kind.BOUNDARY_BOX: "GE.TB.B",
+    Kind.BOUNDARY_CURVE: "GE.TB.L",
+}
+ROOT_NOUN = {
+    "GE.EI": "external interactor",
+    "GE.P": "process",
+    "GE.DS": "data store",
+    "GE.DF": "data flow",
+    "GE.TB.B": "border boundary (box)",
+    "GE.TB.L": "line boundary (curve)",
+    "GE.A": "annotation",
+}
+
 
 @dataclass(frozen=True)
 class Point:
