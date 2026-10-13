@@ -33,7 +33,6 @@
   let dropping = $state(false);
   let renaming = $state<number | null>(null);
   let theme = $state<string>(readTheme());
-  let fromThreat = false;
   const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl+";
   let update = $state.raw<updates.Update | null>(null);
 
@@ -118,8 +117,7 @@
       },
       selected: (id) => {
         selectedCell = id;
-        if (!fromThreat) selectedThreat = null;
-        fromThreat = false;
+        selectedThreat = null; // selectThreat sets it again after selecting the flow
       },
       changed: () => { dirty = true; version++; },
       failed: (m) => say(m, "error"),
@@ -279,15 +277,14 @@
   }
 
   function selectThreat(key: string) {
-    selectedThreat = key;
     const t = analysis?.threats.find((x) => x.key === key);
-    if (!t || !editor) return;
-    const d = editor.model.detail.diagrams.findIndex((dg) => dg.cells.some((c) => c.id === t.cell));
-    if (d >= 0 && d !== diagram) switchDiagram(d);
-    fromThreat = true;
-    editor.select(t.cell);
-    if (selectedCell !== t.cell) fromThreat = false;
-    selectedCell = t.cell;
+    if (t && editor) {
+      const d = editor.model.detail.diagrams.findIndex((dg) => dg.cells.some((c) => c.id === t.cell));
+      if (d >= 0 && d !== diagram) switchDiagram(d);
+      editor.select(t.cell); // fires "selected", which clears the threat; set it after
+      selectedCell = t.cell;
+    }
+    selectedThreat = key;
   }
 
   function showCell(id: string) {

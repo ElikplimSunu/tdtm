@@ -6,6 +6,8 @@ the same kind of data-flow diagram, drawn the way TMT draws it. The rules are TM
 and priorities. On a real model built in TMT 7.3, ThreatSketch (the engine inside ThreatSketch) produced
 exactly the same 54 threats as TMT, and its CSV export matched TMT's row for row.
 
+![ThreatSketch: stencils on the left like TMT's Stencils pane, the diagram, the threat list below like TMT's Analysis View, properties on the right](img/threatsketch-threat.jpg)
+
 ## Doing in ThreatSketch what you did in TMT
 
 | In TMT | In ThreatSketch |

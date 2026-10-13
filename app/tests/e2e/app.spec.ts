@@ -157,6 +157,10 @@ test("triage a threat: state, priority and justification are saved TMT's way", a
   await expect(page.getByTestId("threat-row").first()).toContainText("Mitigated");
   const t = (await snapshot(page)).detail.diagrams[0].cells.find((c: any) => c.id === "placeorder").data.threats[0];
   expect([t.status, t.severity, t.mitigation]).toEqual(["Mitigated", "Low", "Customers sign in with MFA."]);
+  // a second threat on the same flow can be selected and triaged too
+  await page.getByTestId("threat-row").nth(1).click();
+  await page.getByTestId("threat-state").selectOption("Not Applicable");
+  await expect(page.getByTestId("threat-row").nth(1)).toContainText("Not Applicable");
 });
 
 test("delete and undo", async ({ page }) => {

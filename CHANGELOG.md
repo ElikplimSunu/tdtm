@@ -6,6 +6,11 @@ One version covers the app and the command-line tool. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Selecting a second threat on the same data flow cleared the selection instead of showing it.
+- The threat report now says it was created by ThreatSketch.
+
 ## [0.3.0] - 2026-10-13
 
 ### Added

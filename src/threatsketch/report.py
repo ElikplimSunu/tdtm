@@ -110,7 +110,7 @@ def render(model: Model, template=None) -> str:
         f"<title>{escape(model.title)}: Threat Modeling Report</title>",
         f"<style>{CSS}</style></head><body>",
         "<h1>Threat Modeling Report</h1>",
-        f'<p class="muted">Created on {datetime.now():%d/%m/%Y %H:%M} by threatsketch</p>',
+        f'<p class="muted">Created on {datetime.now():%d/%m/%Y %H:%M} by ThreatSketch</p>',
         *(f"<p><b>{k}:</b> {escape(v)}</p>" for k, v in details),
         "<h2>Threat Model Summary:</h2>",
         _summary(threats),

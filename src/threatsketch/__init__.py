@@ -1,4 +1,4 @@
-"""threatsketch: Microsoft TMT-style threat generation for OWASP Threat Dragon models."""
+"""ThreatSketch: Microsoft TMT-style threat generation for data-flow diagrams."""
 
 from importlib.resources import files
 

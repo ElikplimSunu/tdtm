@@ -39,7 +39,36 @@ ThreatSketch.
 - **Files.** Opens Threat Dragon `.json` and TMT `.tm7`; saves Threat Dragon `.json`, which Threat
   Dragon also opens. Nothing is uploaded: the threat engine runs on your computer.
 
-![An element selected: its TMT stencil, the trust boundary it sits in and its TMT properties](docs/img/threatsketch-element.jpg)
+## A tour
+
+**Start.** New model, open a file, or the example. Unsaved work from last time is offered here.
+
+![The start screen: New threat model, Open a file, Open the example](docs/img/threatsketch-welcome.jpg)
+
+**Draw and connect.** Hover an element for a **+** on each side; drag it to another element, or
+click it to link the nearest one.
+
+![Payment Provider hovered, with a + handle on each side](docs/img/threatsketch-connect.jpg)
+
+**TMT properties.** Pick the element's stencil and set its TMT properties. Values fixed by the
+stencil are shown locked; the trust boundary it sits in is named in red.
+
+![Orders DB selected: SQL Database stencil, inside Shop backend, and its TMT properties](docs/img/threatsketch-element.jpg)
+
+**Triage.** Set state, priority and justification. Threats nobody has looked at stay quiet in the
+list; the ones you have decided on stand out.
+
+![The threat list with threats marked Mitigated, Needs Investigation and Not Applicable](docs/img/threatsketch-triage.jpg)
+
+**Report.** The threat report follows TMT's Full Report: summary by state, the diagram, then
+every interaction and its threats. Export it, the CSV or a `.tm7` from the Export menu.
+
+![The threat report: Threat Model Summary table and the diagram](docs/img/threatsketch-report.jpg)
+
+**Dark mode** follows your system. Files, reports and exports stay black on white, as in TMT.
+
+![ThreatSketch in dark mode](docs/img/threatsketch-dark.jpg)
+
 
 ## How close it is to TMT
 
