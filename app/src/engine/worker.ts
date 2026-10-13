@@ -2,7 +2,7 @@
 // Messages in: { id, fn, args }. Out: { id, ok, result } | { id, ok: false, error } | { ready }.
 
 const FUNCTIONS = new Set([
-  "new_model", "analyze", "palette", "set_element", "set_threat",
+  "new_model", "analyze", "palette", "categories", "set_element", "set_threat",
   "import_tm7", "export_tm7", "report_html", "report_csv",
 ]);
 

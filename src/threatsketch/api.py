@@ -17,7 +17,7 @@ is dropped.
 
 from __future__ import annotations
 
-from .merge import merge
+from .merge import STRIDE_TYPES, merge
 from .model import KIND_ROOT, Kind, Model
 from .report import generated_by, render, render_csv, review, tmt_category, tmt_changed, tmt_state
 from .resolve import resolve
@@ -146,6 +146,11 @@ def analyze(raw: dict) -> dict:
     }
 
 
+def categories() -> list[str]:
+    """The template's threat categories, by name (TMT's Category column)."""
+    return list(template().categories.values())
+
+
 ICON_AT = {  # TMT's ImageLocation, as the app places the icon
     "Centered on stencil": "center",
     "Lower right of stencil": "lower-right",
@@ -225,10 +230,23 @@ def _threats(raw: dict):
             yield from (c.get("data") or {}).get("threats") or []
 
 
-def set_threat(raw: dict, key: str, state: str, priority: str, justification: str) -> dict:
-    """Set TMT state, priority and justification on the threat with this threatsketch key or id."""
+def set_threat(
+    raw: dict,
+    key: str,
+    state: str,
+    priority: str,
+    justification: str,
+    title: str | None = None,
+    category: str | None = None,
+    description: str | None = None,
+) -> dict:
+    """Set TMT state, priority and justification on the threat with this threatsketch key or id;
+    also its title, category (a template category name) and description, as TMT's Threat
+    Properties pane allows."""
     if state not in STATES or priority not in PRIORITIES or not isinstance(justification, str):
         raise ValueError("bad state, priority or justification")
+    if category is not None and category not in template().categories.values():
+        raise ValueError(f"unknown category {category!r}")
     found = [
         t
         for t in _threats(raw)
@@ -239,6 +257,14 @@ def set_threat(raw: dict, key: str, state: str, priority: str, justification: st
     status, tmt = STATES[state]
     for t in found:
         t["status"], t["severity"], t["mitigation"] = status, priority, justification
+        if title is not None:
+            t["title"] = title
+        if description is not None:
+            t["description"] = description
+        if category is not None:  # Threat Dragon's STRIDE type where there is one, as import does
+            t["type"] = next(
+                (x for x in STRIDE_TYPES.values() if x.lower() == category.lower()), category
+            )
         if tmt:
             t.setdefault("tdtm", {})["tmtState"] = tmt
         elif isinstance(t.get("tdtm"), dict):
