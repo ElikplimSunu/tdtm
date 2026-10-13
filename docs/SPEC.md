@@ -501,6 +501,11 @@ out-of-scope elements, bidirectional flows.
   `ModifiedAt` (`0001-01-01` until touched), and `Properties` with `Title`,
   `UserThreatCategory` (e.g. "Denial Of Service"), `UserThreatDescription`.
 
+Triage in TMT 7.3 sets `ChangedBy` to `MACHINE\user` and `ModifiedAt` to the time, ISO 8601 with
+7-digit fractions and an offset (`2026-10-13T22:39:44.6125953+00:00`). The threat list, Threat
+Properties and the CSV show both; the time as `13/10/2026 9:56:59 pm` (en-GB Windows; TMT follows
+the Windows locale). Import keeps them under `tdtm.tm7`; triage here stamps `modifiedAt`.
+
 TMT lists and exports a threat stored with `Id` 0 as the highest `Id` + 1 (a real model: 0 among
 1..241 is 242 in TMT's CSV) and the file keeps 0. Import numbers it the same way and keeps the 0
 under `tdtm.tm7.id` for export.

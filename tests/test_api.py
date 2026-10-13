@@ -193,7 +193,7 @@ def test_palette_carries_tmt_stencil_icons_and_where_tmt_draws_them():
 
 def test_threat_rows_carry_tmt_changed_by_and_last_modified():
     """TMT's Analysis View columns, as in its CSV: Last Modified reads "Generated" until someone
-    triages the threat; Changed By is who TMT recorded."""
+    triages the threat, then when; Changed By is who TMT recorded."""
     rows = api.analyze(shop())["threats"]
     assert {(r["changedBy"], r["lastModified"]) for r in rows} == {("", "Generated")}
 
@@ -201,13 +201,16 @@ def test_threat_rows_carry_tmt_changed_by_and_last_modified():
     key = rows[0]["key"]
     raw = api.set_threat(raw, key, "Mitigated", "High", "TLS everywhere")
     row = next(r for r in api.analyze(raw)["threats"] if r["key"] == key)
-    assert row["lastModified"] == ""
+    assert row["lastModified"] not in ("", "Generated")
 
     t = next(t for d in raw["detail"]["diagrams"] for c in d["cells"]
              for t in c["data"].get("threats", []) if t["tdtm"]["key"] == key)  # fmt: skip
     t["tdtm"]["tm7"] = {"changedBy": "CONTOSO\\\\student", "modifiedAt": "2026-10-09T23:01:17"}
     row = next(r for r in api.analyze(raw)["threats"] if r["key"] == key)
-    assert (row["changedBy"], row["lastModified"]) == ("CONTOSO\\\\student", "")
+    assert (row["changedBy"], row["lastModified"]) == (
+        "CONTOSO\\\\student",
+        "09/10/2026 11:01:17 pm",
+    )
 
 
 def test_set_threat_edits_title_category_and_description_as_tmt_allows():
@@ -231,3 +234,17 @@ def test_set_threat_edits_title_category_and_description_as_tmt_allows():
     with pytest.raises(ValueError):
         api.set_threat(raw, key, "Not Started", "High", "", category="Not a category")
     assert api.categories()[-2:] == ["Elevation Of Privilege", "Abuse"]  # SDL: STRIDE, then Abuse
+
+
+def test_triage_records_when_as_tmt_does():
+    """TMT stamps a triaged threat's ModifiedAt; the list, the CSV and the .tm7 show it."""
+    raw = api.analyze(shop())["model"]
+    key = next(t for t in api.analyze(raw)["threats"] if t["id"] == 1)["key"]
+    api.set_threat(raw, key, "Mitigated", "High", "TLS everywhere")
+    row = next(t for t in api.analyze(raw)["threats"] if t["key"] == key)
+    assert row["lastModified"] and row["lastModified"] != "Generated"
+    assert row["lastModified"] in api.report_csv(raw)
+    threat = next(t for d in raw["detail"]["diagrams"] for c in d["cells"]
+                  for t in c["data"].get("threats", []) if t["tdtm"]["key"] == key)  # fmt: skip
+    stamp = threat["tdtm"]["tm7"]["modifiedAt"]
+    assert f"<b:ModifiedAt>{stamp}</b:ModifiedAt>" in api.export_tm7(raw)["text"]
