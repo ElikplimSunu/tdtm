@@ -132,6 +132,10 @@ class Diagram:
 class Model:
     title: str
     diagrams: list[Diagram] = field(default_factory=list)
+    owner: str = ""
+    reviewer: str = ""
+    description: str = ""
+    contributors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
 

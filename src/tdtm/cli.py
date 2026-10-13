@@ -276,7 +276,7 @@ def cmd_report(args: argparse.Namespace) -> int:
         # newline="" keeps the CRLF line endings TMT's export uses
         Path(args.out).write_text(render_csv(model, _template(args)), encoding="utf-8", newline="")
     else:
-        Path(args.out).write_text(render(model), encoding="utf-8")
+        Path(args.out).write_text(render(model, _template(args)), encoding="utf-8")
     print(f"wrote {args.out}")
     return 0
 
@@ -329,7 +329,7 @@ def _write_reports(model_path: Path, args: argparse.Namespace) -> None:
 
     model, _ = load(model_path)
     html, csv_path = model_path.with_suffix(".report.html"), model_path.with_suffix(".csv")
-    html.write_text(render(model), encoding="utf-8")
+    html.write_text(render(model, _template(args)), encoding="utf-8")
     csv_path.write_text(render_csv(model, _template(args)), encoding="utf-8", newline="")
     print(f"reports: {html.name}, {csv_path.name}")
 

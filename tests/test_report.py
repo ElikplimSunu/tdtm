@@ -17,12 +17,16 @@ def test_report_shape(fixtures, tmp_path):
     model, _ = load(analyzed(fixtures, tmp_path))
     html = render(model)
     assert html.startswith("<!doctype html>")
-    assert "Golden 2: actors and a process across a curve" in html
-    assert "24 threats" in html
-    assert "Open</td><td>24" in html  # summary by state
-    assert "Interaction: User → App" in html and "(Request)" in html
-    assert "Spoofing the User External Entity" in html
-    assert "Priority" in html and "Justification" in html and "SDL rule S3" in html
+    assert "<h1>Threat Modeling Report</h1>" in html
+    assert "Threat Model Name:</b> Golden 2: actors and a process across a curve" in html
+    assert "Threat Model Summary:" in html and "Diagram Summary:" in html
+    assert "<td>Not Started</td><td>24</td>" in html and "<td>Total</td><td>24</td>" in html
+    assert "<svg" in html  # the diagram, drawn from the model
+    assert "Interaction: Request" in html and "User → App" in html
+    assert "Spoofing the User External Entity [State: Not Started] [Priority: High]" in html
+    assert "Category:</b> Spoofing" in html
+    assert "Justification:</b> &lt;no mitigation provided&gt;" in html
+    assert "SDL rule S3" in html
 
 
 def test_report_escapes_model_text(fixtures, tmp_path):

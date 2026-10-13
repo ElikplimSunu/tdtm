@@ -435,9 +435,15 @@ Exit codes: 0 ok, 1 usage error, 2 model/template error, 3 tag errors (with `--s
 
 ## 9. Report
 
-Single self-contained HTML file. Sections like TMT's report: summary counts by category/status,
-diagram list, then per interaction: interaction name (`source → target`), each threat with
-category, title, description, justification (= mitigation), priority (= severity), state (= status).
+`tdtm report MODEL` writes one self-contained HTML file laid out like TMT's Full Report: model
+details (name, owner, reviewer, contributors, description), a Threat Model Summary counting TMT
+states (Not Started, Not Applicable, Needs Investigation, Mitigation Implemented, Total, Total
+Migrated), then per diagram an SVG drawing of it (`diagram.py`, from the model's own geometry; red
+flows have open threats), a per-diagram summary, and each interaction that has threats:
+`N. Title [State: ...] [Priority: ...]` with Category (TMT's category name), Description and
+Justification (`<no mitigation provided>` when empty). Threats people attached to other elements
+follow under `Element:`. **[approximate]**: written from memory of TMT 7.3's report; compare with
+a real TMT report and adjust.
 
 ### 9a. CSV export
 
@@ -515,7 +521,8 @@ Threat Dragon 2.6.2 facts (td.vue/src at ff27a5e, and its log at
   dialog: the menu module only gets its window on `did-finish-load`. [confirmed, observed]
   So tdtm launches the app empty, waits for `Checking for update` in the log (window created),
   waits `LOAD_MARGIN` (4 s) more for the page, then sends the file. No log line marks page load,
-  so the margin is a calibrated guess. [assumed]
+  so the margin is a calibrated guess. [confirmed once on a 2019 Intel MacBook Pro: no dialog, the
+  model opened]
 - An opened model lands on the model summary page, not the diagram. Because a reload while the
   user has unsaved edits makes Threat Dragon ask to discard them, automatic reload after each update
   is opt-in (`--reload`); by default tdtm prints a reminder to reopen.

@@ -1,9 +1,11 @@
-"""Self-contained HTML report in the shape of TMT's. SPEC section 9. PLAN task 3.2.
+"""Self-contained HTML report in the shape of TMT's Full Report. SPEC section 9. PLAN task 3.2.
 
-`render(model) -> str` reports every threat in the model, generated or human-written: a summary by
-state and category, then per diagram each interaction (flow) with its threats in TMT's fields
-(Category, Description, Justification = mitigation, Priority = severity, State = status), then
-threats attached to other elements. All model text is escaped.
+`render(model, template=None) -> str`: model details, a Threat Model Summary by TMT state, then per
+diagram a drawing of it, its own summary, and each interaction with its threats as TMT lists them
+("1. Title [State: Not Started] [Priority: High]", Category, Description, Justification), then
+threats people attached to other elements. Every threat in the model is reported, generated or
+not. All model text is escaped. [approximate: laid out from memory of TMT 7.3's report, not yet
+compared with a real one]
 
 `render_csv(model, template) -> str` writes TMT's own CSV export format (same columns, category
 names, state names and CRLF line endings), so a Threat Dragon model hands in like a TMT one.
@@ -13,35 +15,46 @@ from __future__ import annotations
 
 import csv
 import io
-from collections import Counter
+from datetime import datetime
 from html import escape
 
+from .diagram import render_svg
 from .merge import STRIDE_TYPES, fingerprint
 from .model import Kind, Model, Threat
 
 CSS = """
-:root { --fg: #1b2631; --muted: #5d6d7e; --line: #d5dbe1; --bg: #ffffff; --head: #eef3f8;
-        --open: #c0392b; --done: #1e8449; }
-@media (prefers-color-scheme: dark) {
-  :root { --fg: #e5e8eb; --muted: #aab4be; --line: #3a4550; --bg: #161b20; --head: #222b33;
-          --open: #ec7063; --done: #58d68d; }
-}
-body { font: 15px/1.5 system-ui, -apple-system, Segoe UI, sans-serif; color: var(--fg);
-       background: var(--bg); max-width: 960px; margin: 2rem auto; padding: 0 16px; }
-h1 { font-size: 1.6rem; margin-bottom: .2rem; } h2 { margin-top: 2.2rem; }
-h3 { margin: 1.6rem 0 .4rem; font-size: 1.05rem; }
-.meta, .muted { color: var(--muted); }
-table { border-collapse: collapse; margin: .4rem 0 1rem; }
-td, th { border: 1px solid var(--line); padding: .25rem .6rem; text-align: left;
-         vertical-align: top; }
-th { background: var(--head); }
-.threat { border: 1px solid var(--line); border-radius: 6px; padding: .5rem .8rem;
-          margin: .5rem 0; }
-.threat h4 { margin: 0 0 .3rem; font-size: 1rem; }
-.threat dl { display: grid; grid-template-columns: max-content 1fr; gap: .15rem .8rem; margin: 0; }
-.threat dt { color: var(--muted); } .threat dd { margin: 0; white-space: pre-wrap; }
-.Open { color: var(--open); font-weight: 600; } .Mitigated { color: var(--done); }
+body { font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; color: #1b1b1b;
+       background: #ffffff; max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+h1 { font-size: 26px; font-weight: 600; margin: 0 0 4px; }
+h2 { font-size: 18px; font-weight: 600; margin: 28px 0 8px; }
+h3 { font-size: 15px; font-weight: 600; margin: 22px 0 2px; }
+h4 { font-size: 14px; font-weight: 600; margin: 14px 0 4px; }
+p { margin: 3px 0; } .muted { color: #5c5c5c; }
+hr { border: 0; border-top: 1px solid #c8c8c8; margin: 24px 0; }
+table { border-collapse: collapse; margin: 6px 0 4px; }
+td { border: 1px solid #c8c8c8; padding: 3px 14px 3px 8px; }
+td:last-child { text-align: right; }
+.threat { margin: 0 0 12px 18px; } .threat p { white-space: pre-wrap; }
+.diagram { border: 1px solid #c8c8c8; margin: 8px 0; }
+.diagram svg { display: block; width: 100%; height: auto; max-height: 640px; }
+@media print { .diagram svg { max-height: none; } }
 """
+SUMMARY_ROWS = ["Not Started", "Not Applicable", "Needs Investigation", "Mitigation Implemented"]
+TMT_STATE = {"Open": "Not Started", "NotApplicable": "Not Applicable"}  # others are the same
+
+
+def tmt_state(t: Threat) -> str:
+    """The state TMT would show. `Needs Investigation` has no Threat Dragon status, so tdtm keeps
+    it in the threat's `tdtm` key (SPEC 13); everything else maps from the status."""
+    meta = t.raw.get("tdtm")
+    if isinstance(meta, dict) and meta.get("tmtState"):
+        return meta["tmtState"]
+    return TMT_STATE.get(t.status, t.status)
+
+
+def tmt_category(t: Threat, template) -> str:
+    letter = {name.lower(): k for k, name in STRIDE_TYPES.items()}.get(t.type.lower(), "")
+    return template.categories.get(letter, t.type)
 
 
 def _rule(t: Threat) -> str:
@@ -52,63 +65,77 @@ def _rule(t: Threat) -> str:
     return f"{pack.upper()} rule {rule}"
 
 
-def _threat(t: Threat) -> str:
+def _threat(t: Threat, template) -> str:
     number = t.raw.get("number")
     title = f"{number}. {t.title}" if number is not None else t.title
+    heading = f"{title} [State: {tmt_state(t)}] [Priority: {t.severity}]"
     rows = [
-        ("Category", t.type),
+        ("Category", tmt_category(t, template)),
         ("Description", t.description),
-        ("Justification", t.mitigation),
-        ("Priority", t.severity),
-        ("State", f'<span class="{escape(t.status)}">{escape(t.status)}</span>'),
+        ("Justification", t.mitigation or "<no mitigation provided>"),
     ]
     if _rule(t):
-        rows.append(("Source", _rule(t)))
-    body = "".join(
-        f"<dt>{k}</dt><dd>{v if k == 'State' else escape(str(v or ''))}</dd>" for k, v in rows
-    )
-    return f'<div class="threat"><h4>{escape(title)}</h4><dl>{body}</dl></div>'
+        rows.append(("Generated by", _rule(t)))
+    body = "".join(f"<p><b>{k}:</b> {escape(str(v))}</p>" for k, v in rows)
+    return f'<h4>{escape(heading)}</h4><div class="threat">{body}</div>'
 
 
-def _counts(title: str, counter: Counter) -> str:
-    rows = "".join(
-        f"<tr><td>{escape(k or '(none)')}</td><td>{n}</td></tr>" for k, n in counter.most_common()
-    )
-    return f"<table><tr><th>{title}</th><th>Threats</th></tr>{rows}</table>"
+def _summary(threats: list[Threat]) -> str:
+    states = [tmt_state(t) for t in threats]
+    counts = {row: states.count(row) for row in SUMMARY_ROWS}
+    counts["Mitigation Implemented"] = states.count("Mitigated")
+    other = len(states) - sum(counts.values())
+    rows = list(counts.items()) + ([("Other", other)] if other else [])
+    rows += [("Total", len(threats)), ("Total Migrated", 0)]
+    return "<table>" + "".join(f"<tr><td>{k}</td><td>{n}</td></tr>" for k, n in rows) + "</table>"
 
 
-def render(model: Model) -> str:
+def render(model: Model, template=None) -> str:
+    if template is None:
+        from .rules.tb7 import load_template
+
+        template = load_template()
     threats = [t for d in model.diagrams for e in d.elements.values() for t in e.threats]
+    details = [
+        ("Threat Model Name", model.title),
+        ("Owner", model.owner),
+        ("Reviewer", model.reviewer),
+        ("Contributors", ", ".join(model.contributors)),
+        ("Description", model.description),
+    ]
     parts = [
         "<!doctype html>",
         '<html lang="en"><head><meta charset="utf-8">',
         '<meta name="viewport" content="width=device-width, initial-scale=1">',
-        f"<title>{escape(model.title)}: threat report</title><style>{CSS}</style></head><body>",
+        f"<title>{escape(model.title)}: Threat Modeling Report</title>",
+        f"<style>{CSS}</style></head><body>",
         "<h1>Threat Modeling Report</h1>",
-        f'<p class="meta">{escape(model.title)} · {len(threats)} threats · generated by tdtm</p>',
-        "<h2>Summary</h2>",
-        _counts("State", Counter(t.status for t in threats)),
-        _counts("Category", Counter(t.type for t in threats)),
+        f'<p class="muted">Created on {datetime.now():%d/%m/%Y %H:%M} by tdtm</p>',
+        *(f"<p><b>{k}:</b> {escape(v)}</p>" for k, v in details),
+        "<h2>Threat Model Summary:</h2>",
+        _summary(threats),
     ]
     for d in model.diagrams:
-        parts.append(f"<h2>Diagram: {escape(d.title)}</h2>")
-        parts.append(f'<p class="muted">{escape(d.diagram_type)} diagram</p>')
+        diagram_threats = [t for e in d.elements.values() for t in e.threats]
+        parts += [
+            "<hr>",
+            f"<h2>Diagram: {escape(d.title)}</h2>",
+            f'<div class="diagram">{render_svg(d)}</div>',
+            f"<h2>{escape(d.title)} Diagram Summary:</h2>",
+            _summary(diagram_threats),
+        ]
         for f in d.of_kind(Kind.FLOW):
+            if not f.threats:
+                continue
             src, tgt = d.elements[f.source_id].label, d.elements[f.target_id].label
             scope = " (out of scope)" if f.out_of_scope else ""
-            parts.append(
-                f"<h3>Interaction: {escape(src)} → {escape(tgt)} "
-                f'<span class="muted">({escape(f.label)}){scope}</span></h3>'
-            )
-            parts.extend(map(_threat, f.threats))
-            if not f.threats:
-                parts.append('<p class="muted">No threats.</p>')
-        others = [e for e in d.elements.values() if e.kind is not Kind.FLOW and e.threats]
-        if others:
-            parts.append("<h3>Threats on elements</h3>")
-            for e in others:
-                parts.append(f"<p><strong>{escape(e.label)}</strong> ({e.kind.value})</p>")
-                parts.extend(map(_threat, e.threats))
+            parts.append(f"<h3>Interaction: {escape(f.label)}</h3>")
+            parts.append(f'<p class="muted">{escape(src)} → {escape(tgt)}{scope}</p>')
+            parts.extend(_threat(t, template) for t in f.threats)
+        for e in d.elements.values():
+            if e.kind is not Kind.FLOW and e.threats:
+                parts.append(f"<h3>Element: {escape(e.label)}</h3>")
+                parts.extend(_threat(t, template) for t in e.threats)
     parts.append("</body></html>")
     return "\n".join(parts) + "\n"
 
@@ -126,11 +153,9 @@ CSV_COLUMNS = [
     "Justification",
     "Last Modified",
 ]
-TMT_STATE = {"Open": "Not Started", "NotApplicable": "Not Applicable"}  # others are the same
 
 
 def render_csv(model: Model, template) -> str:
-    letter = {name.lower(): k for k, name in STRIDE_TYPES.items()}
     out = io.StringIO()
     w = csv.writer(out, lineterminator="\r\n")
     w.writerow(CSV_COLUMNS)
@@ -139,16 +164,15 @@ def render_csv(model: Model, template) -> str:
             for t in e.threats:
                 meta = t.raw.get("tdtm")
                 untouched = isinstance(meta, dict) and meta.get("fingerprint") == fingerprint(t.raw)
-                category = template.categories.get(letter.get(t.type.lower(), ""), t.type)
                 number = t.raw.get("number")
                 w.writerow([
                     "" if number is None else number,
                     t.title,
-                    category,
+                    tmt_category(t, template),
                     d.title,
                     e.label,
                     t.severity,
-                    TMT_STATE.get(t.status, t.status),
+                    tmt_state(t),
                     "",
                     t.description,
                     t.mitigation,

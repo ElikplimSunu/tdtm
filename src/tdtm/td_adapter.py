@@ -77,7 +77,14 @@ def _element(cell: dict, diagram_id, kind: Kind, warn) -> Element | None:
 def load(path: str | Path) -> tuple[Model, Document]:
     raw = json.loads(Path(path).read_text(encoding="utf-8"))
     doc = Document(raw=raw)
-    model = Model(title=raw.get("summary", {}).get("title", ""))
+    summary, detail = raw.get("summary", {}), raw.get("detail", {})
+    model = Model(
+        title=summary.get("title", ""),
+        owner=summary.get("owner") or "",
+        description=summary.get("description") or "",
+        reviewer=detail.get("reviewer") or "",
+        contributors=[c.get("name", "") for c in detail.get("contributors") or [] if c],
+    )
     warn = model.warnings.append
 
     for d in raw.get("detail", {}).get("diagrams", []):

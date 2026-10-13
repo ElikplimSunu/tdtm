@@ -22,6 +22,11 @@ Select a flow to see its threats, with the same titles and categories TMT would 
 
 ![Threat Dragon showing the generated threats on the Place order flow: Spoofing the Customer External Entity, Cross Site Scripting, Potential Data Repudiation](docs/img/threat-dragon-threats.jpg)
 
+`tdtm open` also keeps a TMT-style report next to the model, with the diagram, a summary by TMT
+state and every threat:
+
+![The tdtm report for the example: model details, Threat Model Summary table, and the diagram](docs/img/report.png)
+
 ## Why
 
 TMT's best feature is rule-driven threat generation. Every data flow in the diagram is checked
