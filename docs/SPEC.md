@@ -3,6 +3,7 @@
 Status markers used below:
 - **[confirmed]** checked against real files on 2026-10-12 (and locked in by `tests/test_spike_facts.py` where possible)
 - **[verify]** believed true, not yet checked; the PLAN task that depends on it must check it first
+- **[assumed]** cannot be checked without running TMT on Windows; left to the parity test (PLAN 3.4)
 
 ## 1. Goal and scope
 
@@ -44,8 +45,14 @@ absent). TMT's threats are STRIDE; a fixture also holds CIA, LINDDUN, DIE, PLOT4
 diagrams, whose threat-type lists differ, so writing STRIDE threats there would be wrong. Those
 diagrams are skipped with a warning and round-trip untouched.
 
-`threatTop` is a counter Threat Dragon uses for threat `number`s; when
-adding threats, increment it and assign `number` the way the UI does. **[verify]** in td.vue source.
+`threatTop` is the counter behind threat `number`s [confirmed in td.vue 2.6.2,
+`components/GraphMeta.vue:167-171`, `ThreatSuggestDialog.vue:193-209`]: a new threat gets
+`number = threatTop + 1`, then `threatTop` is incremented. Numbers are never reused. A model with
+no `threatTop` is given 100 when Threat Dragon opens it. tdtm does the same per new threat,
+starting from `max(threatTop or 0, highest existing number)` so it never duplicates a number.
+
+Source facts in this section come from OWASP/threat-dragon commit `ff27a5e` (2.6.2), `td.vue/src`,
+read in `vendor/threat-dragon` (gitignored).
 
 ### 2.2 Cells [confirmed]
 
@@ -67,9 +74,9 @@ A flow's `source`/`target` can be a bare point `{x,y}` when it is dangling (5 su
 boundary curve whose ends are attached to cells (`{cell}` rather than `{x,y}`) has no fixed
 geometry; skip it with a warning (none seen in fixtures).
 
-### 2.3 Element properties [confirmed in samples; full list **[verify]** against schema]
+### 2.3 Element properties [confirmed, `service/entity/default-properties.js`]
 
-Common `data`: `name`, `description`, `outOfScope`, `reasonOutOfScope`, `isTrustBoundary`,
+Common `data`: `type`, `name`, `description`, `outOfScope`, `reasonOutOfScope`, `isTrustBoundary`,
 `hasOpenThreats`, `threats[]`.
 
 | kind | properties |
@@ -77,10 +84,17 @@ Common `data`: `name`, `description`, `outOfScope`, `reasonOutOfScope`, `isTrust
 | actor | `providesAuthentication` |
 | process | `privilegeLevel`, `isWebApplication`, `handlesCardPayment`, `handlesGoodsOrServices` |
 | store | `isALog`, `storesCredentials`, `isEncrypted`, `isSigned`, `storesInventory` |
-| flow | `protocol`, `isEncrypted`, `isPublicNetwork`, `isBidirectional` |
+| flow | `protocol`, `isEncrypted`, `isPublicNetwork`, `isBidirectional`, `trustBoundaryIds` |
+| boundary box / curve | `crossingFlows`, `containedElements` (no `threats`) |
+| text | `name` only |
 
-Out-of-scope elements (`outOfScope: true`) get no generated threats, and interactions where both
-ends are out of scope are skipped. **[verify]** what TMT does with out-of-scope elements and match it.
+`trustBoundaryIds`, `crossingFlows` and `containedElements` are recomputed by Threat Dragon on
+every save; tdtm ignores them (section 5). `isBidirectional: true` is drawn as a `block` marker on
+`attrs.line.sourceMarker`.
+
+Out of scope: Threat Dragon hides the add-threat button on out-of-scope cells and draws them
+dashed. tdtm skips an interaction when the flow is out of scope or both its ends are. What TMT
+does is **[assumed]** to be similar; only TMT can confirm (PLAN 3.4).
 
 ### 2.4 Threats [confirmed]
 
@@ -90,19 +104,36 @@ Schema-required: `title`, `type`, `status`, `severity`, `description`, `mitigati
 Optional: `modelType`, `number`, `score`, `threatId`. Samples also carry `id` (a UUID).
 Preserve whatever keys exist.
 
-- `type` (STRIDE diagrams): sample strings are `"Information disclosure"`, `"Denial of service"`.
-  Full set **[verify]** in td.vue (expected: Spoofing, Tampering, Repudiation, Information
-  disclosure, Denial of service, Elevation of privilege).
-- `severity`: `TBD | Low | Medium | High | Critical`.
-- `status`: `NotApplicable | Open | Mitigated` plus treatment outcomes. Exact stored strings **[verify]**.
-- After changing threats, recompute `data.hasOpenThreats` on the cell. Threat Dragon colours
-  elements red from this flag.
+- `type` (STRIDE): the stored value is the display string in the UI's language at creation time,
+  not an i18n key. English: `Spoofing`, `Tampering`, `Repudiation`, `Information disclosure`,
+  `Denial of service`, `Elevation of privilege` (`i18n/en.json:429-434`). Threat Dragon's UI
+  offers only some types per kind (actor S,R; store T,R,I,D; flow T,I,D; process all), but keeps
+  any stored type (`ThreatEditDialog.vue:300`). TMT attaches threats of every category to the
+  flow, so tdtm writes e.g. a Spoofing threat on a flow; Threat Dragon shows it.
+- `severity`: `TBD | Low | Medium | High | Critical`; new threats get `TBD`.
+- `status`: `NotApplicable | Open | Mitigated | Accepted | Transferred | Avoided | Eliminated`
+  (`service/threats/status.js`); new threats get `Open`.
+- New threat object (`service/threats/index.js:125-137`): `id` (uuid v4), `title`, `status`,
+  `severity`, `type`, `description`, `mitigation`, `modelType` (`STRIDE`), `new` (false once
+  applied), `number`, `score` (`""`). No `threatId` in practice.
+- `hasOpenThreats` = some threat's `status` equals `Open` case-insensitively
+  (`threats/index.js:140-141`).
+- **Red outlines are stored, not computed on load** (`service/x6/graph/data-changed.js:48-66`;
+  x6 adds cells silently on `fromJSON`). After changing threats tdtm must set both
+  `data.hasOpenThreats` and the stroke attrs, or the element opens black:
+  open → `stroke: "red"`, `strokeWidth: 2.5`; otherwise `stroke: "#333333"`, `strokeWidth: 1.5`.
+  Attr paths: actor and process `body`; store `topLine` and `bottomLine`; flow `line`.
+  Boundaries and text have no threat styling.
 
 ### 2.5 Custom keys
 
-The v2 schema has no `additionalProperties: false`, so extra keys validate. **[verify, manual]**:
-whether the Threat Dragon desktop app keeps unknown keys in `data` and in threat objects after
-you edit and re-save. The design does not depend on it (see section 4), but `merge.py` stores
+The v2 schema has no `additionalProperties: false`, so extra keys validate. Reading the source,
+Threat Dragon keeps unknown keys (high confidence): the threat editor edits a copy and writes back
+field by field onto the existing object (`ThreatEditDialog.vue:393,455-470`), x6 deep-merges cell
+`data` and `toJSON` deep-clones all props, and save spreads the diagram. A save does strip attrs
+equal to shape defaults, drop `angle: 0`, rewrite `diagram.version` and recompute the boundary
+keys, so a byte-equal round trip through Threat Dragon is not expected. **[verify, manual]**
+(PLAN 0.2): confirm by editing and re-saving in the desktop app. The design does not depend on it (see section 4), but `merge.py` stores
 provenance on each generated threat in a `tdtm` key. If the UI strips it, merge falls back to the
 sidecar file (section 6.3).
 
@@ -207,8 +238,7 @@ flow F (source S, target T) and each threat type R:
   explicit tag value, else stencil static override, else attribute default. Unknown attr → no match.
 - `flow crosses 'ID'`: the flow crosses at least one boundary whose stencil is or descends from ID.
 
-Bidirectional TD flows (`isBidirectional: true`) are evaluated in both directions **[verify]**
-what TMT does; TMT has no bidirectional flows, so two interactions is the faithful mapping.
+Bidirectional TD flows (`isBidirectional: true`) are evaluated in both directions **[assumed]**; TMT has no bidirectional flows, so two interactions is the faithful mapping.
 
 Each firing produces one threat on the flow cell (the interaction). Title and description come
 from the templates with names substituted.
@@ -279,7 +309,7 @@ A flow crosses:
   curve's polyline (source → vertices → target). Threat Dragon draws curves with
   `connector: "smooth"`; approximate the curve by its control polyline, and expose
   `--curve-samples N` to subdivide a Catmull-Rom spline through the points if the polyline
-  approximation proves wrong on real diagrams **[verify]**.
+  approximation proves wrong on real diagrams (it held on the demo model; see below).
 
 Flows that enter and leave the same box (both ends outside) do not cross it. A flow running
 along a curve (collinear) does not cross it.

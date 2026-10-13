@@ -5,7 +5,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
 
 ## Phase 0: Spike (settle the [verify] items in SPEC.md)
 
-- [ ] **0.1 Threat Dragon details from source.** Clone OWASP/threat-dragon (sparse: `td.vue/src`)
+- [x] **0.1 Threat Dragon details from source.** Clone OWASP/threat-dragon (sparse: `td.vue/src`)
   into `vendor/` (gitignored). Find and record in SPEC 2.3/2.4: full property list per kind,
   exact STRIDE `type` strings, exact `status` strings, how `number`/`threatTop` are assigned.
   *Done when:* every [verify] in SPEC 2.x is either confirmed or corrected.
