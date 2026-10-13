@@ -389,6 +389,7 @@ def parse_tm7(data: bytes, title: str = "", path: str = "model") -> tuple[dict, 
     }
     doc = Document(raw, {c["id"]: c for d in diagrams for c in d["cells"]})
     instances = _kid(root, "ThreatInstances")
+    unnumbered = []
     for position, kv in enumerate(instances if instances is not None else []):
         flow, t = _threat(_kid(kv, "Value"), position)
         cell = doc.cells.get(flow)
@@ -396,6 +397,12 @@ def parse_tm7(data: bytes, title: str = "", path: str = "model") -> tuple[dict, 
             warnings.append(f"threat {t['number']} ({t['title']}) is on an unknown flow; skipped")
             continue
         cell["data"]["threats"].append(t)
+        if t["number"] == 0:
+            unnumbered.append(t)
         raw["detail"]["threatTop"] = max(raw["detail"]["threatTop"], t["number"])
+    for t in unnumbered:  # TMT shows Id 0 as the next free Id, and keeps 0 in the file (SPEC 11)
+        raw["detail"]["threatTop"] += 1
+        t["number"] = raw["detail"]["threatTop"]
+        _keep(t, {"id": 0})
     merge(doc, [], packs=())  # only restyles: hasOpenThreats and red outlines (SPEC 2.4)
     return raw, warnings
