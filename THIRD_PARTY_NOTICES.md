@@ -17,3 +17,20 @@ used under the Apache License 2.0, http://www.apache.org/licenses/LICENSE-2.0.
 
 https://github.com/OWASP/pytm, MIT License. Its threat library includes CAPEC material under
 MITRE's CAPEC licence.
+
+## ThreatSketch app (`app/`)
+
+The app is built from these packages, bundled into its web build (not vendored in this repo):
+
+- **AntV X6** and its plugins (`@antv/x6`, `@antv/x6-plugin-*`), https://github.com/antvis/X6,
+  MIT License. Copyright (c) 2021-2023 Alipay.inc.
+- **Pyodide**, https://github.com/pyodide/pyodide, Mozilla Public License 2.0. The Pyodide runtime
+  files (`pyodide.mjs`, `pyodide.asm.*`, `python_stdlib.zip`, `pyodide-lock.json`) are copied
+  unmodified into the build; they include CPython (PSF License).
+- **Svelte**, https://github.com/sveltejs/svelte, MIT License.
+
+`app/src/lib/shapes.ts` transcribes the diagram shape definitions and default cell properties of
+OWASP Threat Dragon 2.6.2 (`td.vue/src/service/x6/shapes/` and
+`td.vue/src/service/entity/default-properties.js`), Apache License 2.0, so that Threat Dragon files
+open in ThreatSketch and files saved by ThreatSketch open in Threat Dragon. Changes: the shapes
+are restyled after Microsoft TMT's stencils, and connection points are moved outside each shape.

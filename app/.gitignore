@@ -1,0 +1,9 @@
+node_modules/
+dist/
+public/engine/
+public/pyodide/
+test-results/
+playwright-report/
+src-tauri/target/
+src-tauri/gen/
+public/examples/
