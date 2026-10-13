@@ -13,3 +13,4 @@ report.html
 WORKLOG.md
 CLAUDE.md
 .claude/
+tests/fixtures/private/

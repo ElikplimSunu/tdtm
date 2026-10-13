@@ -6,8 +6,9 @@ Automatic STRIDE threat generation for [OWASP Threat Dragon](https://owasp.org/w
 models, using the same rules as Microsoft's Threat Modeling Tool (TMT). Draw on macOS or Linux, get
 the threat list TMT would give you on Windows.
 
-> **Status: early development.** All commands work and are tested against hand-checked
-> examples, but tdtm's output has not yet been compared with real TMT output. Progress is
+> **Status: early development.** All commands work. On a real model built in TMT 7.3, tdtm
+> produces exactly the same 54 threats as TMT (same rules, titles and priorities). Diagrams with
+> curves, tags or encryption are checked against hand-worked examples only so far. Progress is
 > tracked in [docs/PLAN.md](docs/PLAN.md).
 
 ## Why
@@ -69,6 +70,7 @@ uv run tdtm inspect model.json            # how each element was read: stencil, 
 uv run tdtm stencils --kind process       # valid @tmt stencils and attributes
 uv run tdtm report model.json             # TMT-style HTML report
 uv run tdtm coverage                      # which rules need @tmt tags to fire
+uv run tdtm import model.tm7              # convert a TMT model, keeping TMT's threats and triage
 ```
 
 Re-running is safe: threats you edited in Threat Dragon keep your changes, and threats whose rule no

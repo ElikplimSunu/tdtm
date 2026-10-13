@@ -271,6 +271,26 @@ def cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_import(args: argparse.Namespace) -> int:
+    from .tm7 import Tm7Error, import_tm7
+
+    out = Path(args.out or Path(args.model).with_suffix(".json"))
+    if out.exists() and not args.force:
+        raise UsageError(f"{out} exists; pass --out elsewhere or --force to overwrite it")
+    try:
+        raw, warnings = import_tm7(args.model)
+    except (OSError, Tm7Error) as e:
+        raise UsageError(str(e)) from e
+    for w in warnings:
+        print(f"warning: {w}", file=sys.stderr)
+    out.write_text(json.dumps(raw, indent=2, ensure_ascii=False), encoding="utf-8")
+    threats = sum(
+        len(c["data"].get("threats", [])) for d in raw["detail"]["diagrams"] for c in d["cells"]
+    )
+    print(f"wrote {out} ({len(raw['detail']['diagrams'])} diagrams, {threats} TMT threats)")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="tdtm", description="TMT-style threat generation for OWASP Threat Dragon models."
@@ -309,6 +329,12 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("model")
     r.add_argument("--out", default="report.html")
     r.set_defaults(func=cmd_report)
+
+    m = sub.add_parser("import", help="convert a Microsoft TMT .tm7 model to Threat Dragon JSON")
+    m.add_argument("model", help="the .tm7 file")
+    m.add_argument("--out", help="where to write (default: same name with .json)")
+    m.add_argument("--force", action="store_true", help="overwrite --out if it exists")
+    m.set_defaults(func=cmd_import)
 
     c = sub.add_parser("coverage", help="which template rules can fire from TD properties alone")
     c.add_argument("--template")

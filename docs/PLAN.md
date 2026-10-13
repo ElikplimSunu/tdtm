@@ -67,7 +67,9 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
 - [x] **3.1 `tdtm stencils` and `tdtm coverage`.**
 - [x] **3.2 `tdtm report`** HTML (SPEC 9).
 - [x] **3.3 `tdtm analyze --watch`**: re-run when the model file changes (stdlib polling, no deps).
-- [ ] **3.4 [manual, optional: needs Windows] TMT parity test.** Someone on Windows draws `tests/fixtures/golden/*`
+- [ ] **3.4 [manual, optional: needs Windows] TMT parity test.** *Partly done 2026-10-13:* a
+  real TMT 7.3 model (private, gitignored) imports and gives exactly TMT's 54 threats; see SPEC
+  10. Still open for the golden models, which cover curves, tags and encryption. Someone on Windows draws `tests/fixtures/golden/*`
   in TMT 7.3 with SDL TM Knowledge Base, generates the report, and the reports go into
   `tests/fixtures/parity/`. Write a test diffing per-interaction threat IDs. Fix differences or
   document them in SPEC.
@@ -75,6 +77,6 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
 ## Phase 4: Optional
 
 - [x] **4.1 pytm pack** (SPEC 7.2) behind `--pack pytm`.
-- [ ] **4.2 `.tm7` import** to Threat Dragon JSON (prior art: Part-IO/TMT2Cairis `TMTRead.py`).
+- [x] **4.2 `.tm7` import** to Threat Dragon JSON (prior art: Part-IO/TMT2Cairis `TMTRead.py`).
 - [ ] **4.3 `.tm7` export** so Windows users can open models in TMT (strict DataContract XML).
 - [ ] **4.4 Azure template** support via `--template`.
