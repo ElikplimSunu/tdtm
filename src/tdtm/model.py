@@ -106,6 +106,7 @@ class Element:
     # filled in by later stages
     stencil: str | None = None  # TMT stencil ID, e.g. "SE.P.TMCore.WebApp"
     attributes: dict[str, str] = field(default_factory=dict)  # effective TMT attributes
+    attr_source: dict[str, str] = field(default_factory=dict)  # name -> static|tag|TD|default
     zone: str | None = None  # innermost boundary box cell id, None = outer zone
     crosses: list[str] = field(default_factory=list)  # flows: boundary cell ids crossed
 

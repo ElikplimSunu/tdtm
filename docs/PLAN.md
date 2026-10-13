@@ -37,7 +37,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
   *Done when:* tests cover nested boxes, flow leaving a box, flow crossing a curve, flow parallel to
   a curve, and the real `v2-threat-model.json` (3 curves) gives crossings a human agrees with.
   Record that human check in the test docstring.
-- [ ] **1.5 Resolve effective stencil + attributes per element** (SPEC 3.5 precedence, 4.1, 4.2).
+- [x] **1.5 Resolve effective stencil + attributes per element** (SPEC 3.5 precedence, 4.1, 4.2).
 - [ ] **1.6 `tdtm inspect`.** Prints each element: kind, stencil, effective attributes (marking
   source: tag/TD/static/default), zone; each flow: source → target, crossed boundaries.
 

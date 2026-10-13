@@ -234,8 +234,10 @@ flow F (source S, target T) and each threat type R:
 `fires = eval(R.Include, S, F, T) and not eval(R.Exclude, S, F, T)` (empty Exclude = false).
 
 - `x is 'ID'`: x's stencil is ID or descends from ID.
-- `x.attr is 'V'`: x's effective attribute value equals V, where effective value =
-  explicit tag value, else stencil static override, else attribute default. Unknown attr → no match.
+- `x.attr is 'V'`: x's effective attribute value equals V, where effective value = the stencil's
+  static value, else the `@tmt` tag value, else the value derived from a Threat Dragon property
+  (4.2), else the attribute default. A static value cannot be changed in TMT, so a tag that
+  disagrees with one is ignored with a warning. Unknown attr → no match.
 - `flow crosses 'ID'`: the flow crosses at least one boundary whose stencil is or descends from ID.
 
 Bidirectional TD flows (`isBidirectional: true`) are evaluated in both directions **[assumed]**; TMT has no bidirectional flows, so two interactions is the faithful mapping.
@@ -252,7 +254,7 @@ from the templates with names substituted.
 | actor | `GE.EI` | |
 | process | `GE.P` (`SE.P.TMCore.WebApp` if `isWebApplication`) | |
 | store | `GE.DS` | |
-| flow | `GE.DF` | |
+| flow | `GE.DF`, or the flow stencil named by `protocol` | `protocol` is matched like a tag against data-flow stencil names (`HTTPS`, `IPsec`, `SMB`, ...); `HTTP/S` counts as `HTTPS` |
 | boundary box | `GE.TB.B` | |
 | boundary curve | `GE.TB.L` | |
 
@@ -266,7 +268,7 @@ from the templates with names substituted.
 | store.isALog | storesLogData | true → Yes |
 | store.isEncrypted | Encrypted | true → Yes |
 | store.isSigned | Signed | true → Yes |
-| flow.protocol | stencil hint | "HTTPS"/"HTTP/S" → `SE.DF.TMCore.HTTPS`; "HTTP" → `SE.DF.TMCore.HTTP` [confirmed IDs] |
+| flow.protocol | stencil (4.1) | e.g. "HTTPS"/"HTTP/S" → `SE.DF.TMCore.HTTPS`, "HTTP" → `SE.DF.TMCore.HTTP` |
 
 TD false or missing properties do not set anything; the TMT default applies.
 
