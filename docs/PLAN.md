@@ -46,7 +46,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
 - [x] **2.1 `rules/filters`: tokenizer, parser, evaluator** (SPEC 3.4/3.5). No eval.
   *Done when:* all 47 Include and 11 Exclude strings in default.tb7 parse; hand-written truth-table
   tests for `is`, descendant `is`, `crosses`, attributes, `ROOT`, precedence of and/or.
-- [ ] **2.2 `rules/engine`: run a template over a model.** Per flow (both directions if
+- [x] **2.2 `rules/engine`: run a template over a model.** Per flow (both directions if
   bidirectional), title/description placeholder substitution, skip legacy ROOT rules by default.
 - [ ] **2.3 Golden models.** In `tests/fixtures/golden/`, hand-build 4 small TD models
   (web app + DB across a box; actor → process across a curve; unencrypted vs encrypted flow;
