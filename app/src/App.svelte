@@ -22,7 +22,7 @@
   let selectedThreat = $state<string | null>(null);
   let diagram = $state(0);
   let fileName = $state("");
-  let handle: FileSystemFileHandle | undefined;
+  let handle: files.Handle | undefined;
   let dirty = $state(false);
   let focusName = $state(0);
   let notice = $state<{ text: string; tone: "info" | "error" } | null>(null);
@@ -45,7 +45,9 @@
       if (mod && e.key.toLowerCase() === "o") { e.preventDefault(); open(); }
     };
     const leave = (e: BeforeUnloadEvent) => { if (dirty) e.preventDefault(); };
-    // installed app: files opened with ThreatSketch from Finder or Explorer arrive here
+    if (files.isDesktop) selftest();
+    files.onOpenedFiles(async (opened) => { if (await confirmDiscard()) await openBytes(opened[0]); });
+    // installed web app: files opened with ThreatSketch from Finder or Explorer arrive here
     (window as any).launchQueue?.setConsumer(async (params: { files: FileSystemFileHandle[] }) => {
       const h = params.files[0];
       if (!h) return;
@@ -56,6 +58,31 @@
     window.addEventListener("beforeunload", leave);
     return () => { off(); window.removeEventListener("keydown", keys); window.removeEventListener("beforeunload", leave); };
   });
+
+  /** Desktop smoke test (see src-tauri/src/lib.rs): open the example, report, quit. */
+  async function selftest() {
+    const { invoke } = await import("@tauri-apps/api/core");
+    if (!(await invoke<boolean>("selftest_mode"))) return;
+    const started = performance.now();
+    const report: Record<string, unknown> = { ua: navigator.userAgent };
+    try {
+      await new Promise<void>((ok, fail) => engine.onState((s) => (s.status === "ready" ? ok() : s.status === "failed" ? fail(new Error(s.error)) : null)));
+      report.engineMs = Math.round(performance.now() - started);
+      report.phases = (engine.state as any).phases;
+      const t = performance.now();
+      const m = await fetch(`${import.meta.env.BASE_URL}examples/online-shop.json`).then((r) => r.json());
+      const r = await engine.analyze(m);
+      report.analyzeMs = Math.round(performance.now() - t);
+      report.threats = r.threats.length;
+      await load(m, "online-shop.json");
+      await new Promise((r) => setTimeout(r, 500));
+      report.cells = editor?.graph.getCellCount();
+      report.drawn = document.querySelectorAll(".x6-node, .x6-edge").length;
+    } catch (e: any) {
+      report.error = String(e?.message ?? e);
+    }
+    await invoke("selftest_report", { report: JSON.stringify(report) });
+  }
 
   function ensureEditor() {
     if (editor || !canvas) return editor;
@@ -87,7 +114,7 @@
 
   // --- files -------------------------------------------------------------------------------
 
-  async function load(next: Model, name: string, h?: FileSystemFileHandle) {
+  async function load(next: Model, name: string, h?: files.Handle) {
     try {
       await show(next, name, h);
     } catch (e: any) {
@@ -96,7 +123,7 @@
     }
   }
 
-  async function show(next: Model, name: string, h?: FileSystemFileHandle) {
+  async function show(next: Model, name: string, h?: files.Handle) {
     if (!next?.detail?.diagrams?.length) throw new Error("This file is not a threat model (no diagrams found).");
     model = next;
     fileName = name;
@@ -126,7 +153,7 @@
   }
 
   async function confirmDiscard() {
-    return !dirty || confirm("You have unsaved changes. Discard them?");
+    return !dirty || files.ask("You have unsaved changes. Discard them?");
   }
 
   async function open() {
@@ -165,7 +192,7 @@
     const text = JSON.stringify(editor.snapshot(), null, 2);
     try {
       const used = await files.saveText(text, `${baseName()}.json`, "application/json", as ? undefined : handle);
-      if (used) { handle = used; fileName = used.name; }
+      if (used) { handle = used; fileName = files.handleName(used); }
       else if (!files.canSaveInPlace) fileName ||= `${baseName()}.json`;
       else if (!handle) return; // cancelled
       dirty = false;
@@ -196,10 +223,11 @@
 
   async function report() {
     if (!editor) return;
-    const html = await engine.reportHtml(editor.snapshot());
-    const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-    if (!window.open(url, "_blank")) files.download(html, `${baseName()}.report.html`, "text/html");
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    try {
+      await files.showHtml(await engine.reportHtml(editor.snapshot()), `${baseName()}.report.html`);
+    } catch (e: any) {
+      say(`Could not show the report: ${e?.message ?? e}`, "error");
+    }
   }
 
   // --- editing -----------------------------------------------------------------------------
@@ -291,9 +319,9 @@
     editor.analyse();
   }
 
-  function deleteDiagram(i: number) {
+  async function deleteDiagram(i: number) {
     if (!editor || editor.model.detail.diagrams.length < 2) return;
-    if (!confirm(`Delete the diagram "${editor.model.detail.diagrams[i].title}" and its threats?`)) return;
+    if (!(await files.ask(`Delete the diagram "${editor.model.detail.diagrams[i].title}" and its threats?`))) return;
     editor.snapshot();
     editor.model.detail.diagrams.splice(i, 1);
     switchDiagram(Math.max(0, i - 1));

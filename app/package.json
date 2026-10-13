@@ -12,7 +12,8 @@
     "preview": "vite preview --port 4173 --strictPort",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "tauri": "tauri"
   },
   "dependencies": {
     "@antv/x6": "2.19.2",
@@ -23,11 +24,16 @@
     "@antv/x6-plugin-selection": "2.2.2",
     "@antv/x6-plugin-snapline": "2.1.7",
     "@antv/x6-plugin-transform": "2.1.8",
+    "@tauri-apps/api": "^2.12.3",
+    "@tauri-apps/plugin-dialog": "^2.8.2",
+    "@tauri-apps/plugin-fs": "^2.7.0",
+    "@tauri-apps/plugin-opener": "^2.7.1",
     "pyodide": "314.0.7"
   },
   "devDependencies": {
     "@playwright/test": "1.64.0",
     "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@tauri-apps/cli": "^2.12.2",
     "@tsconfig/svelte": "5.0.8",
     "svelte": "5.57.2",
     "svelte-check": "4.7.6",

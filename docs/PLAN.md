@@ -81,3 +81,18 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
 - [x] **4.3 `.tm7` export** so Windows users can open models in TMT (strict DataContract XML). *Done 2026-10-13:*
   exact round trip on a real file; a human still has to open a Threat Dragon-drawn export in TMT.
 - [ ] **4.4 Azure template** support via `--template`.
+
+## Phase 5: ThreatSketch, the app (`app/`)
+
+Decided 2026-10-13: one TMT-like app instead of Threat Dragon plus the CLI. A new app, not a fork
+of Threat Dragon (its Electron + vue-cli + Vue compat stack cannot be made light or smooth).
+Microsoft TMT is the visual standard; connecting works like Figma or Lucidchart.
+
+- [x] **5.1 Engine API** `src/tdtm/api.py`: plain dicts in and out; tests show it equals the CLI.
+- [x] **5.2 Engine in the browser**: Pyodide in a Web Worker, wheel built from this repo.
+- [x] **5.3 Canvas** (AntV X6 2.x) that opens Threat Dragon files and saves them unchanged, drawn
+  in TMT's style; + handles to connect; stencil palette, properties, threat list, triage.
+- [x] **5.4 Files**: open/save `.json`, import/export `.tm7`, report and CSV, draft restore.
+- [x] **5.5 Offline web app** (PWA) and a GitHub Pages workflow (run by hand or on a tag).
+- [ ] **5.6 Desktop app** (Tauri 2): macOS build, `.tm7` file association, native dialogs.
+- [ ] **5.7 [manual] Publish**: enable GitHub Pages, attach desktop builds to a release.

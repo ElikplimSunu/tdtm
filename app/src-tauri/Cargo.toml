@@ -1,0 +1,23 @@
+[package]
+name = "threatsketch"
+version = "0.1.0"
+description = "ThreatSketch: TMT-style threat modelling"
+authors = ["Eric Sunu"]
+license = "MIT"
+repository = "https://github.com/ElikplimSunu/tdtm"
+edition = "2024"
+rust-version = "1.90"
+
+[lib]
+name = "threatsketch_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.2", features = [] }
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "2.12.3", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-opener = "2"

@@ -10,13 +10,18 @@ const base = new URL(import.meta.env.BASE_URL, self.location.origin).href;
 
 const boot = (async () => {
   const started = performance.now();
+  const phases: Record<string, number> = {};
+  const mark = (name: string) => (phases[name] = Math.round(performance.now() - started));
   const { loadPyodide } = await import(/* @vite-ignore */ `${base}pyodide/pyodide.mjs`);
+  mark("script");
   const py = await loadPyodide({ indexURL: `${base}pyodide/` });
+  mark("pyodide");
   const wheel = await fetch(`${base}engine/tdtm.whl`).then((r) => {
     if (!r.ok) throw new Error(`engine download failed: ${r.status}`);
     return r.arrayBuffer();
   });
   py.unpackArchive(new Uint8Array(wheel), "wheel");
+  mark("wheel");
   py.runPython(`
 import base64, json
 from tdtm import api, __version__
@@ -27,9 +32,10 @@ def _call(name, args_json):
         args[0] = base64.b64decode(args[0])
     return json.dumps(getattr(api, name)(*args), ensure_ascii=False)
 `);
+  mark("tdtm");
   const call = py.globals.get("_call");
   const version = py.runPython("__version__");
-  self.postMessage({ ready: true, version, ms: Math.round(performance.now() - started) });
+  self.postMessage({ ready: true, version, ms: Math.round(performance.now() - started), phases });
   return call as (name: string, args: string) => string;
 })();
 
