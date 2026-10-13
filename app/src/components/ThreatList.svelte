@@ -27,7 +27,7 @@
         (filter === "All" || t.state === filter) &&
         (category === "All" || t.category === category) &&
         (priority === "All" || t.priority === priority) &&
-        (!q || `${t.id} ${t.title} ${t.interaction} ${t.source} ${t.target} ${t.description}`.toLowerCase().includes(q)),
+        (!q || `${t.id} ${t.title} ${t.category} ${t.priority} ${t.state} ${t.interaction} ${t.source} ${t.target} ${t.description}`.toLowerCase().includes(q)),
     );
     const { col, dir } = sort;
     return rows.sort((a, b) => {
@@ -37,6 +37,7 @@
   });
 
   const sortBy = (col: keyof ThreatRow) => (sort = { col, dir: sort.col === col ? (-sort.dir as 1 | -1) : 1 });
+  const SHORT: Record<string, string> = { "Needs Investigation": "Investigating" }; // full name in the tooltip
   const cls = (s: string) => `state-${s.replaceAll(" ", "-")}`;
 
   function keys(e: KeyboardEvent) {
@@ -61,17 +62,17 @@
       </button>
       {#each STATES as s}
         <button role="tab" class="seg" title={s} class:on={filter === s} aria-selected={filter === s} onclick={() => (filter = s)}>
-          <span class="dot {cls(s)}"></span><span class="lbl">{s}</span> <b>{counts[s]}</b>
+          <span class="dot {cls(s)}"></span><span class="lbl">{SHORT[s] ?? s}</span> <b>{counts[s]}</b>
         </button>
       {/each}
     </div>
     <div class="spacer"></div>
     <select class="input small" bind:value={category} aria-label="Category">
-      <option value="All">All categories</option>
+      <option value="All">Any category</option>
       {#each categories as c}<option>{c}</option>{/each}
     </select>
     <select class="input small" bind:value={priority} aria-label="Priority">
-      <option value="All">All priorities</option>
+      <option value="All">Any priority</option>
       {#each priorities as p}<option>{p}</option>{/each}
     </select>
     <label class="search">
@@ -130,8 +131,8 @@
   .seg:hover { color: var(--text); }
   .seg.on { background: var(--panel); color: var(--text); box-shadow: var(--shadow); }
   .spacer { flex: 1; }
-  .input.small { width: auto; height: 28px; min-height: 28px; padding: 2px 8px; font-size: 12px; }
-  .search { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 6px; color: var(--faint); width: 200px; }
+  .input.small { width: 132px; height: 28px; min-height: 28px; padding: 2px 8px; font-size: 12px; }
+  .search { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 6px; color: var(--faint); width: 180px; }
   .search:focus-within { border-color: var(--accent); box-shadow: var(--focus); }
   .search input { border: 0; outline: 0; background: transparent; width: 100%; font-size: 12px; color: var(--text); }
   .table { flex: 1; overflow: auto; outline: none; }
@@ -146,7 +147,7 @@
   .c-id { color: var(--muted); font-variant-numeric: tabular-nums; }
   .c-title { font-weight: 500; }
   .c-category, .c-interaction, .c-priority { color: var(--muted); }
-  @container (max-width: 1060px) { .seg .lbl { display: none; } .search { width: 150px; } }
+  @container (max-width: 1080px) { .seg .lbl { display: none; } .search { width: 150px; } }
   @container (max-width: 700px) { .bar .input.small { display: none; } }
   .empty { padding: 28px; text-align: center; color: var(--muted); }
 </style>

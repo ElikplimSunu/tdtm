@@ -55,8 +55,8 @@ export class Editor {
     this.graph = new Graph({
       container,
       autoResize: true,
-      background: { color: "#ffffff" },
-      grid: { size: 10, visible: true, type: "dot", args: { color: "#c9ced6" } },
+      background: { color: "transparent" },
+      grid: { size: 10, visible: true, type: "dot", args: { color: "#a9b1bf" } },
       mousewheel: { enabled: true, global: false, modifiers: ["ctrl", "meta"], minScale: 0.2, maxScale: 3 },
       scaling: { min: 0.2, max: 3 },
       magnetThreshold: "onleave", // a click on a "+" stays a click; dragging off it draws a flow
@@ -391,7 +391,12 @@ export class Editor {
   private edgeTools(c: XCell, on: boolean) {
     if (!c.isEdge()) return;
     if (!on) { if (c.hasTools()) c.removeTools(); return; }
-    c.addTools(["vertices", "source-arrowhead", "target-arrowhead"]);
+    const end = { fill: "#4f6bed", stroke: "#ffffff", "stroke-width": 1.5, cursor: "move" };
+    c.addTools([
+      { name: "vertices", args: { attrs: { r: 5, fill: "#ffffff", stroke: "#4f6bed", "stroke-width": 1.5, cursor: "move" } } },
+      { name: "source-arrowhead", args: { attrs: { ...end, d: "M -6 -6 6 0 -6 6 Z" } } },
+      { name: "target-arrowhead", args: { attrs: { ...end, d: "M -6 -6 6 0 -6 6 Z" } } },
+    ]);
   }
 
   private bindKeys() {
