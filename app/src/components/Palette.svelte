@@ -24,7 +24,7 @@
     return q ? list.filter((s) => s.name.toLowerCase().includes(q)) : list;
   };
 
-  function drag(e: DragEvent, kind: Kind, s: Stencil) {
+  function drag(e: DragEvent, kind: Kind, s: Pick<Stencil, "id" | "generic">) {
     e.dataTransfer?.setData("application/x-threatsketch", JSON.stringify({ kind, stencil: s.generic ? null : s.id }));
     if (e.dataTransfer) e.dataTransfer.effectAllowed = "copy";
   }
@@ -62,7 +62,7 @@
                     onclick={() => onadd(sec.kind, s.generic ? null : s.id)}
                     title={`${s.name}: drag onto the canvas, or click to add`}
                   >
-                    <span class="glyph"><Icon name={sec.kind} size={16} /></span>
+                    <span class="glyph"><img src={s.icon} alt="" width="16" height="16" /></span>
                     <span class="name">{s.name}</span>
                   </button>
                 {/each}
@@ -73,7 +73,7 @@
       {/each}
       <section>
         <div class="items">
-          <button class="item" draggable="true" ondragstart={(e) => drag(e, "text", { id: "", name: "Note", generic: true })} onclick={() => onadd("text", null)}>
+          <button class="item" draggable="true" ondragstart={(e) => drag(e, "text", { id: "", generic: true })} onclick={() => onadd("text", null)}>
             <span class="glyph"><Icon name="text" size={16} /></span><span class="name">Note</span>
           </button>
         </div>

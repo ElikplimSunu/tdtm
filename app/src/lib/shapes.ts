@@ -29,7 +29,22 @@ export const ports = {
   items: [{ group: "top" }, { group: "right" }, { group: "bottom" }, { group: "left" }],
 };
 
-const text = { fontSize: 13, fill: INK };
+// names wrap inside the shape, as TMT's do
+const text = { fontSize: 13, fill: INK, textWrap: { width: -12 } };
+
+// TMT's stencil icons (from the template, via the palette): faded behind the name, centred on a
+// process, in the lower right of an interactor or store, before the name of a flow or boundary.
+// Painted by the editor, never saved (sync.ts strips `icon`).
+// ponytail: size and fade judged against TMT screenshots; tune here if they look off.
+export const ICON = 28;
+const ICON_FADE = 0.35;
+const LABEL_ICON = 18;
+const ICON_IMG = { tagName: "image", selector: "icon" };
+const lowerRight = { refX: "100%", refY: "100%", x: -ICON - 4, y: -ICON - 4, width: ICON, height: ICON, opacity: ICON_FADE, pointerEvents: "none" };
+const centred = { refX: "50%", refY: "50%", x: -ICON / 2, y: -ICON / 2, width: ICON, height: ICON, opacity: ICON_FADE, pointerEvents: "none" };
+// TMT's flow label: a pale green box with a dark outline, the flow stencil's icon before the name
+export const LABEL_FILL = "#dde8c6";
+export const LABEL_STROKE = "#5b6150";
 const HALO = { tagName: "rect", selector: "halo" };
 const halo = { refX: -28, refY: -28, refWidth: "100%", refWidth2: 56, refHeight: "100%", refHeight2: 56, fill: "transparent", stroke: "none" };
 
@@ -75,24 +90,56 @@ function sidedSmooth(this: any, s: any, t: any, route: any[], options: any, view
   return options.raw ? path : path.serialize();
 }
 
+const measure = typeof document === "undefined" ? null : document.createElement("canvas").getContext("2d");
+
+/** Lines of `text` no wider than `width`, broken only between words, as TMT wraps a name. */
+export function wrapWords(text: string, width: number, widthOf: (s: string) => number): string {
+  return text.split("\n").map((para) => {
+    const lines: string[] = [];
+    for (const word of para.split(/\s+/).filter(Boolean)) {
+      const last = lines.length ? `${lines[lines.length - 1]} ${word}` : "";
+      if (last && widthOf(last) <= width) lines[lines.length - 1] = last;
+      else lines.push(word); // a word wider than the line stays whole and sticks out, as in TMT
+    }
+    return lines.join("\n");
+  }).join("\n");
+}
+
+/** X6's textWrap, but breaking only between words (X6 2.x splits words and ignores `breakWord`). */
+const textWrap = {
+  qualify: (v: unknown) => !!v && typeof v === "object",
+  set(this: any, val: any, { view, elem, attrs, refBBox }: any) {
+    const w = val.width ?? 0;
+    const width = typeof w === "string" && w.endsWith("%") ? (refBBox.width * parseFloat(w)) / 100 : w <= 0 ? refBBox.width + w : w;
+    const txt = String(attrs.text ?? elem?.textContent ?? "");
+    const style = elem ? getComputedStyle(elem) : null;
+    const size = attrs.fontSize ?? attrs["font-size"] ?? parseFloat(style?.fontSize ?? "13");
+    if (measure) measure.font = `${attrs.fontWeight ?? style?.fontWeight ?? 400} ${size}px ${style?.fontFamily ?? "sans-serif"}`;
+    const wrapped = wrapWords(txt, width, (s) => measure?.measureText(s).width ?? s.length * size * 0.55);
+    (Registry.Attr.presets as any).text.set.call(this, wrapped, { view, elem, attrs, refBBox, cell: view.cell });
+  },
+};
+
 export function registerShapes() {
   if (registered) return;
   registered = true;
+  Graph.registerAttr("textWrap", textWrap as any, true);
   Graph.registerConnector("smooth", sidedSmooth as any, true);
   Graph.registerRouter("manhattan", sidedManhattan as any, true);
   Graph.registerNode("actor", {
     inherit: "rect", width: 150, height: 80, zIndex: 0,
-    markup: [HALO, ...(Shape.Rect.getMarkup() as any[])],
-    attrs: { halo, body: { fill: "#fbfcfc", stroke: INK, strokeWidth: 1.5 }, text },
+    markup: [HALO, ...(Shape.Rect.getMarkup() as any[]).slice(0, 1), ICON_IMG, ...(Shape.Rect.getMarkup() as any[]).slice(1)],
+    attrs: { halo, body: { fill: "#fbfcfc", stroke: INK, strokeWidth: 1.5 }, icon: lowerRight, text },
     ports,
   }, true);
   Graph.registerNode("process", {
     inherit: "circle", width: 100, height: 100, zIndex: 0,
-    markup: [HALO, ...(Shape.Circle.getMarkup() as any[])],
+    markup: [HALO, ...(Shape.Circle.getMarkup() as any[]).slice(0, 1), ICON_IMG, ...(Shape.Circle.getMarkup() as any[]).slice(1)],
     attrs: {
       halo,
       body: { fill: "#fbfcfc", stroke: INK, strokeWidth: 1.5 },
-      text,
+      icon: centred,
+      text: { ...text, textWrap: { ...text.textWrap, width: -20 } },
     },
     ports,
   }, true);
@@ -100,7 +147,9 @@ export function registerShapes() {
     inherit: "rect", width: 150, height: 75, zIndex: 0,
     markup: [
       HALO,
-      ...(Shape.Rect.getMarkup() as any[]),
+      ...(Shape.Rect.getMarkup() as any[]).slice(0, 1),
+      ICON_IMG,
+      ...(Shape.Rect.getMarkup() as any[]).slice(1),
       { tagName: "path", selector: "topLine" },
       { tagName: "path", selector: "bottomLine" },
     ],
@@ -108,6 +157,7 @@ export function registerShapes() {
       topLine: { stroke: INK, strokeWidth: 1.5, refD: "M 0 0 l 200 0" },
       bottomLine: { stroke: INK, strokeWidth: 1.5, refDy: 0, refD: "M 0 0 l 100 0" },
       body: { fill: "transparent", stroke: "none" }, // TMT draws a data store as two lines only
+      icon: lowerRight,
       halo,
       text,
     },
@@ -119,19 +169,26 @@ export function registerShapes() {
   }, true);
   Graph.registerNode("trust-boundary-box", {
     inherit: "rect", width: 500, height: 400, zIndex: -50,
+    markup: [...(Shape.Rect.getMarkup() as any[]).slice(0, 1), ICON_IMG, ...(Shape.Rect.getMarkup() as any[]).slice(1)],
     attrs: {
       body: { strokeWidth: 1.5, stroke: BOUNDARY, strokeDasharray: "7 5", fill: "transparent" },
+      icon: { refX: 8, refY: 8, width: 14, height: 14, opacity: 0.5, pointerEvents: "none" },
       label: {
-        text: "", fill: BOUNDARY, fontSize: 13, fontWeight: 600,
-        textAnchor: "start", textVerticalAnchor: "top", refX: 10, refY: 8,
+        text: "", fill: BOUNDARY, fontSize: 13,
+        textAnchor: "start", textVerticalAnchor: "top", refX: 28, refY: 8,
+        textWrap: { width: -36 },
       },
     },
   }, true);
   const label = {
-    markup: [{ tagName: "rect", selector: "body" }, { tagName: "text", selector: "label" }],
+    markup: [{ tagName: "rect", selector: "body" }, { tagName: "image", selector: "icon" }, { tagName: "text", selector: "label" }],
     attrs: {
       label: { fill: INK, fontSize: 12, textAnchor: "middle", textVerticalAnchor: "middle" },
-      body: { ref: "label", fill: "#fbfcfc", stroke: "none", refWidth: "100%", refWidth2: 8, refHeight: "100%", refHeight2: 4, refX: -4, refY: -2, rx: 3 },
+      body: {
+        ref: "label", fill: LABEL_FILL, stroke: LABEL_STROKE, strokeWidth: 1,
+        refWidth: "100%", refWidth2: LABEL_ICON + 14, refHeight: "100%", refHeight2: 8, refX: -(LABEL_ICON + 9), refY: -4,
+      },
+      icon: { ref: "label", refX: 0, refY: "50%", x: -(LABEL_ICON + 5), y: -LABEL_ICON / 2, width: LABEL_ICON, height: LABEL_ICON, opacity: 0.6, pointerEvents: "none" },
     },
     position: { distance: 0.5 },
   };
@@ -147,7 +204,14 @@ export function registerShapes() {
     inherit: "edge", zIndex: 10,
     attrs: { line: { stroke: BOUNDARY, strokeWidth: 1.5, strokeDasharray: "7 5", sourceMarker: null, targetMarker: null } },
     connector: "smooth",
-    defaultLabel: { ...label, attrs: { ...label.attrs, label: { ...label.attrs.label, fill: BOUNDARY, fontWeight: 600 } } },
+    defaultLabel: {
+      ...label,
+      attrs: {
+        ...label.attrs,
+        body: { ...label.attrs.body, fill: "#fbfcfc", stroke: "none" },
+        label: { ...label.attrs.label, fill: BOUNDARY, fontWeight: 600 },
+      },
+    },
   };
   Graph.registerEdge("trust-boundary-curve", curve, true);
   Graph.registerEdge("trust-broundary-curve", curve, true); // a typo many existing models carry

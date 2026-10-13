@@ -33,9 +33,8 @@ some import/export fidelity in `src/threatsketch/`.
 |---|---|---|
 | Window | Menu bar, icon toolbar, docked panes (Stencils, Properties, Threat List, Threat Properties, Messages, Notes) | Web-app header, fixed three-column layout |
 | Views | Design view and Analysis view | One combined view |
-| Shapes | TMT stencil icons inside each shape; data store drawn as two lines with an icon | No icons; stores collapse and overlap on import |
+| Shapes | TMT stencil icons inside each shape; data store drawn as two full-width lines with an icon; names wrap inside the shape | No icons; long names spill out of the shape |
 | Flow labels | Boxed labels with an icon, draggable | Plain text on the line |
-| Import geometry | Elements and boundaries laid out as drawn | Overlaps (SMS Provider / Inter-Bank Payment Network, the three stores in Bank Data Zone) |
 | Threat list columns | ID, Diagram, Changed By, Last Modified, State, Title, Category, Description, Justification, Interaction, Priority; filter on every column | ID, State, Title, Category, Interaction, Priority; three filters |
 | Threat properties | Pane under the list; title, category, description, justification all editable | Right-hand panel; only state, priority, justification |
 | Footer | "Export Csv"; "232 Threats Displayed, 232 Total" | Counts in the status bar |
@@ -100,13 +99,12 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 - [x] **1.2 Model properties.** Assumptions and External Dependencies edited in the app, in the
   report, kept in `.tm7`. (TMT's model name may be empty; the file name stands in, as before.)
 - [x] **1.2b Dataflow Order** written back on export (found by the reference model's round trip).
-- [ ] **1.3 Geometry.** Import element sizes, boundary boxes, flow handle points and label
-  positions exactly; export them back. Done when: the reference model renders with nothing
-  overlapping that doesn't overlap in TMT **[TMT]**.
+- [x] **1.3 Geometry.** Checked: positions and sizes come through exactly (shapes TMT placed 4px
+  apart are 4px apart). What looked like overlaps is how shapes are drawn: phase 3.
 - [ ] **1.4 Threat fields.** Changed By, Last Modified, edited title/description/category,
   threats added by hand; round-trip through `.json` and `.tm7`.
-- [ ] **1.5 Stencil icons.** Expose the 58 icons in `default.tb7` (`<Image>`, base64 PNG) through
-  `api.py`. They're Microsoft's, MIT licensed, already in the repo.
+- [x] **1.5 Stencil icons.** `api.palette()` gives each stencil's icon (a data URL; inherited from
+  the parent when missing) and where TMT puts it (`iconAt`: center, lower-right, before-label).
 - [ ] **1.6 Notes** (the `.tm7`'s `Notes`: Id, text, date, added by): import, export, keep in
   `.json`.
 - [ ] **1.7 Threat generation on/off** (`ThreatGenerationEnabled`): honoured by analyze, kept.
@@ -129,13 +127,14 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 ### Phase 3: Canvas
 
 - [ ] **3.1 Shapes** for every stencil: TMT's outline, size and icon (from 1.5). Stores as two
-  lines. Generic elements vs specific stencils look as in TMT.
+  lines. Generic elements vs specific stencils look as in TMT. *Done: icons, word wrapping. Left:
+  icons in the report's diagram; sizes and fades checked side by side* **[TMT]**.
 - [ ] **3.2 Boundaries**: border boundaries (red dashed box, label at top left) and line
   boundaries (curved red dashed line with a handle).
 - [ ] **3.3 Flows**: a curve with one draggable handle, as TMT draws them; arrowheads; two-way
   flows; drawing a flow from the stencil's Data Flow item as well as from the + handles.
-- [ ] **3.4 Flow labels**: TMT's green box with the flow stencil's icon, draggable apart from
-  the line.
+- [ ] **3.4 Flow labels**: TMT's green box with the flow stencil's icon *(done)*, draggable
+  apart from the line.
 - [ ] **3.5 Interaction**: selection look, multi-select, grid, zoom levels, copy/paste,
   right-click menus, delete, undo/redo; all as TMT.
 - [ ] **3.6 Pixel check**: the reference model in TMT and in ThreatSketch at the same zoom, side

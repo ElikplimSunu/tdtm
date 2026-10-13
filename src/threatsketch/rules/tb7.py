@@ -37,6 +37,8 @@ class Stencil:
     name: str
     parent: str
     root: str = ""  # the GE.* ancestor, or itself for a GE
+    image: str = ""  # base64 PNG; inherited from the parent when the stencil has none
+    image_location: str = ""  # TMT's ImageLocation, e.g. "Centered on stencil"
     own_attributes: dict[str, Attribute] = field(default_factory=dict)
 
 
@@ -117,7 +119,11 @@ def load_template(path: str | Path | None = None) -> Template:
     for section in ("GenericElements", "StandardElements"):
         for el in root.findall(f"{section}/ElementType"):
             s = Stencil(
-                id=_text(el, "ID"), name=_text(el, "Name"), parent=_text(el, "ParentElement")
+                id=_text(el, "ID"),
+                name=_text(el, "Name"),
+                parent=_text(el, "ParentElement"),
+                image=_text(el, "Image"),
+                image_location=_text(el, "ImageLocation"),
             )
             s.own_attributes = {
                 a.name: a for a in map(_attribute, el.findall("Attributes/Attribute"))
@@ -127,6 +133,13 @@ def load_template(path: str | Path | None = None) -> Template:
         s.root = s.id
         while stencils.get(s.root) and stencils[s.root].parent in stencils:
             s.root = stencils[s.root].parent
+        parent = stencils.get(s.parent)
+        while parent and not (s.image and s.image_location):
+            s.image, s.image_location = (
+                s.image or parent.image,
+                s.image_location or parent.image_location,
+            )
+            parent = stencils.get(parent.parent)
 
     return Template(
         name=root.find("Manifest").get("name", ""),

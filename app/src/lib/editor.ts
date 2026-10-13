@@ -16,7 +16,7 @@ import { Transform } from "@antv/x6-plugin-transform";
 import { engine } from "../engine/client";
 import { ELBOW, KIND_OF_TYPE, newCell, registerShapes, type Kind } from "./shapes";
 import { forCanvas, fromCanvas, patchCell } from "./sync";
-import type { AnalyzeResult, Cell, Model } from "./types";
+import type { AnalyzeResult, Cell, ElementInfo, Model, Palette } from "./types";
 
 const NODE_SHAPES = new Set(["actor", "process", "store", "td-text-block", "trust-boundary-box"]);
 const EDGE_SHAPES = new Set(["flow", "trust-boundary-curve", "trust-broundary-curve"]);
@@ -33,9 +33,21 @@ export type EditorEvents = {
   edit: (cellId: string) => void; // double-click: edit this element's name
 };
 
+/** The cell as the model sees it: without tools and without the stencil icons the canvas paints. */
 function canvasJSON(c: XCell): Record<string, any> {
   const j = c.toJSON() as Record<string, any>;
   delete j.tools;
+  if (j.attrs?.icon) {
+    j.attrs = { ...j.attrs };
+    delete j.attrs.icon;
+  }
+  if (Array.isArray(j.labels)) {
+    j.labels = j.labels.map((l: any) => {
+      if (!l?.attrs?.icon) return l;
+      const { icon: _, ...attrs } = l.attrs;
+      return { ...l, attrs };
+    });
+  }
   return j;
 }
 
@@ -58,6 +70,8 @@ export class Editor {
   private timer: ReturnType<typeof setTimeout> | undefined;
   private chain: Promise<unknown> = Promise.resolve();
   private version = 0; // bumped whenever the model changes outside an engine call
+  private icons = new Map<string, string>(); // stencil id -> its icon (data URL)
+  private elements: Record<string, ElementInfo> = {}; // the engine's last word on each cell
 
   constructor(container: HTMLElement, private on: EditorEvents) {
     registerShapes();
@@ -185,6 +199,7 @@ export class Editor {
     }
     this.graph.cleanHistory();
     this.baseline = new Map(this.graph.getCells().map((c) => [c.id, JSON.stringify(canvasJSON(c))]));
+    this.paintIcons();
     queueMicrotask(() => this.fit());
   }
 
@@ -266,7 +281,7 @@ export class Editor {
     return this.run(async () => {
       const r = await this.fresh(() => engine.analyze(this.model));
       this.apply(r.model);
-      this.on.analysed(r);
+      this.analysed(r);
     });
   }
 
@@ -276,7 +291,7 @@ export class Editor {
       this.apply(m, true);
       const r = await this.fresh(() => engine.analyze(this.model));
       this.apply(r.model);
-      this.on.analysed(r);
+      this.analysed(r);
       this.on.changed();
     });
   }
@@ -287,7 +302,7 @@ export class Editor {
       this.apply(m);
       const r = await this.fresh(() => engine.analyze(this.model));
       this.apply(r.model);
-      this.on.analysed(r);
+      this.analysed(r);
       this.on.changed();
     });
   }
@@ -317,6 +332,40 @@ export class Editor {
       }
     }
     if (this.sync() && !undoable) this.schedule();
+  }
+
+  private analysed(r: AnalyzeResult) {
+    this.elements = r.elements;
+    this.paintIcons();
+    this.on.analysed(r);
+  }
+
+  /** The template's icons, by stencil id. */
+  setPalette(p: Palette) {
+    for (const list of Object.values(p)) for (const s of list) this.icons.set(s.id, s.icon);
+    this.paintIcons();
+  }
+
+  /** Each element and flow gets its resolved stencil's icon, as TMT draws it (not saved, not undoable). */
+  private paintIcons() {
+    const was = this.applying;
+    this.applying = true;
+    try {
+      for (const c of this.graph.getCells()) {
+        const href = this.icons.get(this.elements[c.id]?.stencil ?? "");
+        if (!href) continue;
+        if (c.isNode()) {
+          if (c.getAttrByPath("icon/href") !== href) c.setAttrByPath("icon/href", href);
+        } else if (c.isEdge()) {
+          const first = c.getLabels()[0] as any;
+          if (first && typeof first === "object" && first.attrs?.icon?.href !== href) {
+            c.setLabelAt(0, { ...first, attrs: { ...first.attrs, icon: { href } } });
+          }
+        }
+      }
+    } finally {
+      this.applying = was;
+    }
   }
 
   // --- editing ------------------------------------------------------------------------------

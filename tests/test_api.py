@@ -95,7 +95,12 @@ def test_new_model_is_valid_threat_dragon(td_schema_path):
 
 def test_palette_lists_tmt_stencils_per_kind():
     p = api.palette()
-    assert p["process"][0] == {"id": "GE.P", "name": "Generic Process", "generic": True}
+    first = p["process"][0]
+    assert {k: first[k] for k in ("id", "name", "generic")} == {
+        "id": "GE.P",
+        "name": "Generic Process",
+        "generic": True,
+    }
     assert any(s["name"] == "Web Application" for s in p["process"])
     assert any(s["name"] == "SQL Database" for s in p["store"])
     assert any(s["name"] == "HTTPS" for s in p["flow"])
@@ -164,3 +169,23 @@ def test_tm7_import_export_and_reports():
     html = api.report_html(raw)
     assert "Online shop" in html and "Threat Model Summary" in html
     assert api.report_csv(raw).startswith("Id,Title,Category,Diagram")
+
+
+def test_palette_carries_tmt_stencil_icons_and_where_tmt_draws_them():
+    """Each stencil's icon from the template (a 16px PNG), placed as TMT places it: centred on
+    processes, lower right of interactors and stores, before the label on flows and boundaries.
+    A stencil without its own icon has its parent's."""
+    p = api.palette()
+    every = [s for kind in p.values() for s in kind]
+    assert all(s["icon"].startswith("data:image/png;base64,iVBOR") for s in every)
+    at = {kind: {s["iconAt"] for s in stencils} for kind, stencils in p.items()}
+    assert at == {
+        "process": {"center"},
+        "actor": {"lower-right"},
+        "store": {"lower-right"},
+        "flow": {"before-label"},
+        "boundary_box": {"before-label"},
+        "boundary_curve": {"before-label"},
+    }
+    sql = next(s for s in p["store"] if s["name"] == "SQL Database")
+    assert sql["icon"] != next(s for s in p["store"] if s["generic"])["icon"]
