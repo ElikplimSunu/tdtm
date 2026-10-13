@@ -69,6 +69,7 @@ uv run tdtm analyze model.json --pack all # also OWASP pytm's threats (needs `uv
 uv run tdtm inspect model.json            # how each element was read: stencil, attributes, zone
 uv run tdtm stencils --kind process       # valid @tmt stencils and attributes
 uv run tdtm report model.json             # TMT-style HTML report
+uv run tdtm report model.json --out threats.csv  # TMT's own CSV export format
 uv run tdtm coverage                      # which rules need @tmt tags to fire
 uv run tdtm import model.tm7              # convert a TMT model, keeping TMT's threats and triage
 ```

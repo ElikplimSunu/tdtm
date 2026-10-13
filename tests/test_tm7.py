@@ -144,3 +144,49 @@ def test_parity_fixture_stays_out_of_git():
     probe = PRIVATE / "mobile-banking.tm7"
     r = subprocess.run(["git", "check-ignore", "-q", str(probe)], cwd=FIXTURES, check=False)
     assert r.returncode == 0, "tests/fixtures/private/ must stay gitignored"
+
+
+TMT_CSV_HEADER = (
+    "Id,Title,Category,Diagram,Interaction,Priority,State,Changed By,Description,"
+    "Justification,Last Modified"
+)
+
+
+def test_report_csv_in_tmt_format(tmp_path):
+    model, out = tmp_path / "small.json", tmp_path / "threats.csv"
+    assert main(["import", str(SMALL), "--out", str(model)]) == 0
+    assert main(["report", str(model), "--out", str(out)]) == 0
+    data = out.read_bytes()
+    assert data.startswith(TMT_CSV_HEADER.encode() + b"\r\n") and data.endswith(b"\r\n")
+    rows = {r["Id"]: r for r in csv.DictReader(out.open(newline=""))}
+    assert rows["1"] == {
+        "Id": "1",
+        "Title": "Spoofing the Customer External Entity",
+        "Category": "Spoofing",
+        "Diagram": "Checkout flow",
+        "Interaction": "Checkout",
+        "Priority": "High",
+        "State": "Not Started",
+        "Changed By": "",
+        "Description": rows["1"]["Description"],
+        "Justification": "",
+        "Last Modified": "Generated",
+    }
+    assert (rows["2"]["State"], rows["2"]["Justification"], rows["2"]["Last Modified"]) == (
+        "Mitigated",
+        "Input is validated on the server.",
+        "",
+    )
+
+
+@pytest.mark.skipif(
+    not (PRIVATE / "mobile-banking.tm7").exists(), reason="private TMT model absent"
+)
+def test_csv_parity_with_tmt_export(tmp_path):
+    """TMT's own CSV export of the real model, reproduced from Threat Dragon JSON: every row, every
+    column (Id, Title, Category, Diagram, Interaction, Priority, State, ... Last Modified)."""
+    model, out = tmp_path / "mb.json", tmp_path / "mb.csv"
+    assert main(["import", str(PRIVATE / "mobile-banking.tm7"), "--out", str(model)]) == 0
+    assert main(["report", str(model), "--out", str(out)]) == 0
+    with out.open(newline="") as ours, (PRIVATE / "mobile-banking.csv").open(newline="") as theirs:
+        assert sorted(csv.reader(ours)) == sorted(csv.reader(theirs))

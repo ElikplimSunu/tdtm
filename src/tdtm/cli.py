@@ -266,13 +266,17 @@ def cmd_coverage(args: argparse.Namespace) -> int:
 
 
 def cmd_report(args: argparse.Namespace) -> int:
-    from .report import render
+    from .report import render, render_csv
 
     try:
         model, _ = load(args.model)
     except (OSError, ValueError, KeyError) as e:
         raise UsageError(f"cannot read model {args.model}: {e}") from e
-    Path(args.out).write_text(render(model), encoding="utf-8")
+    if args.out.lower().endswith(".csv"):
+        # newline="" keeps the CRLF line endings TMT's export uses
+        Path(args.out).write_text(render_csv(model, _template(args)), encoding="utf-8", newline="")
+    else:
+        Path(args.out).write_text(render(model), encoding="utf-8")
     print(f"wrote {args.out}")
     return 0
 
@@ -333,7 +337,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     r = sub.add_parser("report", help="write a TMT-style HTML report")
     r.add_argument("model")
-    r.add_argument("--out", default="report.html")
+    r.add_argument("--out", default="report.html", help="ending in .csv writes TMT's CSV format")
+    r.add_argument("--template", help="for category names (default: SDL TM Knowledge Base)")
     r.set_defaults(func=cmd_report)
 
     m = sub.add_parser("import", help="convert a Microsoft TMT .tm7 model to Threat Dragon JSON")

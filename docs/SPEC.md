@@ -439,6 +439,14 @@ Single self-contained HTML file. Sections like TMT's report: summary counts by c
 diagram list, then per interaction: interaction name (`source → target`), each threat with
 category, title, description, justification (= mitigation), priority (= severity), state (= status).
 
+### 9a. CSV export
+
+`tdtm report MODEL --out NAME.csv` writes TMT's CSV export exactly: columns `Id, Title, Category,
+Diagram, Interaction, Priority, State, Changed By, Description, Justification, Last Modified`,
+CRLF line endings, no byte-order mark. Category uses the template's names (`Denial Of Service`);
+State maps Open → `Not Started`, NotApplicable → `Not Applicable`; Last Modified is `Generated` for
+an untouched tdtm threat, else empty. [confirmed: reproduces a real TMT 7.3 export row for row.]
+
 ## 10. Testing strategy
 
 - Unit tests per module, fixtures in `tests/fixtures/`.

@@ -4,13 +4,19 @@
 state and category, then per diagram each interaction (flow) with its threats in TMT's fields
 (Category, Description, Justification = mitigation, Priority = severity, State = status), then
 threats attached to other elements. All model text is escaped.
+
+`render_csv(model, template) -> str` writes TMT's own CSV export format (same columns, category
+names, state names and CRLF line endings), so a Threat Dragon model hands in like a TMT one.
 """
 
 from __future__ import annotations
 
+import csv
+import io
 from collections import Counter
 from html import escape
 
+from .merge import STRIDE_TYPES, fingerprint
 from .model import Kind, Model, Threat
 
 CSS = """
@@ -105,3 +111,47 @@ def render(model: Model) -> str:
                 parts.extend(map(_threat, e.threats))
     parts.append("</body></html>")
     return "\n".join(parts) + "\n"
+
+
+CSV_COLUMNS = [
+    "Id",
+    "Title",
+    "Category",
+    "Diagram",
+    "Interaction",
+    "Priority",
+    "State",
+    "Changed By",
+    "Description",
+    "Justification",
+    "Last Modified",
+]
+TMT_STATE = {"Open": "Not Started", "NotApplicable": "Not Applicable"}  # others are the same
+
+
+def render_csv(model: Model, template) -> str:
+    letter = {name.lower(): k for k, name in STRIDE_TYPES.items()}
+    out = io.StringIO()
+    w = csv.writer(out, lineterminator="\r\n")
+    w.writerow(CSV_COLUMNS)
+    for d in model.diagrams:
+        for e in d.elements.values():
+            for t in e.threats:
+                meta = t.raw.get("tdtm")
+                untouched = isinstance(meta, dict) and meta.get("fingerprint") == fingerprint(t.raw)
+                category = template.categories.get(letter.get(t.type.lower(), ""), t.type)
+                number = t.raw.get("number")
+                w.writerow([
+                    "" if number is None else number,
+                    t.title,
+                    category,
+                    d.title,
+                    e.label,
+                    t.severity,
+                    TMT_STATE.get(t.status, t.status),
+                    "",
+                    t.description,
+                    t.mitigation,
+                    "Generated" if untouched else "",
+                ])  # fmt: skip
+    return out.getvalue()
