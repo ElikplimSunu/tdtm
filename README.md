@@ -1,6 +1,6 @@
 # ThreatSketch and tdtm
 
-[![CI](https://github.com/ElikplimSunu/tdtm/actions/workflows/ci.yml/badge.svg)](https://github.com/ElikplimSunu/tdtm/actions/workflows/ci.yml)
+[![CI](https://github.com/ElikplimSunu/threatsketch/actions/workflows/ci.yml/badge.svg)](https://github.com/ElikplimSunu/threatsketch/actions/workflows/ci.yml)
 
 Microsoft's Threat Modeling Tool (TMT) generates STRIDE threats from a data-flow diagram, but only
 runs on Windows. This repository brings the same threat generation to macOS and Linux, with
@@ -47,10 +47,10 @@ It follows your system's light or dark setting (files, reports and exports stay 
 
 | Where | How |
 |---|---|
-| **Browser**, any OS | https://elikplimsunu.github.io/tdtm/ (nothing to install; works offline after the first visit) |
-| **macOS** | `brew install --cask elikplimsunu/tap/threatsketch`, or the `.dmg` from [Releases](https://github.com/ElikplimSunu/tdtm/releases/latest) (Intel and Apple silicon) |
-| **Windows** | the `.msi` or `-setup.exe` from [Releases](https://github.com/ElikplimSunu/tdtm/releases/latest) |
-| **Linux** | the `.AppImage` or `.deb` from [Releases](https://github.com/ElikplimSunu/tdtm/releases/latest) |
+| **Browser**, any OS | https://elikplimsunu.github.io/threatsketch/ (nothing to install; works offline after the first visit) |
+| **macOS** | `brew install --cask elikplimsunu/tap/threatsketch`, or the `.dmg` from [Releases](https://github.com/ElikplimSunu/threatsketch/releases/latest) (Intel and Apple silicon) |
+| **Windows** | the `.msi` or `-setup.exe` from [Releases](https://github.com/ElikplimSunu/threatsketch/releases/latest) |
+| **Linux** | the `.AppImage` or `.deb` from [Releases](https://github.com/ElikplimSunu/threatsketch/releases/latest) |
 
 The desktop app checks for a new version when it starts and offers to install it; the web
 version offers a reload. The apps are not signed by Apple or Microsoft: the first time, macOS
@@ -121,7 +121,7 @@ Install once:
 
 ```bash
 brew install --cask threat-dragon
-uv tool install tdtm                   # or: pipx install tdtm
+uv tool install threatsketch                   # or: pipx install threatsketch
 ```
 
 Then one command per model:
@@ -140,14 +140,14 @@ threats arrive, reopen the model in Threat Dragon (File > Open Recent) to see th
 The same steps one at a time: `tdtm import`, `tdtm analyze`, `tdtm report` (see Usage).
 
 To try it on the example: `tdtm open examples/online-shop.json` from a clone of this repo.
-To update tdtm later: `uv tool upgrade tdtm`.
+To update tdtm later: `uv tool upgrade threatsketch`.
 
 ### Install for development
 
 Requires Python 3.11 or newer and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-git clone https://github.com/ElikplimSunu/tdtm.git
+git clone https://github.com/ElikplimSunu/threatsketch.git
 cd tdtm
 uv sync
 uv run tdtm --help

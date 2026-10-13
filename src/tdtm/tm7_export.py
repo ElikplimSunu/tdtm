@@ -45,7 +45,7 @@ XTYPE = {  # GenericTypeId -> TMT drawing class
 }
 TMT_STATE = {"Mitigated": "Mitigated", "NotApplicable": "NotApplicable"}
 GUID = re.compile(r"[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}")
-NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "https://github.com/ElikplimSunu/tdtm/tm7")
+NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "https://github.com/ElikplimSunu/tdtm/tm7")  # frozen
 
 
 def _t(text) -> str:

@@ -4,7 +4,7 @@ version = "0.3.0"
 description = "ThreatSketch: TMT-style threat modelling"
 authors = ["Eric Sunu"]
 license = "MIT"
-repository = "https://github.com/ElikplimSunu/tdtm"
+repository = "https://github.com/ElikplimSunu/threatsketch"
 edition = "2024"
 rust-version = "1.90"
 

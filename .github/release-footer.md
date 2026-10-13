@@ -2,12 +2,12 @@
 ## Install
 
 - **In the browser** (nothing to install, works offline after the first visit):
-  https://elikplimsunu.github.io/tdtm/
+  https://elikplimsunu.github.io/threatsketch/
 - **macOS:** `brew install --cask elikplimsunu/tap/threatsketch`, or the `.dmg` below
   (universal: Intel and Apple silicon).
 - **Windows:** the `.msi` or `-setup.exe` below.
 - **Linux:** the `.AppImage` (updates itself) or the `.deb` below.
-- **tdtm command line:** `uv tool install tdtm` or `pipx install tdtm`.
+- **tdtm command line:** `uv tool install threatsketch` or `pipx install threatsketch`.
 
 The desktop app checks for new versions when it starts and offers to install them. The web
 version offers a reload when a new version is out.

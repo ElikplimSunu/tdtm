@@ -1,5 +1,5 @@
 [project]
-name = "tdtm"
+name = "threatsketch"
 dynamic = ["version"]
 description = "Microsoft TMT-style automatic threat generation for OWASP Threat Dragon models"
 readme = "README.md"
@@ -18,14 +18,15 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/ElikplimSunu/tdtm"
-Issues = "https://github.com/ElikplimSunu/tdtm/issues"
+Homepage = "https://github.com/ElikplimSunu/threatsketch"
+Issues = "https://github.com/ElikplimSunu/threatsketch/issues"
 
 [project.optional-dependencies]
 pytm = ["pytm>=1.4"]
 
 [project.scripts]
 tdtm = "tdtm.cli:main"
+threatsketch = "tdtm.cli:main"
 
 [dependency-groups]
 dev = ["pytest>=8", "jsonschema>=4", "ruff>=0.6"]
