@@ -1,6 +1,6 @@
 [package]
 name = "threatsketch"
-version = "0.1.0"
+version = "0.3.0"
 description = "ThreatSketch: TMT-style threat modelling"
 authors = ["Eric Sunu"]
 license = "MIT"
@@ -17,7 +17,12 @@ tauri-build = { version = "2.7.2", features = [] }
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 tauri = { version = "2.12.3", features = [] }
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-opener = "2"
+tauri-plugin-process = "2"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"

@@ -32,10 +32,15 @@ fn take_opened_files(pending: tauri::State<Pending>) -> Vec<OpenedFile> {
 }
 
 /// Smoke test for desktop builds: with THREATSKETCH_SELFTEST=<file> set, the app opens the
-/// example, writes what happened to <file> and quits.
+/// example, writes what happened to <file> and quits. With THREATSKETCH_SELFTEST_UPDATE=1 as
+/// well, it first installs any available update and restarts into it.
 #[tauri::command]
-fn selftest_mode() -> bool {
-    std::env::var_os("THREATSKETCH_SELFTEST").is_some()
+fn selftest_mode() -> &'static str {
+    match (std::env::var_os("THREATSKETCH_SELFTEST"), std::env::var_os("THREATSKETCH_SELFTEST_UPDATE")) {
+        (None, _) => "",
+        (Some(_), None) => "run",
+        (Some(_), Some(_)) => "update",
+    }
 }
 
 #[tauri::command]
@@ -52,8 +57,11 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_process::init())
         .manage(Pending::default())
         .setup(|app| {
+            #[cfg(desktop)]
+            app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
             let args: Vec<_> = std::env::args_os().skip(1).map(std::path::PathBuf::from).filter(|p| p.is_file()).collect();
             app.state::<Pending>().0.lock().unwrap().extend(args);
             Ok(())

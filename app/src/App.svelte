@@ -7,6 +7,7 @@
   import { engine, type EngineState } from "./engine/client";
   import { Editor } from "./lib/editor";
   import * as files from "./lib/files";
+  import * as updates from "./lib/updates";
   import type { Kind } from "./lib/shapes";
   import type { AnalyzeResult, Model, Palette as PaletteT } from "./lib/types";
 
@@ -33,6 +34,7 @@
   let renaming = $state<number | null>(null);
   let theme = $state<string>(readTheme());
   let fromThreat = false;
+  let update = $state.raw<updates.Update | null>(null);
 
   onMount(() => {
     const off = engine.onState(async (s) => {
@@ -45,7 +47,8 @@
       if (mod && e.key.toLowerCase() === "o") { e.preventDefault(); open(); }
     };
     const leave = (e: BeforeUnloadEvent) => { if (dirty) e.preventDefault(); };
-    if (files.isDesktop) selftest();
+    if (files.isDesktop) selftest().then((testing) => { if (!testing) updates.checkDesktop().then((u) => (update = u)); });
+    updates.watchWeb((u) => (update = u));
     files.onOpenedFiles(async (opened) => { if (await confirmDiscard()) await openBytes(opened[0]); });
     // installed web app: files opened with ThreatSketch from Finder or Explorer arrive here
     (window as any).launchQueue?.setConsumer(async (params: { files: FileSystemFileHandle[] }) => {
@@ -62,9 +65,15 @@
   /** Desktop smoke test (see src-tauri/src/lib.rs): open the example, report, quit. */
   async function selftest() {
     const { invoke } = await import("@tauri-apps/api/core");
-    if (!(await invoke<boolean>("selftest_mode"))) return;
+    const mode = await invoke<string>("selftest_mode");
+    if (!mode) return false;
+    if (mode === "update") {
+      const u = await updates.checkDesktop();
+      if (u) { await u.apply(); return true; } // restarts into the new version, which reports
+    }
     const started = performance.now();
-    const report: Record<string, unknown> = { ua: navigator.userAgent };
+    const { getVersion } = await import("@tauri-apps/api/app");
+    const report: Record<string, unknown> = { ua: navigator.userAgent, version: await getVersion() };
     try {
       await new Promise<void>((ok, fail) => engine.onState((s) => (s.status === "ready" ? ok() : s.status === "failed" ? fail(new Error(s.error)) : null)));
       report.engineMs = Math.round(performance.now() - started);
@@ -82,6 +91,18 @@
       report.error = String(e?.message ?? e);
     }
     await invoke("selftest_report", { report: JSON.stringify(report) });
+    return true;
+  }
+
+  async function applyUpdate() {
+    if (!update) return;
+    if (dirty && editor) files.saveDraft({ model: editor.snapshot(), name: fileName }); // offered again after the restart
+    dirty = false;
+    try {
+      await update.apply();
+    } catch (e: any) {
+      say(`The update could not be installed: ${e?.message ?? e}`, "error");
+    }
   }
 
   function ensureEditor() {
@@ -531,6 +552,13 @@
   {#if dropping}
     <div class="dropzone"><div>Drop a <b>.json</b> or <b>.tm7</b> model to open it</div></div>
   {/if}
+  {#if update}
+    <div class="update" role="status">
+      <span>{update.version ? `ThreatSketch ${update.version} is available.` : "A new version of ThreatSketch is ready."}</span>
+      <button class="btn primary" onclick={applyUpdate}>{files.isDesktop ? "Install and restart" : "Reload"}</button>
+      <button class="btn icon" onclick={() => (update = null)} aria-label="Later"><Icon name="close" size={14} /></button>
+    </div>
+  {/if}
   {#if notice}
     <div class="toast {notice.tone}" role="status">{notice.text}<button class="btn icon" onclick={() => (notice = null)} aria-label="Dismiss"><Icon name="close" size={14} /></button></div>
   {/if}
@@ -613,6 +641,7 @@
 
   .dropzone { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(79, 107, 237, 0.12); border: 3px dashed var(--accent); pointer-events: none; font-size: 16px; }
   .dropzone div { padding: 14px 22px; background: var(--panel); border-radius: 10px; box-shadow: var(--shadow-lg); }
+  .update { position: fixed; right: 16px; bottom: 44px; z-index: 45; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-lg); }
   .toast { position: fixed; left: 50%; bottom: 44px; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 8px; max-width: min(640px, 90vw); padding: 8px 8px 8px 14px; background: #1d2433; color: #fff; border-radius: 10px; box-shadow: var(--shadow-lg); }
   .toast.error { background: #b42318; }
   .toast .btn { color: #fff; }

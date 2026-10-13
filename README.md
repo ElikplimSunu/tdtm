@@ -43,27 +43,23 @@ It follows your system's light or dark setting (files, reports and exports stay 
 
 ![ThreatSketch in dark mode](docs/img/threatsketch-dark.jpg)
 
-### Run it
+### Get it
 
-The hosted web version and desktop downloads will come with the next release. Until then, run it
-from a clone (needs [Node.js](https://nodejs.org) 20.19 or newer and [uv](https://docs.astral.sh/uv/)):
+| Where | How |
+|---|---|
+| **Browser**, any OS | https://elikplimsunu.github.io/tdtm/ (nothing to install; works offline after the first visit) |
+| **macOS** | `brew install --cask elikplimsunu/tap/threatsketch`, or the `.dmg` from [Releases](https://github.com/ElikplimSunu/tdtm/releases/latest) (Intel and Apple silicon) |
+| **Windows** | the `.msi` or `-setup.exe` from [Releases](https://github.com/ElikplimSunu/tdtm/releases/latest) |
+| **Linux** | the `.AppImage` or `.deb` from [Releases](https://github.com/ElikplimSunu/tdtm/releases/latest) |
 
-```bash
-git clone https://github.com/ElikplimSunu/tdtm.git
-cd tdtm/app
-npm install
-npm run dev        # then open http://localhost:5173
-```
+The desktop app checks for a new version when it starts and offers to install it; the web
+version offers a reload. The apps are not signed by Apple or Microsoft: the first time, macOS
+asks you to choose **Open Anyway** in System Settings > Privacy & Security, and Windows shows a
+SmartScreen prompt (**More info > Run anyway**).
 
-To build the macOS desktop app (needs [Rust](https://rustup.rs) and Xcode's command line tools):
-
-```bash
-npm run tauri build -- --bundles app,dmg
-```
-
-The `.dmg` is written to `app/src-tauri/target/release/bundle/dmg/`. It is not signed with an
-Apple Developer ID, so the first time you open it macOS asks you to confirm in System Settings >
-Privacy & Security.
+To run it from a clone (needs [Node.js](https://nodejs.org) 20.19 or newer and
+[uv](https://docs.astral.sh/uv/)): `cd app && npm install && npm run dev`, then open
+http://localhost:5173. `app/README.md` has the rest.
 
 Already know TMT? [Coming from Microsoft TMT](docs/coming-from-tmt.md) maps every TMT step and
 term to ThreatSketch.
@@ -121,11 +117,11 @@ tdtm follows these rules:
 
 ### Quick start on a Mac
 
-Install once (needs [Homebrew](https://brew.sh); `brew install uv` if you do not have uv):
+Install once:
 
 ```bash
 brew install --cask threat-dragon
-uv tool install git+https://github.com/ElikplimSunu/tdtm
+uv tool install tdtm                   # or: pipx install tdtm
 ```
 
 Then one command per model:
@@ -148,7 +144,7 @@ To update tdtm later: `uv tool upgrade tdtm`.
 
 ### Install for development
 
-Requires Python 3.11 or newer and [uv](https://docs.astral.sh/uv/). There is no PyPI release yet.
+Requires Python 3.11 or newer and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 git clone https://github.com/ElikplimSunu/tdtm.git
@@ -237,6 +233,21 @@ explains how the app is put together.
 Work follows `docs/PLAN.md` from top to bottom, one task per commit. Tests come first, written from
 the task's acceptance criteria. A task that teaches something new about the file formats updates
 `docs/SPEC.md` in the same commit.
+
+## Releasing
+
+One version number covers tdtm and ThreatSketch ([semantic versioning](https://semver.org)).
+Note changes under *Unreleased* in [CHANGELOG.md](CHANGELOG.md) as you go. To release:
+
+```bash
+uv run python scripts/bump.py 0.4.0       # sets the version everywhere, dates the changelog
+git commit -am "Release 0.4.0" && git tag v0.4.0 && git push && git push --tags
+```
+
+The tag starts `.github/workflows/release.yml`: tests; desktop builds for macOS, Windows and
+Linux, each opened and checked by a self-test; the GitHub release with every installer and the
+update feed; then the website, the Homebrew tap and PyPI. Running the workflow by hand ("Run
+workflow") builds and self-tests everything without releasing.
 
 ## Contributing
 
