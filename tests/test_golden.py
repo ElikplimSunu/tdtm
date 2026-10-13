@@ -10,10 +10,13 @@ from tdtm.rules.engine import run_sdl
 from tdtm.rules.tb7 import load_template
 from tdtm.td_adapter import load
 
-GOLDEN = sorted(
-    p for p in (Path(__file__).parent / "fixtures" / "golden").glob("*.json")
-    if not p.name.endswith(".expected.json")
-)  # fmt: skip
+FIXTURES = Path(__file__).parent / "fixtures"
+GOLDEN = sorted(  # private/ is gitignored: models from coursework, run only where present
+    p
+    for folder in ("golden", "private")
+    for p in (FIXTURES / folder).glob("*.json")
+    if not p.name.endswith(".expected.json") and p.with_name(p.stem + ".expected.json").exists()
+)
 
 
 @pytest.mark.parametrize("path", GOLDEN, ids=lambda p: p.stem)
