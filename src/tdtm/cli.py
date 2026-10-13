@@ -8,6 +8,7 @@ import re
 import shutil
 import sys
 import time
+import webbrowser
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -334,6 +335,31 @@ def _write_reports(model_path: Path, args: argparse.Namespace) -> None:
     print(f"reports: {html.name}, {csv_path.name}")
 
 
+def _start_view(model: Path, args: argparse.Namespace, browser: bool):
+    from .analysis import serve
+
+    server, url = serve(model, _template(args), port=getattr(args, "port", 0) or 0)
+    print(f"analysis view: {url}")
+    if browser:
+        webbrowser.open(url)
+    return server
+
+
+def cmd_view(args: argparse.Namespace) -> int:
+    if not Path(args.model).exists():
+        raise UsageError(f"{args.model} does not exist")
+    server = _start_view(Path(args.model), args, browser=not args.no_browser)
+    print("press Ctrl-C to stop")
+    try:
+        while True:
+            time.sleep(3600)
+    except KeyboardInterrupt:
+        print("stopped")
+    finally:
+        server.shutdown()
+    return 0
+
+
 def cmd_open(args: argparse.Namespace) -> int:
     from .launcher import open_in_threat_dragon
 
@@ -379,6 +405,8 @@ def cmd_open(args: argparse.Namespace) -> int:
             first = False
             if not args.no_launch:
                 open_in_threat_dragon(model)
+            if not args.no_view:
+                servers.append(_start_view(model, args, browser=not args.no_launch))
             print(f"watching {model}: save in Threat Dragon and tdtm updates the threats")
             print("press Ctrl-C to stop")
         elif wrote and args.reload:
@@ -386,10 +414,14 @@ def cmd_open(args: argparse.Namespace) -> int:
         elif wrote:
             print(f"threats updated: reopen {model.name} in Threat Dragon to see them")
 
+    servers = []
     try:
         watch(model, on_change)
     except KeyboardInterrupt:
         print("stopped")
+    finally:
+        for server in servers:
+            server.shutdown()
     return 0
 
 
@@ -445,8 +477,18 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="after each update, reopen the model in Threat Dragon (it lands on the summary page)",
     )
-    o.add_argument("--no-launch", action="store_true", help="do not start Threat Dragon")
+    o.add_argument(
+        "--no-launch", action="store_true", help="do not start Threat Dragon or the browser"
+    )
+    o.add_argument("--no-view", action="store_true", help="do not serve the analysis view")
     o.set_defaults(func=cmd_open)
+
+    v = sub.add_parser("view", help="TMT-style analysis view of a model's threats, in the browser")
+    v.add_argument("model")
+    v.add_argument("--port", type=int, default=0, help="port on 127.0.0.1 (default: any free)")
+    v.add_argument("--no-browser", action="store_true", help="only print the address")
+    v.add_argument("--template", help="for category names (default: SDL TM Knowledge Base)")
+    v.set_defaults(func=cmd_view)
 
     m = sub.add_parser("import", help="convert a Microsoft TMT .tm7 model to Threat Dragon JSON")
     m.add_argument("model", help="the .tm7 file")

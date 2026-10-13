@@ -526,3 +526,19 @@ Threat Dragon 2.6.2 facts (td.vue/src at ff27a5e, and its log at
 - An opened model lands on the model summary page, not the diagram. Because a reload while the
   user has unsaved edits makes Threat Dragon ask to discard them, automatic reload after each update
   is opt-in (`--reload`); by default tdtm prints a reminder to reopen.
+
+## 13. Analysis view
+
+`tdtm view MODEL [--port N] [--no-browser]`, also started by `tdtm open` (unless `--no-view`):
+TMT's Analysis View as a local web page. Diagram drawings (foldable), a grid of every threat
+(ID, State, Title, Category, Interaction, Priority, Justification) with filters by state,
+category and priority and a text search, and a Threat Properties panel for the selected row.
+The page polls `/api/model` every 2 s and redraws when the file's mtime and size change.
+
+Read-only for now: edits happen in Threat Dragon. Editing from the page is planned with a triage
+journal, because Threat Dragon keeps its own copy of the model in memory and would overwrite
+page edits on its next save.
+
+Safety: `ThreadingHTTPServer` bound to 127.0.0.1, any Host header other than its own address is
+refused (DNS rebinding), GET only, model text reaches the DOM through `textContent` only; the one
+`innerHTML` is the server-rendered SVG, in which `diagram.py` escapes every name.

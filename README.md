@@ -22,6 +22,11 @@ Select a flow to see its threats, with the same titles and categories TMT would 
 
 ![Threat Dragon showing the generated threats on the Place order flow: Spoofing the Customer External Entity, Cross Site Scripting, Potential Data Repudiation](docs/img/threat-dragon-threats.jpg)
 
+`tdtm open` also serves an analysis view in your browser, like TMT's Analysis View: every threat
+in one grid with filters, and its properties underneath. It refreshes whenever you save:
+
+![tdtm's analysis view: a grid of all 38 threats with state, title, category, interaction and priority, and the Cross Site Scripting threat's properties below](docs/img/analysis-view.jpg)
+
 `tdtm open` also keeps a TMT-style report next to the model, with the diagram, a summary by TMT
 state and every threat:
 
@@ -81,8 +86,8 @@ tdtm open model.json      # or model.tm7 to start from a TMT model
 
 It creates `model.json` if it does not exist (or converts the `.tm7`, keeping TMT's threats and
 your triage), adds the threats TMT would generate, writes `model.report.html` (TMT-style report)
-and `model.csv` (TMT's CSV export format) next to it, opens it in Threat Dragon, and keeps
-watching. Draw and save in Threat Dragon; each save updates the threats and both reports. When new
+and `model.csv` (TMT's CSV export format) next to it, opens it in Threat Dragon and the
+analysis view in your browser, and keeps watching. Draw and save in Threat Dragon; each save updates the threats and both reports. When new
 threats arrive, reopen the model in Threat Dragon (File > Open Recent) to see them, or start with
 `--reload` to have that done for you. Ctrl-C stops watching.
 
@@ -116,6 +121,7 @@ uv run tdtm report model.json --out threats.csv  # TMT's own CSV export format
 uv run tdtm coverage                      # which rules need @tmt tags to fire
 uv run tdtm import model.tm7              # convert a TMT model, keeping TMT's threats and triage
 uv run tdtm open model.json               # all of the above, opened in Threat Dragon and kept updated
+uv run tdtm view model.json               # just the analysis view (TMT's threat grid) in the browser
 ```
 
 Re-running is safe: threats you edited in Threat Dragon keep your changes, and threats whose rule no
