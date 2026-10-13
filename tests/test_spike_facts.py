@@ -152,3 +152,18 @@ def test_stencil_inheritance_is_one_level():
                 added.add((e.findtext("ID"), name))
     assert ("SE.P.TMCore.Modern", "internetClient") in added
     assert ("SE.DS.TMCore.Cookie", "HTTPOnly") in added
+
+
+def test_threat_dragon_keeps_custom_keys(fixtures):
+    # PLAN 0.2 [manual]: a human opens tests/fixtures/manual/custom-keys.json in Threat Dragon
+    # desktop, moves Browser, edits the Web Request threat's mitigation, and saves the result as
+    # custom-keys.saved.json. This test is the verdict (SPEC 2.5, 6.3).
+    saved = fixtures / "manual" / "custom-keys.saved.json"
+    if not saved.exists():
+        pytest.skip("waiting for the manual Threat Dragon save (PLAN 0.2)")
+    cells = {c["id"]: c for c in json.loads(saved.read_text())["detail"]["diagrams"][0]["cells"]}
+    browser = cells["b394f9f7-07ca-42bc-b616-ad77c6fbfcce"]
+    threat = cells["2d84bfae-f1ed-49e5-8542-10a02f4a1c57"]["data"]["threats"][0]
+    assert "edited" in threat["mitigation"].lower(), "the threat edit did not happen"
+    assert browser["data"].get("tdtm") == {"probe": "cell-data-key"}
+    assert threat.get("tdtm", {}).get("probe") == "threat-key"
