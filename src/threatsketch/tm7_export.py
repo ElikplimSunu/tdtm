@@ -60,6 +60,17 @@ def _el(tag: str, text, ns: str | None = None) -> str:
     return f"<{tag}{xmlns}>{_t(text)}</{tag}>" if str(text) != "" else f"<{tag}{xmlns}/>"
 
 
+def _notes(notes: list[dict]) -> str:
+    """TMT's Notes: <Note> with AddedBy, Date, Id, Message (SPEC 11)."""
+    inner = "".join(
+        "<Note>"
+        + "".join(_el(k, n.get(k, "")) for k in ("AddedBy", "Date", "Id", "Message"))
+        + "</Note>"
+        for n in notes
+    )
+    return f"<Notes>{inner}</Notes>" if inner else "<Notes/>"
+
+
 def _guid(cell_id: str) -> str:
     return cell_id if GUID.fullmatch(cell_id) else str(uuid.uuid5(NAMESPACE, cell_id))
 
@@ -244,6 +255,8 @@ def _properties(e, template) -> str:
         )
     if e.kind in (Kind.BOUNDARY_BOX, Kind.BOUNDARY_CURVE):
         area = "Trust Boundary Area" if e.kind is Kind.BOUNDARY_BOX else "Trust Boundary Line"
+        if ((data.get("tdtm") or {}).get("tm7") or {}).get("areaHeader") is False:
+            return "".join(parts)  # as some TMT files have it (TMT's sample model)
         return "".join(parts) + _p_header(area)  # [unverified for curves]
     parts.append(
         _p_value(
@@ -382,11 +395,14 @@ def _threat(
         if untouched
         else TMT_STATE.get(status, "NotStarted")
     )
+    # TMT 7.3 keeps the justification in Properties (SPEC 11); files that had the element keep it
+    where = keep.get("justificationIn") or ("property" if t.get("mitigation") else None)
     props = [
         ("Title", t.get("title", "")),
         ("UserThreatCategory", category),
         ("UserThreatShortDescription", short),
         ("UserThreatDescription", t.get("description", "")),
+        *([("StateInformation", t.get("mitigation") or "")] if where == "property" else []),
         ("InteractionString", flow_name),
         ("Priority", t.get("severity", "High")),
     ]
@@ -409,7 +425,7 @@ def _threat(
         + f"<b:Properties>{p}</b:Properties>"
         + _el("b:SourceGuid", src)
         + _el("b:State", state)
-        + _el("b:StateInformation", t.get("mitigation") or None)
+        + _el("b:StateInformation", (t.get("mitigation") or None) if where == "element" else None)
         + _el("b:TargetGuid", tgt)
         + '<b:Title i:nil="true"/>'
         + _el("b:TypeId", rule)
@@ -465,7 +481,7 @@ def export_tm7(raw: dict, template_path=None) -> tuple[str, list[str]]:
                     flow_ids[(e.cell_id, direction)] = (_guid(key), _guid(s), _guid(t))
                     z += 1
         meta_props = _p_header("Diagram") + _p_value(
-            "StringDisplayAttribute", "Name", "Name", d.title, "string"
+            "StringDisplayAttribute", "Name", s_keep.get("nameKey", "Name"), d.title, "string"
         )
         surfaces.append(
             f'<DrawingSurfaceModel z:Id="i{surface_z}" xmlns:z="{SER}">'
@@ -522,9 +538,13 @@ def export_tm7(raw: dict, template_path=None) -> tuple[str, list[str]]:
         + _el("Reviewer", detail.get("reviewer") or "")
         + _el("ThreatModelName", meta.get("ThreatModelName", summary.get("title") or ""))
         + "</MetaInformation>"
-        + _el("Notes", "")
+        + _notes(keep.get("notes") or [])
         + f'<ThreatInstances xmlns:a="{ARR}">{"".join(x for *_, x in sorted(threats))}'
-        + "</ThreatInstances><ThreatGenerationEnabled>true</ThreatGenerationEnabled>"
+        + "</ThreatInstances>"
+        + _el(
+            "ThreatGenerationEnabled",
+            "false" if keep.get("threatGenerationEnabled") is False else "true",
+        )
         + f'<Validations xmlns:a="{KB}"/>'
         + _el("Version", keep.get("version", "4.3"))
         + knowledge_base(tb7, z)

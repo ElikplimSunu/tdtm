@@ -25,6 +25,7 @@
     paste: '<rect x="5" y="4" width="14" height="17" rx="1"/><path d="M9 4V2.5h6V4M9 10h6M9 14h6"/>',
     diagramadd: '<rect x="3" y="5" width="14" height="14" rx="1"/><path d="M20 3v6M17 6h6"/>',
     diagramdel: '<rect x="3" y="5" width="14" height="14" rx="1"/><path d="M17 6h6"/>',
+    note: '<path d="M5 4h14v11l-5 5H5z"/><path d="M14 20v-5h5M8 9h8M8 13h5"/>',
     fit: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
     trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',

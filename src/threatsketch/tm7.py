@@ -89,6 +89,11 @@ def _dataflow_order(v: ET.Element) -> str | None:
     return None
 
 
+def _has_header(v: ET.Element, display: str) -> bool:
+    props = _kid(v, "Properties")
+    return any(_text(a, "DisplayName") == display for a in (props if props is not None else []))
+
+
 def _read_properties(v: ET.Element) -> tuple[str, bool, str, list[str]]:
     """-> (name, out of scope, reason, `key=value` tag items for non-default selections)"""
     name, oos, reason, items = "", False, "", []
@@ -144,6 +149,9 @@ def _node(v: ET.Element, z: int) -> dict | None:
             if _text(v, "StrokeThickness") != "0"
             else None,
             "dataflowOrder": _dataflow_order(v),
+            "areaHeader": False
+            if td_type == "tm.BoundaryBox" and not _has_header(v, "Trust Boundary Area")
+            else None,
         },
     )
     if td_type == "tm.BoundaryBox":
@@ -269,7 +277,7 @@ def _threat(v: ET.Element, position: int) -> tuple[str, dict]:
         "severity": _text(v, "Priority") or props.get("Priority") or "High",
         "type": next((s for s in STRIDE_TYPES.values() if s.lower() == category.lower()), category),
         "description": props.get("UserThreatDescription", ""),
-        "mitigation": _text(v, "StateInformation"),
+        "mitigation": _text(v, "StateInformation") or props.get("StateInformation", ""),
         "modelType": "STRIDE",
         "new": False,
         "number": int(_text(v, "Id") or 0),
@@ -292,6 +300,12 @@ def _threat(v: ET.Element, position: int) -> tuple[str, dict]:
         t,
         {
             "pos": position,
+            # TMT 7.3 keeps the justification in Properties; some files have the element instead
+            "justificationIn": "property"
+            if "StateInformation" in props
+            else "element"
+            if _text(v, "StateInformation")
+            else None,
             "changedBy": _nil_or_text(v, "ChangedBy"),
             "interactionString": _nil_or_text(v, "InteractionString"),
             "modifiedAt": None if modified.startswith(UNTOUCHED) else modified,
@@ -377,6 +391,17 @@ def parse_tm7(data: bytes, title: str = "", path: str = "model") -> tuple[dict, 
     surface_keep = {}
     for index, surface in enumerate(surfaces if surfaces is not None else []):
         surface_keep[str(index)] = {"guid": _text(surface, "Guid"), "zoom": _text(surface, "Zoom")}
+        props = _kid(surface, "Properties")
+        name_key = next(
+            (
+                _text(a, "Name")
+                for a in (props if props is not None else [])
+                if _text(a, "DisplayName") == "Name"
+            ),
+            "Name",
+        )
+        if name_key != "Name":  # TMT's sample model has an empty one
+            surface_keep[str(index)]["nameKey"] = name_key
     raw["tdtm"] = {
         "tm7": {
             "version": _text(root, "Version"),
@@ -387,6 +412,13 @@ def parse_tm7(data: bytes, title: str = "", path: str = "model") -> tuple[dict, 
             "surfaces": surface_keep,
         }
     }
+    notes = _kid(root, "Notes")
+    if notes is not None and len(notes):  # TMT's Notes pane: Id, Message, Date, AddedBy
+        raw["tdtm"]["tm7"]["notes"] = [
+            {k: _text(n, k) for k in ("Id", "Message", "Date", "AddedBy")} for n in notes
+        ]
+    if _text(root, "ThreatGenerationEnabled") == "false":
+        raw["tdtm"]["tm7"]["threatGenerationEnabled"] = False
     doc = Document(raw, {c["id"]: c for d in diagrams for c in d["cells"]})
     instances = _kid(root, "ThreatInstances")
     unnumbered = []
