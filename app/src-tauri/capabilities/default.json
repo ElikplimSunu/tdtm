@@ -1,8 +1,10 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Open and save the files the user picks; write the threat report to the app cache and open it.",
-  "windows": ["main"],
+  "description": "Open and save the files the user picks; show the report; install signed updates.",
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "dialog:allow-open",
@@ -12,6 +14,15 @@
     "fs:allow-write-text-file",
     "fs:allow-mkdir",
     "fs:allow-appcache-write-recursive",
-    { "identifier": "opener:allow-open-path", "allow": [{ "path": "$APPCACHE/**" }] }
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [
+        {
+          "path": "$APPCACHE/**"
+        }
+      ]
+    },
+    "updater:default",
+    "process:allow-restart"
   ]
 }

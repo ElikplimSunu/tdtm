@@ -1,6 +1,6 @@
 [project]
 name = "tdtm"
-version = "0.2.0"
+dynamic = ["version"]
 description = "Microsoft TMT-style automatic threat generation for OWASP Threat Dragon models"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -33,6 +33,13 @@ dev = ["pytest>=8", "jsonschema>=4", "ruff>=0.6"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/tdtm/__init__.py"  # the one version for tdtm and ThreatSketch; scripts/bump.py sets it
+
+[tool.hatch.build.targets.sdist]
+include = ["/src/tdtm", "/tests", "/examples", "/README.md", "/CHANGELOG.md", "/LICENSE", "/THIRD_PARTY_NOTICES.md"]
+exclude = ["/tests/fixtures/private"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tdtm"]

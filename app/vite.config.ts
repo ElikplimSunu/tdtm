@@ -11,7 +11,8 @@ export default defineConfig({
     // is cached with the app. Not in the desktop app, which ships the files itself.
     VitePWA({
       disable: !!process.env.TAURI_ENV_PLATFORM,
-      registerType: "autoUpdate",
+      registerType: "prompt", // the app asks before switching (lib/updates.ts)
+      injectRegister: false,
       includeAssets: ["favicon.svg", "apple-touch-icon.png"],
       manifest: {
         name: "ThreatSketch",

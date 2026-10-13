@@ -1,0 +1,163 @@
+# Release: push a tag vX.Y.Z (after `uv run python scripts/bump.py X.Y.Z` and a commit).
+# Tests, then desktop builds for macOS (universal), Windows and Linux, each self-tested, then one
+# GitHub release with every installer, the update feed (latest.json), the Python wheel and sdist;
+# then the website, the Homebrew tap and PyPI. A step whose credentials are missing is skipped.
+# "Run workflow" by hand builds and self-tests everything without releasing (a dry run).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - name: Tag matches the version in the code
+        if: env.RELEASE == 'true'
+        run: test "v$(uv run python -c 'import tdtm; print(tdtm.__version__)')" = "$GITHUB_REF_NAME"
+      - run: uv run pytest -q
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: app/package-lock.json }
+      - run: npm ci && npm run check && npx vitest run && npx playwright test
+        working-directory: app
+
+  desktop:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            args: --target universal-apple-darwin
+            bin: app/src-tauri/target/universal-apple-darwin/release/threatsketch
+          - os: windows-latest
+            args: ""
+            bin: app/src-tauri/target/release/threatsketch.exe
+          - os: ubuntu-22.04
+            args: ""
+            bin: app/src-tauri/target/release/threatsketch
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: app/package-lock.json }
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - if: matrix.os == 'ubuntu-22.04'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xvfb
+      - run: npm ci
+        working-directory: app
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: app
+          args: ${{ matrix.args }}
+          tagName: ${{ env.RELEASE == 'true' && github.ref_name || '' }}
+          releaseName: ThreatSketch and tdtm ${{ github.ref_name }}
+          releaseBody: See CHANGELOG.md. The full notes are added when the release is published.
+          releaseDraft: true
+          includeUpdaterJson: true
+      - name: Self-test (opens the example in the built app)
+        shell: bash
+        run: |
+          export THREATSKETCH_SELFTEST="$RUNNER_TEMP/selftest.json"
+          run="${{ matrix.bin }}"
+          if [ "${{ matrix.os }}" = ubuntu-22.04 ]; then run="xvfb-run -a $run"; fi
+          $run & pid=$!
+          for i in $(seq 1 240); do [ -f "$THREATSKETCH_SELFTEST" ] && break; sleep 1; done
+          kill $pid 2>/dev/null || true
+          cat "$THREATSKETCH_SELFTEST"
+          python3 -c "import json,sys; r=json.load(open(sys.argv[1])); assert r.get('threats') == 38, r" "$THREATSKETCH_SELFTEST"
+      - if: env.RELEASE != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}
+          path: app/src-tauri/target/**/release/bundle/**
+          retention-days: 7
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: desktop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv build
+      - name: Release notes from CHANGELOG.md, Python packages, publish
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          awk -v v="$v" '$0 ~ "^## \\[" v "\\]" {on=1; next} /^## \[/ {on=0} on' CHANGELOG.md > notes.md
+          cat .github/release-footer.md >> notes.md
+          gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          gh release edit "$GITHUB_REF_NAME" --notes-file notes.md --draft=false --latest
+      - uses: actions/upload-artifact@v4
+        with: { name: python-dist, path: dist/ }
+
+  pages:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions: { contents: read, pages: write, id-token: write }
+    environment: { name: github-pages, url: "${{ steps.deploy.outputs.page_url }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: app/package-lock.json }
+      - run: npm ci && npm run build
+        working-directory: app
+        env: { BASE: "/${{ github.event.repository.name }}/" }
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: app/dist }
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  homebrew:
+    needs: publish
+    runs-on: ubuntu-latest
+    env: { TAP_DEPLOY_KEY: "${{ secrets.TAP_DEPLOY_KEY }}" }
+    steps:
+      - if: env.TAP_DEPLOY_KEY == ''
+        run: echo "::notice::TAP_DEPLOY_KEY not set; Homebrew tap not updated"
+      - if: env.TAP_DEPLOY_KEY != ''
+        uses: actions/checkout@v4
+        with: { repository: ElikplimSunu/homebrew-tap, ssh-key: "${{ secrets.TAP_DEPLOY_KEY }}" }
+      - if: env.TAP_DEPLOY_KEY != ''
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          gh release download "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" -p "ThreatSketch_${v}_universal.dmg" -D dl
+          dmg=$(sha256sum "dl/ThreatSketch_${v}_universal.dmg" | cut -d' ' -f1)
+          sed -i -E "s/^  version \".*\"/  version \"$v\"/; s/^  sha256 \".*\"/  sha256 \"$dmg\"/" Casks/threatsketch.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "threatsketch $v"
+          git push
+
+  pypi:
+    needs: publish
+    if: vars.PUBLISH_PYPI == 'true'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions: { id-token: write }
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: python-dist, path: dist/ }
+      - uses: pypa/gh-action-pypi-publish@release/v1

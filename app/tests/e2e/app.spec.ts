@@ -37,7 +37,6 @@ async function openExample(page: Page) {
 }
 
 const snapshot = (page: Page) => page.evaluate(() => JSON.parse(JSON.stringify((window as any).threatsketch.editor.snapshot())));
-const count = (page: Page, sel: string) => page.locator(sel).count();
 
 async function download(page: Page, click: () => Promise<void>) {
   const [d] = await Promise.all([page.waitForEvent("download"), click()]);
@@ -59,8 +58,8 @@ async function plus(page: Page, cellId: string, side: string) {
 
 test("opens the example: TMT's 38 threats, drawn TMT-style", async ({ page }) => {
   await openExample(page);
-  expect(await count(page, ".x6-node")).toBe(6);
-  expect(await count(page, ".x6-edge")).toBe(7);
+  await expect(page.locator(".x6-node")).toHaveCount(6);
+  await expect(page.locator(".x6-edge")).toHaveCount(7);
   await expect(page.getByTestId("threat-row")).toHaveCount(38);
   // trust boundaries are red dashed, as in TMT; open-threat outlines are not drawn
   const box = page.locator('g[data-cell-id="backend"] rect').first();
@@ -87,7 +86,7 @@ test("draw from scratch: palette, click + to connect, threats appear as you draw
   await newModel(page);
   await page.getByRole("button", { name: /Generic External Interactor/ }).click();
   await page.getByRole("button", { name: /^Generic Process/ }).click();
-  expect(await count(page, ".x6-node")).toBe(2);
+  await expect(page.locator(".x6-node")).toHaveCount(2);
   const [actor, proc] = (await snapshot(page)).detail.diagrams[0].cells.map((c: any) => c.id);
 
   await (await plus(page, actor, "right")).click();
