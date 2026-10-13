@@ -50,3 +50,36 @@ def test_svg_of_an_empty_diagram_is_valid():
     from threatsketch.model import Diagram
 
     assert render_svg(Diagram(0, "empty")).startswith("<svg")
+
+
+def test_flows_both_ways_between_two_shapes_do_not_overlap():
+    from threatsketch.model import Diagram, Element, Kind, Rect
+
+    d = Diagram(0, "two-way")
+    for id_, x in (("a", 0), ("b", 300)):
+        d.elements[id_] = Element(id_, 0, Kind.ACTOR, id_, rect=Rect(x, 0, 100, 60))
+    for id_, s, t in (("f1", "a", "b"), ("f2", "b", "a")):
+        d.elements[id_] = Element(id_, 0, Kind.FLOW, id_, source_id=s, target_id=t)
+    lines = [p for p in render_svg(d).split("<") if p.startswith('polyline class="flow"')]
+    assert len(lines) == 2 and lines[0] != lines[1]
+
+
+def test_elbow_flows_bend_at_right_angles_and_two_way_ones_stay_apart():
+    from threatsketch.model import Diagram, Element, Kind, Rect
+
+    d = Diagram(0, "elbows")
+    d.elements["a"] = Element("a", 0, Kind.ACTOR, "a", rect=Rect(0, 0, 100, 60))
+    d.elements["b"] = Element("b", 0, Kind.ACTOR, "b", rect=Rect(300, 100, 100, 60))
+    for id_, s, t in (("f1", "a", "b"), ("f2", "b", "a")):
+        d.elements[id_] = Element(id_, 0, Kind.FLOW, id_, source_id=s, target_id=t, elbow=True)
+    lines = []
+    for part in render_svg(d).split("<"):
+        if part.startswith('polyline class="flow"'):
+            pts = part.split('points="')[1].split('"')[0].split()
+            lines.append([tuple(map(float, p.split(","))) for p in pts])
+    assert len(lines) == 2
+    for pts in lines:
+        assert len(pts) == 4
+        assert all(p[0] == q[0] or p[1] == q[1] for p, q in zip(pts, pts[1:], strict=False))
+    assert set(lines[0]).isdisjoint(lines[1])
+    assert lines[0][0][0] == 100 and lines[1][-1][0] == 100  # out of a's right side, back into it

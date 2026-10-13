@@ -18,7 +18,7 @@ export type Attribute = { name: string; label: string; value: string; values: st
 export type ElementInfo = { kind: string; stencil: string; stencilName: string; zone: string | null; crosses: string[]; attributes: Attribute[] };
 
 export type AnalyzeResult = {
-  model: Model; threats: ThreatRow[]; elements: Record<string, ElementInfo>; warnings: string[];
+  model: Model; threats: ThreatRow[]; elements: Record<string, ElementInfo>; warnings: string[]; review: string[];
   counts: { added: number; refreshed: number; unchanged: number; edited: number; stale: number };
 };
 

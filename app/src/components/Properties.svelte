@@ -6,18 +6,21 @@
   import { visibleDescription, withTags } from "../lib/sync";
   import { PRIORITIES, STATES, type ElementInfo, type Model, type Palette, type ThreatRow } from "../lib/types";
   import Icon from "./Icon.svelte";
+  import type { LineStyle } from "../lib/editor";
 
   type Props = {
     model: Model | null;
-    cell: { id: string; kind: Kind; data: Record<string, any> } | null;
+    cell: { id: string; kind: Kind; data: Record<string, any>; line: LineStyle } | null;
     info: ElementInfo | undefined;
     threat: ThreatRow | null;
     cellThreats: ThreatRow[];
     palette: Palette | null;
     names: Record<string, string>;
+    review: string[]; // what a reader of the report would trip over (engine's report.review)
     focusName: number;
     onmodel: (field: string, value: string) => void;
     onupdate: (id: string, change: Record<string, any>) => void;
+    online: (id: string, style: LineStyle) => void;
     onstencil: (id: string, stencil: string, attributes: Record<string, string>) => void;
     onthreat: (key: string, state: string, priority: string, justification: string) => void;
     onselectthreat: (key: string) => void;
@@ -149,6 +152,13 @@
           <textarea class="input" rows="3" bind:value={description} onblur={commitDescription}></textarea>
         </label>
       {/if}
+      {#if c.kind === "flow"}
+        <label class="field"><span>Line</span>
+          <select class="input" value={c.line} onchange={(e) => p.online(c.id, e.currentTarget.value as LineStyle)} data-testid="line-style">
+            <option value="curved">Curved, as in TMT</option>
+            <option value="elbow">Elbow, around shapes</option>
+          </select></label>
+      {/if}
       {#if hasThreats}
         {#if c.kind === "flow"}
           <label class="check">
@@ -229,6 +239,12 @@
           onchange={(e) => p.onmodel("contributors", e.currentTarget.value)} /></label>
       <label class="field"><span>Description</span>
         <textarea class="input" rows="4" value={p.model.summary.description ?? ""} onchange={(e) => p.onmodel("description", e.currentTarget.value)}></textarea></label>
+      {#if p.review.length}
+        <div class="section">Review before sharing</div>
+        <ul class="review small" data-testid="review">
+          {#each p.review as note}<li>{note}</li>{/each}
+        </ul>
+      {/if}
       <p class="muted small hint">Select an element to edit it, or a threat in the list to triage it.</p>
     </div>
   {/if}
@@ -261,4 +277,6 @@
   .danger { margin-top: var(--s-2); color: var(--danger); }
   .danger:hover:not(:disabled) { background: var(--danger-bg); }
   .hint { margin-top: var(--s-5); }
+  .review { margin: 0; padding-left: var(--s-4); color: var(--muted); line-height: 1.5; }
+  .review li + li { margin-top: var(--s-2); }
 </style>

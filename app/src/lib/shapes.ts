@@ -1,7 +1,7 @@
 // Threat Dragon's diagram shapes, registered under Threat Dragon's names so its files open and draw
 // the same. Transcribed from OWASP Threat Dragon 2.6.2 (td.vue/src/service/x6/shapes and
 // service/entity/default-properties.js), Apache-2.0; see THIRD_PARTY_NOTICES.md.
-import { Graph, Shape } from "@antv/x6";
+import { Graph, Path, Registry, Shape } from "@antv/x6";
 
 // Drawn the way Microsoft TMT draws its SDL stencils: black outlines on white, red dashed trust
 // boundaries. Threat Dragon's red "open threats" outlines stay in the file but are not drawn here.
@@ -35,9 +35,45 @@ const halo = { refX: -28, refY: -28, refWidth: "100%", refWidth2: 56, refHeight:
 
 let registered = false;
 
+/** Elbow lines: X6's own orthogonal router under its own name (Threat Dragon draws it too). */
+export const ELBOW = { router: { name: "manhattan" }, connector: { name: "rounded", args: { radius: 8 } } };
+
+/**
+ * Elbows go round shapes but straight through trust boundaries and notes, which are not in the
+ * way, and leave and enter square to the sides a flow is pinned to.
+ */
+function sidedManhattan(this: any, vertices: any, options: any, view: any) {
+  const opts: Record<string, any> = { padding: 16, excludeShapes: ["trust-boundary-box", "td-text-block"], ...options };
+  const from = view?.cell?.getSource?.()?.anchor?.name, to = view?.cell?.getTarget?.()?.anchor?.name;
+  if (from in OUT) opts.startDirections = [from];
+  if (to in OUT) opts.endDirections = [to];
+  return manhattan.call(this, vertices, opts as any, view);
+}
+
+const OUT: Record<string, [number, number]> = { top: [0, -1], right: [1, 0], bottom: [0, 1], left: [-1, 0] };
+const smooth = Registry.Connector.presets.smooth;
+const manhattan = Registry.Router.presets.manhattan;
+
+/**
+ * Flows keep X6's "smooth" connector (Threat Dragon reads it), redrawn so that a flow pinned to a
+ * side of each shape leaves and enters at right angles to those sides, as in Lucidchart; it curves
+ * round instead of cutting back across its own shape. With bends, or unpinned, it is X6's own curve.
+ */
+function sidedSmooth(this: any, s: any, t: any, route: any[], options: any, view: any) {
+  const a = OUT[view?.cell?.getSource?.()?.anchor?.name], b = OUT[view?.cell?.getTarget?.()?.anchor?.name];
+  if (route?.length || !a || !b) return smooth.call(this, s, t, route, options, view);
+  const k = Math.max(40, Math.hypot(t.x - s.x, t.y - s.y) / 2.5);
+  const path = new Path();
+  path.appendSegment(Path.createSegment("M", s));
+  path.appendSegment(Path.createSegment("C", s.x + a[0] * k, s.y + a[1] * k, t.x + b[0] * k, t.y + b[1] * k, t.x, t.y));
+  return options.raw ? path : path.serialize();
+}
+
 export function registerShapes() {
   if (registered) return;
   registered = true;
+  Graph.registerConnector("smooth", sidedSmooth as any, true);
+  Graph.registerRouter("manhattan", sidedManhattan as any, true);
   Graph.registerNode("actor", {
     inherit: "rect", width: 150, height: 80, zIndex: 0,
     markup: [HALO, ...(Shape.Rect.getMarkup() as any[])],

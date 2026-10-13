@@ -78,3 +78,27 @@ def test_report_command(fixtures, tmp_path, capsys):
     assert main(["report", str(path), "--out", str(out)]) == 0
     assert "Spoofing the User External Entity" in out.read_text()
     assert str(out) in capsys.readouterr().out
+
+
+def test_review_flags_a_model_nobody_could_act_on(fixtures, tmp_path):
+    from threatsketch.model import Diagram, Element, Kind, Model, Rect
+    from threatsketch.report import review
+    from threatsketch.rules.tb7 import load_template
+
+    tpl = load_template()
+    d = Diagram(0, "d")
+    d.elements["a"] = Element("a", 0, Kind.ACTOR, "External interactor", rect=Rect(0, 0, 9, 9))
+    d.elements["p"] = Element("p", 0, Kind.PROCESS, "Process 2", rect=Rect(50, 0, 9, 9))
+    d.elements["s"] = Element("s", 0, Kind.STORE, "Orders database", rect=Rect(99, 0, 9, 9))
+    d.elements["f"] = Element("f", 0, Kind.FLOW, "Web Application", source_id="a", target_id="p")
+    notes = review(Model("m", [d]), tpl)
+    assert notes[0].startswith("3 of 4 elements still have a default name (External interactor")
+    assert any("no description" in n for n in notes)
+    assert any("No trust boundary" in n for n in notes)
+    assert all("—" not in n for n in notes)
+
+    model, _ = load(analyzed(fixtures, tmp_path))  # named, with a boundary, nothing triaged
+    notes = review(model, tpl)
+    assert any(n.startswith("24 of 24 threats are still Not Started") for n in notes)
+    assert not any("default name" in n or "trust boundary" in n for n in notes)
+    assert "<h2>Review before sharing</h2>" in render(model, tpl)

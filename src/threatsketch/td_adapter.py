@@ -65,6 +65,8 @@ def _element(cell: dict, diagram_id, kind: Kind, warn) -> Element | None:
         e.source_id = (cell.get("source") or {}).get("cell")
         e.target_id = (cell.get("target") or {}).get("cell")
         e.points = [p for p in map(_point, cell.get("vertices") or []) if p]
+        router = cell.get("router")
+        e.elbow = (router if isinstance(router, str) else (router or {}).get("name")) == "manhattan"
     else:  # boundary curve: a free-standing line
         ends = [_point(cell.get("source")), _point(cell.get("target"))]
         if None in ends:

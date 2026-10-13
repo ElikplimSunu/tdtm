@@ -18,6 +18,7 @@ from __future__ import annotations
 import base64
 import csv
 import io
+import re
 from datetime import datetime
 from functools import cache
 from html import escape
@@ -155,6 +156,61 @@ def _summary(threats: list[Threat], template) -> str:
 
 BOUNDARIES = "trust boundaries"
 
+# Names an element gets when it is drawn (ThreatSketch, Threat Dragon); stencil names count too.
+DEFAULT_NAMES = {"", "external interactor", "external actor", "actor", "process", "data store",
+                 "store", "data flow", "flow"}  # fmt: skip
+
+
+def review(model: Model, template) -> list[str]:
+    """What a reader of the report would trip over, one plain-text line each; [] when ready."""
+    defaults = DEFAULT_NAMES | {s.name.lower() for s in template.stencils.values()}
+    parts = [e for d in model.diagrams for e in d.of_kind(Kind.ACTOR, Kind.PROCESS, Kind.STORE)]
+    flows = [f for d in model.diagrams for f in d.of_kind(Kind.FLOW)]
+    unnamed = [
+        e for e in parts + flows if re.sub(r"[\s_-]*\d+$", "", e.name.strip()).lower() in defaults
+    ]
+    threats = [t for d in model.diagrams for e in d.elements.values() for t in e.threats]
+    states = [tmt_state(t) for t in threats]
+    notes = []
+    if unnamed:
+        examples = list(dict.fromkeys(e.label for e in unnamed))[:4]
+        notes.append(
+            f"{len(unnamed)} of {_n(len(parts + flows), 'element')} still "
+            f"{'has' if len(unnamed) == 1 else 'have'} a default name ({', '.join(examples)}). "
+            "Name each after the real thing, such as Web server, Orders database or Card details."
+        )
+    if not model.description.strip():
+        notes.append("The model has no description. Say what the system is and what it is for.")
+    if flows and not any(d.of_kind(Kind.BOUNDARY_BOX, Kind.BOUNDARY_CURVE) for d in model.diagrams):
+        notes.append(
+            "No trust boundary is drawn, so threats that apply only where data crosses one "
+            "(such as between the Internet and your servers) cannot appear."
+        )
+    if (n := states.count("Not Started")) and threats:
+        notes.append(
+            f"{n} of {_n(len(threats), 'threat')} {'is' if n == 1 else 'are'} still Not Started. "
+            "Triage each one as Mitigated, Not Applicable or Needs Investigation."
+        )
+    closed = [
+        t
+        for t, s in zip(threats, states, strict=True)
+        if s in ("Mitigated", "Not Applicable") and not t.mitigation
+    ]
+    if closed:
+        notes.append(
+            f"{_n(len(closed), 'threat')} {'is' if len(closed) == 1 else 'are'} Mitigated or "
+            "Not Applicable without a justification."
+        )
+    return notes
+
+
+def _review(model: Model, template) -> str:
+    notes = review(model, template)
+    if not notes:
+        return ""
+    items = "".join(f"<li>{escape(n)}</li>" for n in notes)
+    return f'<aside class="review"><h2>Review before sharing</h2><ul>{items}</ul></aside>'
+
 
 def _n(n: int, one: str, many: str = "") -> str:
     return f"{n} {one if n == 1 else many or one + 's'}"
@@ -238,6 +294,7 @@ def render(model: Model, template=None) -> str:
         '<dl class="meta">'
         + "".join(f"<div><dt>{k}</dt><dd>{escape(v)}</dd></div>" for k, v in meta if v)
         + "</dl></header>",
+        _review(model, template),
         "<h2>Threat Model Summary</h2>",
         _summary(threats, template),
     ]

@@ -31,11 +31,13 @@ ThreatSketch.
   template, with each stencil's TMT properties. Threats depend on the stencils, their properties
   and which trust boundaries each flow crosses, as in TMT.
 - **Connecting.** Hover an element: a **+** appears on each side. Drag it to another element to
-  draw a data flow, or click it to link the nearest element on that side.
+  draw a data flow, or click it to link the nearest element on that side. Flows stay on the sides
+  you chose, curved as in TMT or as elbow lines.
 - **Triage.** Not Started, Needs Investigation, Not Applicable and Mitigated, with priority and
   justification.
 - **Hand-ins.** A report laid out like TMT's Full Report (HTML or PDF), the threat list in TMT's
-  CSV format, or a `.tm7` for TMT.
+  CSV format, or a `.tm7` for TMT. A review list flags what a reader would trip over first, such
+  as elements still named Process or Data flow.
 - **Files.** Opens Threat Dragon `.json` and TMT `.tm7`; saves Threat Dragon `.json`, which Threat
   Dragon also opens. Nothing is uploaded: the threat engine runs on your computer.
 

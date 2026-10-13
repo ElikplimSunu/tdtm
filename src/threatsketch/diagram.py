@@ -16,7 +16,7 @@ PAD = 40
 STYLE = """
 .shape { fill: #fbfcfc; stroke: #1b2026; stroke-width: 1.5; }
 .boundary { fill: none; stroke: #c0392f; stroke-width: 1.5; stroke-dasharray: 7 5; }
-.flow { fill: none; stroke: #1b2026; stroke-width: 1.3; }
+.flow { fill: none; stroke: #1b2026; stroke-width: 1.3; stroke-linejoin: round; }
 text { font: 12px "IBM Plex Sans", system-ui, "Segoe UI", sans-serif; fill: #1b2026; }
 text.boundary-label { fill: #c0392f; font-weight: 600; }
 text.flow-label { font-size: 11px; paint-order: stroke; stroke: #fbfcfc; stroke-width: 4px; }
@@ -46,6 +46,47 @@ def _flow_points(d: Diagram, f: Element) -> list[Point]:
     start = _edge_point(src.rect, first, src.kind is Kind.PROCESS)
     end = _edge_point(tgt.rect, last, tgt.kind is Kind.PROCESS)
     return [start, *mids, end]
+
+
+def _twin_shift(d: Diagram, f: Element) -> float:
+    """How far to move a flow sideways so flows joining the same two shapes do not overlap."""
+    pair = {f.source_id, f.target_id}
+    twins = sorted(g.cell_id for g in d.of_kind(Kind.FLOW) if {g.source_id, g.target_id} == pair)
+    return (twins.index(f.cell_id) - (len(twins) - 1) / 2) * 16
+
+
+def _side_by_side(d: Diagram, f: Element, points: list[Point], shift: float) -> list[Point]:
+    """Move a straight flow `shift` across the line between its shapes' centres."""
+    if not shift or len(points) != 2:
+        return points
+    lo, hi = sorted((f.source_id, f.target_id))  # one direction for every flow of the pair
+    a, b = d.elements[lo].rect.centre, d.elements[hi].rect.centre
+    length = math.hypot(b.x - a.x, b.y - a.y) or 1
+    nx, ny = -(b.y - a.y) / length * shift, (b.x - a.x) / length * shift
+    return [Point(p.x + nx, p.y + ny) for p in points]
+
+
+def _elbow(d: Diagram, f: Element, shift: float) -> list[Point]:
+    """An elbow line, as the canvas draws one: out of the facing sides, one bend each way.
+
+    Flows sharing the two shapes are moved `shift` apart, the bend too, so they never cross.
+    """
+    lo, hi = sorted((f.source_id, f.target_id))
+    a, b = d.elements[lo].rect, d.elements[hi].rect
+    ca, cb = a.centre, b.centre
+    if abs(cb.x - ca.x) / (a.width + b.width) >= abs(cb.y - ca.y) / (a.height + b.height):
+        right = cb.x > ca.x
+        sx, ex = (a.x + a.width, b.x) if right else (a.x, b.x + b.width)
+        mx = (sx + ex) / 2 - shift * (1 if cb.y > ca.y else -1) * (1 if right else -1)
+        pts = [Point(sx, ca.y + shift), Point(mx, ca.y + shift), Point(mx, cb.y + shift)]
+        pts.append(Point(ex, cb.y + shift))
+    else:
+        down = cb.y > ca.y
+        sy, ey = (a.y + a.height, b.y) if down else (a.y, b.y + b.height)
+        my = (sy + ey) / 2 - shift * (1 if cb.x > ca.x else -1) * (1 if down else -1)
+        pts = [Point(ca.x - shift, sy), Point(ca.x - shift, my), Point(cb.x - shift, my)]
+        pts.append(Point(cb.x - shift, ey))
+    return pts if f.source_id == lo else pts[::-1]
 
 
 def _pts(points: list[Point]) -> str:
@@ -99,7 +140,11 @@ def render_svg(d: Diagram) -> str:
                 )
         parts.append(f'<text x="{c.x}" y="{c.y + 4}" text-anchor="middle">{escape(e.label)}</text>')
     for f in d.of_kind(Kind.FLOW):
-        pts = _flow_points(d, f)
+        shift = 0.0 if f.points else _twin_shift(d, f)
+        if f.elbow and not f.points:
+            pts = _elbow(d, f, shift)
+        else:
+            pts = _side_by_side(d, f, _flow_points(d, f), shift)
         parts.append(f'<polyline class="flow" points="{_pts(pts)}" marker-end="url(#arrow)"/>')
         mid = (
             pts[len(pts) // 2]
