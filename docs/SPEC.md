@@ -273,6 +273,17 @@ from the templates with names substituted.
 
 TD false or missing properties do not set anything; the TMT default applies.
 
+### 4.2a What Threat Dragon alone can reach
+
+`tdtm coverage` tries every element Threat Dragon's own properties can express (4.1, 4.2) in
+every source, flow, target and crossing combination. With default.tb7, **30 of the 41 non-legacy
+rules** can fire without tags. The other 11 need `@tmt`: T3, T4, I26 (process implements a
+protocol or authentication scheme), I2 (custom authorization), T7, T8 (SQL Database), T11, T12
+(XML or JSON payload), I25 (Machine Trust Boundary), E3 (Authorization Provider), and T6, which
+needs an authenticated flow without both confidentiality and integrity. Threat Dragon's settings
+only give authentication together with encryption (HTTPS, IPsec), so T6 needs a tag such as
+`@tmt: authenticatesSource=Yes` on an ordinary flow.
+
 ### 4.3 `@tmt` tags (the escape hatch for everything else)
 
 Any line in an element's `description` that starts with `@tmt:` is parsed. Tags override

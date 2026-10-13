@@ -33,12 +33,8 @@ class UsageError(Exception):
 def _load(args: argparse.Namespace):
     """Load and resolve. Returns (model, doc, template, tag errors)."""
     from .resolve import resolve
-    from .rules.tb7 import load_template
 
-    try:
-        template = load_template(getattr(args, "template", None))
-    except (OSError, ET.ParseError) as e:
-        raise UsageError(f"cannot read template: {e}") from e
+    template = _template(args)
     try:
         model, doc = load(args.model)
     except (OSError, ValueError, KeyError) as e:
@@ -154,6 +150,82 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     return 0
 
 
+KIND_ORDER = [
+    Kind.ACTOR,
+    Kind.PROCESS,
+    Kind.STORE,
+    Kind.FLOW,
+    Kind.BOUNDARY_BOX,
+    Kind.BOUNDARY_CURVE,
+]
+
+
+def _template(args: argparse.Namespace):
+    from .rules.tb7 import load_template
+
+    try:
+        return load_template(args.template)
+    except (OSError, ET.ParseError) as e:
+        raise UsageError(f"cannot read template: {e}") from e
+
+
+def cmd_stencils(args: argparse.Namespace) -> int:
+    from .model import KIND_ROOT
+
+    template = _template(args)
+    for kind in [Kind(args.kind)] if args.kind else KIND_ORDER:
+        root = KIND_ROOT[kind]
+        stencils = [s for s in template.stencils.values() if s.root == root]
+        print(f"== {kind.value.replace('_', ' ')} (TMT {root})")
+        print("Stencils (@tmt: <name or id>):")
+        width = max(len(s.name) for s in stencils)
+        for s in stencils:
+            fixed = ", ".join(
+                f"{a.name}={a.default}" for a in s.own_attributes.values() if a.static
+            )
+            print(f"  {s.name:<{width}}  {s.id}" + (f"  fixes {fixed}" if fixed else ""))
+        print("Attributes (@tmt: <name>=<value>; * marks the default):")
+        generic = template.attributes_for(root)
+        for a in generic.values():
+            print(f"  {a.name} ({a.display_name}): {', '.join(_starred(a))}")
+        extra = [
+            (s, a)
+            for s in stencils
+            for a in s.own_attributes.values()
+            if not a.static and a.name not in generic
+        ]
+        for s, a in extra:
+            print(f"  {a.name} ({a.display_name}): {', '.join(_starred(a))}  only with {s.name}")
+        print()
+    return 0
+
+
+def _starred(a) -> list[str]:
+    return [v + ("*" if i == 0 else "") for i, v in enumerate(a.values)]
+
+
+def cmd_coverage(args: argparse.Namespace) -> int:
+    from .coverage import coverage
+
+    results = coverage(_template(args))
+    legacy = [tt.id for tt, _, _ in results if tt.legacy]
+    alone = [(tt, h) for tt, fires, h in results if fires and not tt.legacy]
+    tagged = [(tt, h) for tt, fires, h in results if not fires and not tt.legacy]
+    width = max(len(tt.id) for tt, _, _ in results if len(tt.id) < 10)
+    for heading, rows in (
+        ("Fire from Threat Dragon properties alone", alone),
+        ("Need @tmt tags", tagged),
+    ):
+        print(f"{heading} ({len(rows)}):")
+        for tt, hints in rows:
+            print(f"  {tt.id:<{width}}  {tt.category}  {tt.short_title}")
+            for hint in hints:
+                print(f"  {'':<{width}}     {hint}")
+        print()
+    print(f"Legacy rules, skipped unless --include-legacy ({len(legacy)}): {', '.join(legacy)}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="tdtm", description="TMT-style threat generation for OWASP Threat Dragon models."
@@ -183,9 +255,9 @@ def build_parser() -> argparse.ArgumentParser:
     i.set_defaults(func=cmd_inspect)
 
     s = sub.add_parser("stencils", help="list valid @tmt stencils and attributes")
-    s.add_argument("--kind")
+    s.add_argument("--kind", choices=[k.value for k in KIND_ORDER])
     s.add_argument("--template")
-    s.set_defaults(func=_not_yet("3.1"))
+    s.set_defaults(func=cmd_stencils)
 
     r = sub.add_parser("report", help="write a TMT-style HTML report")
     r.add_argument("model")
@@ -194,7 +266,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     c = sub.add_parser("coverage", help="which template rules can fire from TD properties alone")
     c.add_argument("--template")
-    c.set_defaults(func=_not_yet("3.1"))
+    c.set_defaults(func=cmd_coverage)
     return p
 
 

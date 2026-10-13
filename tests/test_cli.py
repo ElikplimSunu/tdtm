@@ -11,11 +11,6 @@ def test_version(capsys):
     assert __version__ in capsys.readouterr().out
 
 
-def test_unimplemented_commands_say_where_to_look(capsys):
-    assert main(["report", "x.json"]) == 1
-    assert "PLAN.md" in capsys.readouterr().err
-
-
 def test_inspect_demo_model(capsys, fixtures):
     assert main(["inspect", str(fixtures / "td" / "v2-threat-model.json")]) == 0
     out = capsys.readouterr().out
@@ -117,3 +112,34 @@ def test_analyze_sidecar(model_copy):
     before = model_copy.read_bytes()
     assert main(["analyze", str(model_copy), "--sidecar"]) == 0
     assert model_copy.read_bytes() == before
+
+
+def test_stencils_lists_tags_for_a_kind(capsys):
+    assert main(["stencils", "--kind", "process"]) == 0
+    out = capsys.readouterr().out
+    assert "Web Application" in out and "SE.P.TMCore.WebApp" in out
+    assert "fixes codeType=Unmanaged" in out
+    assert "hasInputSanitizers (Sanitizes Input): Not Selected*, Yes, No" in out
+    assert "SQL Database" not in out
+    assert main(["stencils", "--kind", "store"]) == 0
+    out = capsys.readouterr().out
+    assert "HTTPOnly (HTTPOnly): No*, Yes" in out and "only with Cookies" in out
+
+
+def test_stencils_lists_every_kind_by_default(capsys):
+    assert main(["stencils"]) == 0
+    out = capsys.readouterr().out
+    for word in ("actor", "process", "store", "flow", "boundary box", "boundary curve"):
+        assert f"== {word}" in out
+
+
+def test_coverage(capsys):
+    assert main(["coverage"]) == 0
+    out = capsys.readouterr().out
+    td_alone, _, rest = out.partition("Need @tmt tags")
+    assert "S3 " in td_alone and "T2 " in td_alone  # T2 via isWebApplication (codeType fixed)
+    assert "T7 " in rest and "SQL Database" in rest
+    assert "E3 " in rest and "Authorization Provider" in rest
+    assert "I25 " in rest and "Machine Trust Boundary" in rest
+    assert "T6 " in rest and "tag attributes so that" in rest  # authenticated, unencrypted flow
+    assert "SU " not in td_alone and "Legacy" in out

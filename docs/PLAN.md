@@ -64,7 +64,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
 
 ## Phase 3: Make it pleasant
 
-- [ ] **3.1 `tdtm stencils` and `tdtm coverage`.**
+- [x] **3.1 `tdtm stencils` and `tdtm coverage`.**
 - [ ] **3.2 `tdtm report`** HTML (SPEC 9).
 - [ ] **3.3 `tdtm analyze --watch`**: re-run when the model file changes (stdlib polling, no deps).
 - [ ] **3.4 [manual, optional: needs Windows] TMT parity test.** Someone on Windows draws `tests/fixtures/golden/*`
