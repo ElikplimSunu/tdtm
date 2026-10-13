@@ -8,6 +8,6 @@ export default defineConfig({
   fullyParallel: true,
   workers: 3,
   reporter: [["list"]],
-  use: { baseURL: "http://localhost:4173", channel: "chrome", trace: "retain-on-failure" },
-  webServer: { command: "npm run build && npm run preview", url: "http://localhost:4173", timeout: 180_000, reuseExistingServer: false },
+  use: { baseURL: `http://localhost:4173${process.env.BASE ?? "/"}`, channel: "chrome", trace: "retain-on-failure" },
+  webServer: { command: "npm run build && npm run preview", url: `http://localhost:4173${process.env.BASE ?? "/"}`, timeout: 180_000, reuseExistingServer: false },
 });
