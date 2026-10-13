@@ -45,6 +45,7 @@ export class Editor {
   diagram = 0;
   private baseline = new Map<string, string>(); // cell id -> its canvas JSON when last in step
   private applying = false;
+  private loaded = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private chain: Promise<unknown> = Promise.resolve();
 
@@ -68,8 +69,9 @@ export class Editor {
           delete json.source; delete json.target;
           return editor.graph.createEdge(json);
         },
-        validateConnection({ sourceCell, targetCell, targetMagnet }) {
-          return !!targetMagnet && !!targetCell && sourceCell !== targetCell && isNode(targetCell);
+        // drop anywhere on an actor, process or store (not only on its "+")
+        validateConnection({ sourceCell, targetCell }) {
+          return !!targetCell && sourceCell !== targetCell && isNode(targetCell);
         },
       },
       highlighting: {
@@ -119,6 +121,7 @@ export class Editor {
   // --- loading and saving --------------------------------------------------------------------
 
   open(model: Model) {
+    this.loaded = false; // a different model: nothing on the canvas belongs to it
     this.model = model;
     this.diagram = 0;
     this.loadDiagram(0);
@@ -127,7 +130,8 @@ export class Editor {
 
   loadDiagram(index: number) {
     if (this.model.detail.diagrams[index] === undefined) return;
-    if (this.baseline.size) this.sync();
+    if (this.loaded) this.sync(); // keep what was drawn on the diagram we are leaving
+    this.loaded = true;
     this.diagram = index;
     const cells = this.current().cells;
     const nodes = new Set(cells.filter((c) => c.position).map((c) => c.id));
@@ -273,7 +277,7 @@ export class Editor {
   // --- editing ------------------------------------------------------------------------------
 
   add(kind: Kind, stencil: string | null, at?: { x: number; y: number }) {
-    const p = at ?? this.centre();
+    const p = at ?? this.freeSpot();
     const json = forCanvas(newCell(kind, DEFAULT_NAMES[kind], Math.round(p.x / 10) * 10, Math.round(p.y / 10) * 10));
     const cell = json.source ? this.graph.addEdge(json) : this.graph.addNode(json);
     this.graph.cleanSelection();
@@ -365,6 +369,14 @@ export class Editor {
   centre() {
     const r = this.graph.getGraphArea();
     return { x: r.x + r.width / 2 - 60, y: r.y + r.height / 2 - 40 };
+  }
+
+  /** Where a clicked stencil goes: the middle of the view, moved right until it overlaps nothing. */
+  private freeSpot() {
+    const p = this.centre();
+    const taken = this.graph.getNodes().filter((n) => n.shape !== "trust-boundary-box").map((n) => n.getBBox());
+    for (let i = 0; i < 12 && taken.some((b) => b.isIntersectWithRect({ x: p.x - 20, y: p.y - 20, width: 190, height: 140 })); i++) p.x += 200;
+    return p;
   }
 
   clientToLocal(x: number, y: number) {

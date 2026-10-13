@@ -31,6 +31,8 @@
   let description = $state("");
   let reason = $state("");
   let justification = $state("");
+  let tstate = $state("");
+  let priority = $state("");
   let lastId = "";
 
   $effect(() => {
@@ -41,6 +43,8 @@
     description = visibleDescription(p.cell?.data?.description);
     reason = p.cell?.data?.reasonOutOfScope ?? "";
     justification = p.threat?.justification ?? "";
+    tstate = p.threat?.state ?? "";
+    priority = p.threat?.priority ?? "";
   });
 
   $effect(() => {
@@ -70,12 +74,12 @@
     const values = Object.fromEntries(p.info.attributes.map((a) => [a.name, a.value]));
     p.onstencil(p.cell.id, p.info.stencil, { ...values, [attr]: value });
   }
-  function triage(change: Partial<{ state: string; priority: string; justification: string }>) {
+  // The form keeps its own values, so a quick second change never sends a stale first one.
+  function triage() {
     const t = p.threat;
     if (!t) return;
-    const next = { state: t.state, priority: t.priority, justification: t.justification, ...change };
-    if (next.state === t.state && next.priority === t.priority && next.justification === t.justification) return;
-    p.onthreat(t.key, next.state, next.priority, next.justification);
+    if (tstate === t.state && priority === t.priority && justification === t.justification) return;
+    p.onthreat(t.key, tstate, priority, justification);
   }
   const cls = (s: string) => `state-${s.replaceAll(" ", "-")}`;
   const sourceNote: Record<string, string> = { static: "set by the stencil", TD: "from a Threat Dragon option", tag: "", default: "" };
@@ -103,13 +107,13 @@
       <div class="grid2">
         <label class="field">
           <span>State</span>
-          <select class="input {cls(t.state)} statesel" value={t.state} onchange={(e) => triage({ state: e.currentTarget.value })} data-testid="threat-state">
+          <select class="input {cls(tstate)} statesel" bind:value={tstate} onchange={triage} data-testid="threat-state">
             {#each STATES as s}<option>{s}</option>{/each}
           </select>
         </label>
         <label class="field">
           <span>Priority</span>
-          <select class="input" value={t.priority} onchange={(e) => triage({ priority: e.currentTarget.value })} data-testid="threat-priority">
+          <select class="input" bind:value={priority} onchange={triage} data-testid="threat-priority">
             {#each PRIORITIES as s}<option>{s}</option>{/each}
           </select>
         </label>
@@ -117,7 +121,7 @@
       <label class="field">
         <span>Justification</span>
         <textarea class="input" rows="4" placeholder="How is this mitigated, or why does it not apply?" bind:value={justification}
-          onblur={() => triage({ justification })} data-testid="threat-justification"></textarea>
+          onblur={triage} data-testid="threat-justification"></textarea>
       </label>
       <div class="field">
         <span>Description</span>
