@@ -8,8 +8,17 @@ One version covers the app and the command-line tool. The format follows
 
 ### Added
 
+- TMT's stencil icons, from the template: faded inside processes (centred), interactors and data
+  stores (lower right), before each trust boundary's name, and in the stencil list.
+- Flow names in TMT's pale green box with the flow stencil's icon before the name.
+
 - Assumptions and External Dependencies, TMT's two other model fields: edited in the model's
   properties, shown in the report, and kept through `.tm7` import and export.
+
+### Changed
+
+- Names wrap inside their shape between words, as in TMT, instead of breaking mid-word or
+  running past the edge. Trust boundary names are no longer bold, as in TMT.
 
 ### Fixed
 
