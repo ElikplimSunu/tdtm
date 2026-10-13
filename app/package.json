@@ -1,7 +1,7 @@
 {
   "name": "threatsketch",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
   "description": "ThreatSketch: draw a data-flow diagram, get Microsoft TMT's STRIDE threats. Runs in the browser.",
   "license": "MIT",

@@ -48,7 +48,7 @@
           {
             "position": {
               "x": 30,
-              "y": 230
+              "y": 220
             },
             "size": {
               "width": 160,
@@ -205,7 +205,7 @@
           {
             "position": {
               "x": 900,
-              "y": 230
+              "y": 220
             },
             "size": {
               "width": 160,
@@ -269,25 +269,36 @@
             },
             "id": "placeorder",
             "source": {
-              "cell": "customer"
+              "cell": "customer",
+              "selector": "body",
+              "anchor": {
+                "name": "right",
+                "args": {
+                  "dy": 10
+                }
+              },
+              "connectionPoint": {
+                "name": "anchor"
+              }
             },
             "target": {
-              "cell": "webapp"
+              "cell": "webapp",
+              "selector": "body",
+              "anchor": {
+                "name": "left",
+                "args": {
+                  "dy": 10
+                }
+              }
             },
             "labels": [
               {
-                "position": 0.5,
+                "position": 0.625,
                 "attrs": {
                   "label": {
                     "text": "Place order"
                   }
                 }
-              }
-            ],
-            "vertices": [
-              {
-                "x": 330,
-                "y": 225
               }
             ]
           },
@@ -324,25 +335,36 @@
             },
             "id": "confirmation",
             "source": {
-              "cell": "webapp"
+              "cell": "webapp",
+              "selector": "body",
+              "anchor": {
+                "name": "left",
+                "args": {
+                  "dy": -10
+                }
+              }
             },
             "target": {
-              "cell": "customer"
+              "cell": "customer",
+              "selector": "body",
+              "anchor": {
+                "name": "right",
+                "args": {
+                  "dy": -10
+                }
+              },
+              "connectionPoint": {
+                "name": "anchor"
+              }
             },
             "labels": [
               {
-                "position": 0.5,
+                "position": 0.625,
                 "attrs": {
                   "label": {
                     "text": "Order confirmation"
                   }
                 }
-              }
-            ],
-            "vertices": [
-              {
-                "x": 330,
-                "y": 330
               }
             ]
           },
@@ -379,25 +401,33 @@
             },
             "id": "saveorder",
             "source": {
-              "cell": "webapp"
+              "cell": "webapp",
+              "selector": "body",
+              "anchor": {
+                "name": "bottom"
+              }
             },
             "target": {
-              "cell": "orders"
+              "cell": "orders",
+              "selector": "body",
+              "anchor": {
+                "name": "top",
+                "args": {
+                  "dx": 10
+                }
+              },
+              "connectionPoint": {
+                "name": "anchor"
+              }
             },
             "labels": [
               {
-                "position": 0.5,
+                "position": 0.375,
                 "attrs": {
                   "label": {
                     "text": "Save order"
                   }
                 }
-              }
-            ],
-            "vertices": [
-              {
-                "x": 450,
-                "y": 400
               }
             ]
           },
@@ -434,25 +464,36 @@
             },
             "id": "history",
             "source": {
-              "cell": "orders"
+              "cell": "orders",
+              "selector": "body",
+              "anchor": {
+                "name": "top",
+                "args": {
+                  "dx": -10
+                }
+              },
+              "connectionPoint": {
+                "name": "anchor"
+              }
             },
             "target": {
-              "cell": "webapp"
+              "cell": "webapp",
+              "selector": "body",
+              "anchor": {
+                "name": "bottom",
+                "args": {
+                  "dx": -20
+                }
+              }
             },
             "labels": [
               {
-                "position": 0.5,
+                "position": 0.375,
                 "attrs": {
                   "label": {
                     "text": "Order history"
                   }
                 }
-              }
-            ],
-            "vertices": [
-              {
-                "x": 520,
-                "y": 420
               }
             ]
           },
@@ -489,25 +530,36 @@
             },
             "id": "charge",
             "source": {
-              "cell": "webapp"
+              "cell": "webapp",
+              "selector": "body",
+              "anchor": {
+                "name": "right",
+                "args": {
+                  "dy": -10
+                }
+              }
             },
             "target": {
-              "cell": "payments"
+              "cell": "payments",
+              "selector": "body",
+              "anchor": {
+                "name": "left",
+                "args": {
+                  "dy": -10
+                }
+              },
+              "connectionPoint": {
+                "name": "anchor"
+              }
             },
             "labels": [
               {
-                "position": 0.5,
+                "position": 0.625,
                 "attrs": {
                   "label": {
                     "text": "Charge card"
                   }
                 }
-              }
-            ],
-            "vertices": [
-              {
-                "x": 780,
-                "y": 225
               }
             ]
           },
@@ -544,25 +596,36 @@
             },
             "id": "result",
             "source": {
-              "cell": "payments"
+              "cell": "payments",
+              "selector": "body",
+              "anchor": {
+                "name": "left",
+                "args": {
+                  "dy": 10
+                }
+              },
+              "connectionPoint": {
+                "name": "anchor"
+              }
             },
             "target": {
-              "cell": "webapp"
+              "cell": "webapp",
+              "selector": "body",
+              "anchor": {
+                "name": "right",
+                "args": {
+                  "dy": 10
+                }
+              }
             },
             "labels": [
               {
-                "position": 0.5,
+                "position": 0.625,
                 "attrs": {
                   "label": {
                     "text": "Payment result"
                   }
                 }
-              }
-            ],
-            "vertices": [
-              {
-                "x": 780,
-                "y": 330
               }
             ]
           },
@@ -599,10 +662,24 @@
             },
             "id": "auditwrite",
             "source": {
-              "cell": "webapp"
+              "cell": "webapp",
+              "selector": "body",
+              "anchor": {
+                "name": "bottom",
+                "args": {
+                  "dx": 20
+                }
+              }
             },
             "target": {
-              "cell": "audit"
+              "cell": "audit",
+              "selector": "body",
+              "anchor": {
+                "name": "top"
+              },
+              "connectionPoint": {
+                "name": "anchor"
+              }
             },
             "labels": [
               {
@@ -612,12 +689,6 @@
                     "text": "Audit events"
                   }
                 }
-              }
-            ],
-            "vertices": [
-              {
-                "x": 620,
-                "y": 400
               }
             ]
           }
