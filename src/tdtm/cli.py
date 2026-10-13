@@ -140,13 +140,12 @@ def _analyze_once(args: argparse.Namespace) -> int:
         run_sdl(model, template, include_legacy=args.include_legacy) if "sdl" in packs else []
     )
     if "pytm" in packs:
-        from .rules.pytm_pack import run_pytm
+        from .rules.pytm_pack import PytmMissing, run_pytm
 
         try:
             generated += run_pytm(model)
-        except NotImplementedError:
-            print("tdtm: the pytm pack is not implemented yet (docs/PLAN.md 4.1)", file=sys.stderr)
-            return 1
+        except PytmMissing as e:
+            raise UsageError(str(e)) from e
 
     out = Path(args.out or args.model)
     sidecar_in, sidecar_out = (Path(p).with_suffix(".tdtm.json") for p in (args.model, out))

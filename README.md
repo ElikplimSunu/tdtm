@@ -63,6 +63,7 @@ uv run tdtm --help
 uv run tdtm analyze model.json            # add threats to the model, keeping a .bak copy
 uv run tdtm analyze model.json --dry-run  # show what would change
 uv run tdtm analyze model.json --prune    # also remove generated threats whose rule stopped firing
+uv run tdtm analyze model.json --pack all # also OWASP pytm's threats (needs `uv sync --extra pytm`)
 uv run tdtm inspect model.json            # how each element was read: stencil, attributes, zone
 uv run tdtm stencils --kind process       # valid @tmt stencils and attributes
 uv run tdtm report model.json             # TMT-style HTML report

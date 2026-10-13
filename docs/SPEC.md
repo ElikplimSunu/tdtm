@@ -392,12 +392,27 @@ Compiled from `default.tb7` at runtime (fast enough; cache optional). `--templat
 
 ### 7.2 `pytm` (optional extra)
 
-pytm **1.4.0** is installed via the `pytm` extra. Note: 1.4.0 classes are pydantic models
-(`TM.model_dump` etc.), so README examples written for older versions may not apply. Build
-`TM`, `Actor`, `Process`/`Server`, `Datastore`, `Dataflow`, `Boundary` objects from the model,
-set `inBoundary` from section 5, call `tm.resolve()`, read findings. **[verify]** the exact 1.4.0 API
-and how findings link back to elements (by name or uuid). pytm only knows boundaries by
-membership, so its crossing rules follow from `inBoundary` on each end.
+pytm **1.4.0** is installed via the `pytm` extra (CI installs it; works on Python 3.11 and 3.14).
+Confirmed API: `TM.reset()` first (elements and threats live in class-level state), build
+`TM(name, description=...)` and `Actor`/`Process`/`Server`/`Datastore`/`Dataflow(src, dst, name)`
+objects, call `tm.resolve()`, read `tm.findings`. Each finding has `element` (the pytm object, so
+tdtm maps back by object identity, not by name), `threat_id` (e.g. `INP03`), `description` (short),
+`details`, `severity`, `mitigations`. Findings attach to nodes as well as flows.
+
+Mapping: actor → `Actor`; process → `Process`, or `Server` if `isWebApplication`; store →
+`Datastore` with `storesLogData` (isALog), `storesSensitiveData` (storesCredentials),
+`controls.isEncryptedAtRest` (isEncrypted); flow → `Dataflow` with `protocol` and
+`controls.isEncrypted`, two Dataflows for a bidirectional flow; `outOfScope` → `inScope = False`.
+
+Boundaries are not mapped: no condition in pytm 1.4.0's threat library reads `inBoundary`, so
+they would change nothing. Map zones (section 5) if a later pytm uses them.
+
+pytm has no STRIDE field. tdtm maps the SID prefix (`rules/pytm_pack.py CATEGORY_BY_PREFIX`):
+INP, SC, API, LB, LLM → Tampering; AC → Elevation of privilege; AA, CR → Spoofing; DS, DE, DR, HA
+→ Information disclosure; DO → Denial of service. This is tdtm's judgement, not pytm's. Severity:
+Very High → Critical, Very Low → Low, others unchanged.
+
+pytm evaluates its conditions with `eval`; tdtm only lets it load its bundled library.
 
 ## 8. CLI
 
