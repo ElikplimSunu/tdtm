@@ -506,6 +506,13 @@ Triage in TMT 7.3 sets `ChangedBy` to `MACHINE\user` and `ModifiedAt` to the tim
 Properties and the CSV show both; the time as `13/10/2026 9:56:59 pm` (en-GB Windows; TMT follows
 the Windows locale). Import keeps them under `tdtm.tm7`; triage here stamps `modifiedAt`.
 
+TMT 7.3 keeps a threat's justification as the `StateInformation` entry of its `Properties`
+(after `UserThreatDescription`), with the `StateInformation` element nil; import reads either, and
+export writes it where the file had it (the property for new triage). `Notes` holds `<Note>`
+elements with `AddedBy`, `Date`, `Id`, `Message`; import keeps them in `tdtm.tm7.notes`.
+`ThreatGenerationEnabled` false is kept. TMT's own sample model has a boundary without its
+`Trust Boundary Area` header and a diagram `Name` attribute with an empty key; both are kept.
+
 TMT lists and exports a threat stored with `Id` 0 as the highest `Id` + 1 (a real model: 0 among
 1..241 is 242 in TMT's CSV) and the file keeps 0. Import numbers it the same way and keeps the 0
 under `tdtm.tm7.id` for export.

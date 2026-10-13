@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import Icon from "./components/Icon.svelte";
   import MenuBar, { type Menu } from "./components/MenuBar.svelte";
+  import Notes, { type Note } from "./components/Notes.svelte";
   import Palette from "./components/Palette.svelte";
   import Properties from "./components/Properties.svelte";
   import ThreatList from "./components/ThreatList.svelte";
@@ -40,15 +41,21 @@
   // TMT's two views: Design shows the stencils and element properties, Analysis the threat list
   // and threat properties. Each pane can also be shown or hidden from the View menu.
   type View = "design" | "analysis";
-  const LAYOUT: Record<View, { stencils: boolean; threats: boolean; props: boolean }> = {
-    design: { stencils: true, threats: false, props: true },
-    analysis: { stencils: false, threats: true, props: true },
+  const LAYOUT: Record<View, { stencils: boolean; threats: boolean; props: boolean; notes: boolean }> = {
+    design: { stencils: true, threats: false, props: true, notes: false },
+    analysis: { stencils: false, threats: true, props: true, notes: false },
   };
+  let bottom = $state<"threats" | "notes">("threats"); // the pane in front when both are open
   let view = $state<View>("design");
   let panes = $state({ ...LAYOUT.design });
   function setView(v: View) {
     view = v;
     panes = { ...LAYOUT[v] };
+    bottom = "threats";
+  }
+  function showNotes(on = !panes.notes) {
+    panes.notes = on;
+    if (on) bottom = "notes";
   }
   const REPO = "https://github.com/ElikplimSunu/threatsketch";
 
@@ -358,6 +365,17 @@
     files.saveDraft({ model: m, name: fileName });
   }
 
+  /** TMT's Notes, kept with the model (`tdtm.tm7.notes`, which .tm7 import and export carry). */
+  function setNotes(next: Note[]) {
+    if (!editor) return;
+    const m = editor.model as any;
+    ((m.tdtm ??= {}).tm7 ??= {}).notes = next;
+    model = { ...m } as Model;
+    editor.model = m;
+    dirty = true;
+    files.saveDraft({ model: m, name: fileName });
+  }
+
   // --- diagrams ----------------------------------------------------------------------------
 
   function switchDiagram(i: number) {
@@ -467,6 +485,7 @@
         { label: "Stencils", action: () => (panes.stencils = !panes.stencils), checked: panes.stencils },
         { label: "Threat List", action: () => (panes.threats = !panes.threats), checked: panes.threats },
         { label: "Properties", action: () => (panes.props = !panes.props), checked: panes.props },
+        { label: "Notes", action: () => showNotes(), checked: panes.notes },
         { label: "Reset Window Layout", action: () => { setView(view); threatHeight = 280; } },
       ] },
       { label: "Diagram", items: [
@@ -529,7 +548,7 @@
 />
 
 <div class="app" class:has-model={!!model}
-  style="--threats: {panes.threats ? threatHeight : 0}px; --pal: {panes.stencils ? 240 : 0}px; --props: {panes.props ? 320 : 0}px">
+  style="--threats: {panes.threats || panes.notes ? threatHeight : 0}px; --pal: {panes.stencils ? 240 : 0}px; --props: {panes.props ? 320 : 0}px">
   <header class="top">
     <div class="brand">
       <img class="mark" src="{import.meta.env.BASE_URL}favicon.svg" alt="" width="22" height="22" />
@@ -573,6 +592,8 @@
       <button class="btn icon" onclick={() => editor?.zoom(0.1)} aria-label="Zoom in" title={`Zoom In (${MOD}+)`}><Icon name="zoomin" /></button>
       <button class="btn icon" onclick={() => editor?.zoom(-0.1)} aria-label="Zoom out" title={`Zoom Out (${MOD}-)`}><Icon name="zoomout" /></button>
       <button class="btn icon" onclick={() => editor?.fit()} aria-label="Fit to screen" title="Fit to Window"><Icon name="fit" /></button>
+      <span class="div"></span>
+      <button class="btn icon" class:on={panes.notes} onclick={() => showNotes()} title="Notes" aria-label="Notes" aria-pressed={panes.notes}><Icon name="note" /></button>
     </div>
   {/if}
 
@@ -614,11 +635,23 @@
     </div>
   </main>
 
-  {#if model && panes.threats}
-    <section class="threatpane">
+  {#if model && (panes.threats || panes.notes)}
+    {@const notes = (model as any).tdtm?.tm7?.notes ?? []}
+    {@const front = panes.threats && panes.notes ? bottom : panes.notes ? "notes" : "threats"}
+    <section class="threatpane" class:tabbed={panes.threats && panes.notes}>
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="resizer" onpointerdown={resize} title="Drag to resize"></div>
+      {#if panes.threats && panes.notes}
+        <div class="panetabs" role="tablist" aria-label="Bottom panes">
+          <button role="tab" class:on={front === "threats"} aria-selected={front === "threats"} onclick={() => (bottom = "threats")}>Threat List</button>
+          <button role="tab" class:on={front === "notes"} aria-selected={front === "notes"} onclick={() => (bottom = "notes")}>Notes - {notes.length ? `${notes.length} ${notes.length === 1 ? "entry" : "entries"}` : "no entries"}</button>
+        </div>
+      {/if}
+      {#if front === "notes"}
+        <Notes {notes} onchange={setNotes} />
+      {:else}
       <ThreatList threats={analysis?.threats ?? []} selected={selectedThreat} onselect={selectThreat} onexport={() => exportAs("csv")} loading={engineState.status === "loading"} />
+      {/if}
     </section>
   {/if}
 
@@ -737,6 +770,10 @@
   .hint i { font-style: normal; font-weight: 600; color: var(--accent-text); }
 
   .threatpane { grid-area: threats; position: relative; min-height: 0; border-top: 1px solid var(--border-strong); }
+  .threatpane.tabbed { display: grid; grid-template-rows: 30px minmax(0, 1fr); }
+  .panetabs { display: flex; gap: 2px; padding: 0 var(--s-2); align-items: flex-end; background: var(--panel-2); border-bottom: 1px solid var(--border); }
+  .panetabs button { height: 26px; padding: 0 var(--s-3); border: 1px solid transparent; border-bottom: 0; border-radius: var(--r-1) var(--r-1) 0 0; background: none; color: var(--muted); font-size: var(--fs-small); }
+  .panetabs button.on { background: var(--panel); border-color: var(--border); color: var(--text); margin-bottom: -1px; height: 27px; }
   .resizer { position: absolute; left: 0; right: 0; top: -4px; height: 8px; z-index: 5; cursor: row-resize; }
   .resizer:hover { background: linear-gradient(transparent 3px, var(--accent) 3px, var(--accent) 5px, transparent 5px); }
 

@@ -209,13 +209,16 @@ def canonical(path_or_text):
     return ET.canonicalize(path_or_text)
 
 
-@pytest.mark.skipif(
-    not (PRIVATE / "mobile-banking.tm7").exists(), reason="private TMT model absent"
+@pytest.mark.parametrize(
+    "original",
+    sorted(PRIVATE.glob("*.tm7"))
+    or [pytest.param(None, marks=pytest.mark.skip("no private model"))],
+    ids=lambda p: p.stem if p else "none",
 )
-def test_export_reproduces_the_real_tmt_file_exactly(tmp_path):
+def test_export_reproduces_the_real_tmt_file_exactly(original, tmp_path):
     """Import a real TMT 7.3 file and export it again: canonical XML must be identical, including
-    the KnowledgeBase that export transcribes from default.tb7. Also after an analyze run."""
-    original = PRIVATE / "mobile-banking.tm7"
+    the KnowledgeBase that export transcribes from default.tb7. Also after an analyze run. Every
+    private model: an untouched one, and TMT's sample with triage and notes."""
     model, out = tmp_path / "mb.json", tmp_path / "mb.tm7"
     assert main(["import", str(original), "--out", str(model)]) == 0
     assert main(["export", str(model), "--out", str(out)]) == 0
@@ -325,6 +328,50 @@ def test_tmt_threat_id_0_shows_as_the_next_free_id(tmp_path):
     threats = [t for c in cells_of(raw).values() for t in c["data"].get("threats", [])]
     assert sorted(t["number"] for t in threats) == [2, 3] and raw["detail"]["threatTop"] == 3
     again, out = tmp_path / "zero.json", tmp_path / "out.tm7"
+    assert main(["import", str(source), "--out", str(again)]) == 0
+    assert main(["export", str(again), "--out", str(out)]) == 0
+    assert canonical(out) == canonical(source)
+
+
+def test_tmt_73_details_survive_import_and_export(tmp_path):
+    """As TMT 7.3 saves a model after triage (its own sample model): the justification in the
+    StateInformation property with the element nil, Notes, and ThreatGenerationEnabled false."""
+    model, first = tmp_path / "small.json", tmp_path / "first.tm7"
+    assert main(["import", str(SMALL), "--out", str(model)]) == 0
+    assert main(["export", str(model), "--out", str(first)]) == 0
+    text = first.read_text(encoding="utf-8")
+    element = "<b:StateInformation>Input is validated on the server.</b:StateInformation>"
+    start = text.rindex("<a:KeyValueOfstringThreatpc_P0_PhOB>", 0, text.index(element))
+    end = text.index("</a:KeyValueOfstringThreatpc_P0_PhOB>", start)
+    block = text[start:end].replace(element, '<b:StateInformation i:nil="true"/>')
+    block = re.sub(
+        r"(<a:Key>UserThreatDescription</a:Key>.*?</a:KeyValueOfstringstring>)",
+        r"\1<a:KeyValueOfstringstring><a:Key>StateInformation</a:Key>"
+        r"<a:Value>Input is validated on the server.</a:Value></a:KeyValueOfstringstring>",
+        block,
+        count=1,
+    )
+    notes = (
+        "<Notes><Note><AddedBy>CONTOSO\\student</AddedBy><Date>2026-10-13T23:04:21.4929103+00:00"
+        "</Date><Id>1</Id><Message>note one &amp; more</Message></Note></Notes>"
+    )
+    text = (text[:start] + block + text[end:]).replace("<Notes/>", notes)
+    text = text.replace(
+        "<ThreatGenerationEnabled>true</ThreatGenerationEnabled>",
+        "<ThreatGenerationEnabled>false</ThreatGenerationEnabled>",
+    )
+    source = tmp_path / "tmt73.tm7"
+    source.write_text(text, encoding="utf-8")
+
+    raw, _ = import_tm7(source)
+    threats = [t for c in cells_of(raw).values() for t in c["data"].get("threats", [])]
+    assert "Input is validated on the server." in {t["mitigation"] for t in threats}
+    assert raw["tdtm"]["tm7"]["notes"] == [
+        {"Id": "1", "Message": "note one & more", "Date": "2026-10-13T23:04:21.4929103+00:00",
+         "AddedBy": "CONTOSO\\student"}
+    ]  # fmt: skip
+    assert raw["tdtm"]["tm7"]["threatGenerationEnabled"] is False
+    again, out = tmp_path / "tmt73.json", tmp_path / "out.tm7"
     assert main(["import", str(source), "--out", str(again)]) == 0
     assert main(["export", str(again), "--out", str(out)]) == 0
     assert canonical(out) == canonical(source)
