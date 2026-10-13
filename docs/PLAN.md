@@ -78,5 +78,6 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
 
 - [x] **4.1 pytm pack** (SPEC 7.2) behind `--pack pytm`.
 - [x] **4.2 `.tm7` import** to Threat Dragon JSON (prior art: Part-IO/TMT2Cairis `TMTRead.py`).
-- [ ] **4.3 `.tm7` export** so Windows users can open models in TMT (strict DataContract XML).
+- [x] **4.3 `.tm7` export** so Windows users can open models in TMT (strict DataContract XML). *Done 2026-10-13:*
+  exact round trip on a real file; a human still has to open a Threat Dragon-drawn export in TMT.
 - [ ] **4.4 Azure template** support via `--template`.

@@ -120,6 +120,7 @@ uv run tdtm report model.json             # TMT-style HTML report
 uv run tdtm report model.json --out threats.csv  # TMT's own CSV export format
 uv run tdtm coverage                      # which rules need @tmt tags to fire
 uv run tdtm import model.tm7              # convert a TMT model, keeping TMT's threats and triage
+uv run tdtm export model.json             # write a TMT .tm7 you can open in TMT or hand in
 uv run tdtm open model.json               # all of the above, opened in Threat Dragon and kept updated
 uv run tdtm view model.json               # just the analysis view (TMT's threat grid) in the browser
 ```

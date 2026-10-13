@@ -90,8 +90,8 @@ def merge(
 
     def stamp(t: dict, key: str) -> None:
         m = {"key": key, "fingerprint": fingerprint(t), "version": __version__}
-        if sidecar is None:
-            t["tdtm"] = m
+        if sidecar is None:  # keep anything else under `tdtm`, e.g. what `tdtm import` kept
+            t["tdtm"] = {**(t.get("tdtm") if isinstance(t.get("tdtm"), dict) else {}), **m}
         else:
             sidecar[t["id"]] = m
 

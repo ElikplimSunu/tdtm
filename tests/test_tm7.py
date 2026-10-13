@@ -88,8 +88,11 @@ def test_analyze_after_import_keeps_tmt_work(tmp_path, capsys):
     # Checkout fires 12 rules (11 for actor -> process across a box, plus T13.1 for a web app
     # with input but not output sanitizing); Save order fires S7.1, I24 and D2.
     assert "13 added, 0 refreshed, 1 unchanged, 1 kept as you edited them" in summary
-    t1 = next(t for t in cells_of(json.loads(out.read_text()))[ID + "15"]["data"]["threats"]
-              if t["tdtm"]["key"].startswith("sdl:T1:"))  # fmt: skip
+    t1 = next(
+        t
+        for t in cells_of(json.loads(out.read_text()))[ID + "15"]["data"]["threats"]
+        if t["tdtm"]["key"].startswith("sdl:T1:")
+    )
     assert t1["mitigation"] == "Input is validated on the server."
 
 
@@ -190,3 +193,100 @@ def test_csv_parity_with_tmt_export(tmp_path):
     assert main(["report", str(model), "--out", str(out)]) == 0
     with out.open(newline="") as ours, (PRIVATE / "mobile-banking.csv").open(newline="") as theirs:
         assert sorted(csv.reader(ours)) == sorted(csv.reader(theirs))
+
+
+# --- export (PLAN 4.3) ---------------------------------------------------------------------
+
+
+def canonical(path_or_text):
+    import xml.etree.ElementTree as ET
+
+    if isinstance(path_or_text, Path):
+        return ET.canonicalize(from_file=str(path_or_text))
+    return ET.canonicalize(path_or_text)
+
+
+@pytest.mark.skipif(
+    not (PRIVATE / "mobile-banking.tm7").exists(), reason="private TMT model absent"
+)
+def test_export_reproduces_the_real_tmt_file_exactly(tmp_path):
+    """Import a real TMT 7.3 file and export it again: canonical XML must be identical, including
+    the KnowledgeBase that export transcribes from default.tb7. Also after an analyze run."""
+    original = PRIVATE / "mobile-banking.tm7"
+    model, out = tmp_path / "mb.json", tmp_path / "mb.tm7"
+    assert main(["import", str(original), "--out", str(model)]) == 0
+    assert main(["export", str(model), "--out", str(out)]) == 0
+    assert canonical(out) == canonical(original)
+    assert main(["analyze", str(model)]) == 0
+    assert main(["export", str(model), "--out", str(out), "--force"]) == 0
+    assert canonical(out) == canonical(original)
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        Path(__file__).parent.parent / "examples" / "online-shop.json",
+        FIXTURES / "golden" / "4-tags.json",
+        FIXTURES / "golden" / "2-actor-process-curve.json",
+    ],
+    ids=lambda p: p.stem,
+)
+def test_export_then_import_keeps_the_model(source, tmp_path):
+    model, tm7, back = tmp_path / "m.json", tmp_path / "m.tm7", tmp_path / "back.json"
+    shutil.copy(source, model)
+    assert main(["analyze", str(model)]) == 0
+    assert main(["export", str(model), "--out", str(tm7)]) == 0
+    canonical(tm7)  # well-formed XML
+    assert main(["import", str(tm7), "--out", str(back)]) == 0
+
+    from tdtm.resolve import resolve
+    from tdtm.rules.tb7 import load_template
+    from tdtm.td_adapter import load
+
+    t = load_template()
+    (before, _), (after, _) = load(model), load(back)
+    assert resolve(before, t) == [] and resolve(after, t) == []
+
+    def summary(m):
+        out = []
+        for d in m.diagrams:
+            for e in d.elements.values():
+                if e.kind.value == "boundary_curve":
+                    continue  # line boundaries: export format unverified, see SPEC 14
+                threats = sorted(x.tdtm_key.split(":")[1] for x in e.threats if x.tdtm_key)
+                out.append(
+                    (
+                        e.kind.value,
+                        e.name,
+                        e.stencil,
+                        e.out_of_scope,
+                        tuple(sorted(e.attributes.items())),
+                        tuple(threats),
+                    )
+                )
+        return sorted(out)
+
+    assert summary(after) == summary(before)
+
+
+def test_export_splits_bidirectional_flows(tmp_path):
+    raw = json.loads((FIXTURES / "golden" / "2-actor-process-curve.json").read_text())
+    for c in raw["detail"]["diagrams"][0]["cells"]:
+        if c["id"] == "request":
+            c["data"]["isBidirectional"] = True
+    model, tm7 = tmp_path / "m.json", tmp_path / "m.tm7"
+    model.write_text(json.dumps(raw))
+    assert main(["analyze", str(model)]) == 0
+    assert main(["export", str(model), "--out", str(tm7)]) == 0
+    text = tm7.read_text()
+    assert text.count('i:type="Connector"') == 4  # 3 flows, one of them both ways
+    # every generated threat on the two-way flow lands on one of its two connectors
+    assert text.count("<b:TypeId>") == 11 + 3 + 10 + 3
+
+
+def test_export_refuses_to_overwrite(tmp_path, capsys):
+    model, out = tmp_path / "m.json", tmp_path / "m.tm7"
+    shutil.copy(FIXTURES / "golden" / "1-webapp-db-box.json", model)
+    out.write_text("keep me")
+    assert main(["export", str(model), "--out", str(out)]) == 2
+    assert out.read_text() == "keep me" and "exists" in capsys.readouterr().err

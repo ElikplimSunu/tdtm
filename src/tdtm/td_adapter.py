@@ -75,7 +75,11 @@ def _element(cell: dict, diagram_id, kind: Kind, warn) -> Element | None:
 
 
 def load(path: str | Path) -> tuple[Model, Document]:
-    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    return load_raw(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+def load_raw(raw: dict) -> tuple[Model, Document]:
+    """Like `load`, for JSON already in memory. The Document wraps `raw` itself, not a copy."""
     doc = Document(raw=raw)
     summary, detail = raw.get("summary", {}), raw.get("detail", {})
     model = Model(

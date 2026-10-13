@@ -542,3 +542,34 @@ page edits on its next save.
 Safety: `ThreadingHTTPServer` bound to 127.0.0.1, any Host header other than its own address is
 refused (DNS rebinding), GET only, model text reaches the DOM through `textContent` only; the one
 `innerHTML` is the server-rendered SVG, in which `diagram.py` escapes every name.
+
+## 14. `.tm7` export
+
+`tdtm export MODEL.json [--out MODEL.tm7] [--force] [--template PATH]` writes a TMT file. TMT reads
+`.tm7` with .NET's DataContractSerializer, which is strict about element names, order and
+namespaces, so `tm7_export.py` writes the exact text shape of a real TMT 7.3 file (section 11),
+including `z:Id` numbering and per-element namespace declarations.
+
+- **KnowledgeBase**: transcribed from the `.tb7` at export time. Rules found by diffing against a
+  real file: fields in alphabetical order with `IsExtension false` first; `ID`/`ParentElement`/
+  `Image` become `Id`/`ParentId`/`ImageSource`; `Behavior`, `Shape`, `ImageStream` are always nil;
+  `AvailableToBaseModels` empty; one `StencilConstraint` (Any/Any) per element; attribute `Id`,
+  `IsInherited`, `IsOverrided` and metadatum `Description` dropped; `Include`/`Exclude` swapped;
+  `ThreatMetaData` children in the default (Model) namespace; a field the `.tb7` lacks is written
+  nil, an empty one empty; metadatum `Values` become `b:string` items (nil, empty or text).
+- **Elements**: properties are rebuilt from the template and the element's resolved stencil and
+  attributes (tags and Threat Dragon properties), `SelectedIndex` = position of the effective value.
+  A standard stencil gets "Predefined Static Attributes", then "Configurable Attributes", then
+  "As <generic name>" with the generic's dynamic attributes.
+- **TMT-only details** kept by `tdtm import` under `tdtm.tm7` (model, cell and threat level) are
+  written back: diagram GUID and zoom, flow anchor points, ports and handle, threat order,
+  ModifiedAt, ChangedBy. Without them they are derived: anchors where the flow meets the shape,
+  ports from the side, handle from the middle vertex or midpoint, `0001-01-01` timestamps.
+- Non-GUID cell ids get deterministic UUIDv5 GUIDs. A bidirectional flow becomes two connectors
+  (TMT has none). Only STRIDE diagrams are exported. Threats without an `sdl` key (written by
+  people in Threat Dragon) and `[stale]` threats are left out with a warning.
+
+[confirmed] Import then export of a real TMT 7.3 model gives canonically identical XML (845,896
+characters), also after an `analyze` run (`test_export_reproduces_the_real_tmt_file_exactly`).
+**[unverified]**: TMT opening a model drawn in Threat Dragon and exported; line boundaries
+(`LineBoundary`); where a stencil's own dynamic attributes go in its property list.

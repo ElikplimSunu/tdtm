@@ -425,6 +425,24 @@ def cmd_open(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_export(args: argparse.Namespace) -> int:
+    from .tm7_export import export_tm7
+
+    out = Path(args.out or Path(args.model).with_suffix(".tm7"))
+    if out.exists() and not args.force:
+        raise UsageError(f"{out} exists; pass --out elsewhere or --force to overwrite it")
+    try:
+        raw = json.loads(Path(args.model).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise UsageError(f"cannot read model {args.model}: {e}") from e
+    xml, warnings = export_tm7(raw, args.template)
+    for w in warnings:
+        print(f"warning: {w}", file=sys.stderr)
+    out.write_text(xml, encoding="utf-8")
+    print(f"wrote {out}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="tdtm", description="TMT-style threat generation for OWASP Threat Dragon models."
@@ -495,6 +513,13 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_argument("--out", help="where to write (default: same name with .json)")
     m.add_argument("--force", action="store_true", help="overwrite --out if it exists")
     m.set_defaults(func=cmd_import)
+
+    x = sub.add_parser("export", help="write a Threat Dragon model as a Microsoft TMT .tm7 file")
+    x.add_argument("model")
+    x.add_argument("--out", help="where to write (default: same name with .tm7)")
+    x.add_argument("--force", action="store_true", help="overwrite --out if it exists")
+    x.add_argument("--template", help="path to a .tb7 template (default: SDL TM Knowledge Base)")
+    x.set_defaults(func=cmd_export)
 
     c = sub.add_parser("coverage", help="which template rules can fire from TD properties alone")
     c.add_argument("--template")
