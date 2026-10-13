@@ -66,7 +66,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
 
 - [x] **3.1 `tdtm stencils` and `tdtm coverage`.**
 - [x] **3.2 `tdtm report`** HTML (SPEC 9).
-- [ ] **3.3 `tdtm analyze --watch`**: re-run when the model file changes (stdlib polling, no deps).
+- [x] **3.3 `tdtm analyze --watch`**: re-run when the model file changes (stdlib polling, no deps).
 - [ ] **3.4 [manual, optional: needs Windows] TMT parity test.** Someone on Windows draws `tests/fixtures/golden/*`
   in TMT 7.3 with SDL TM Knowledge Base, generates the report, and the reports go into
   `tests/fixtures/parity/`. Write a test diffing per-interaction threat IDs. Fix differences or

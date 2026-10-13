@@ -72,6 +72,13 @@ uv run tdtm coverage                      # which rules need @tmt tags to fire
 Re-running is safe: threats you edited in Threat Dragon keep your changes, and threats whose rule no
 longer fires are marked `[stale]` rather than deleted. Only STRIDE diagrams get threats.
 
+### Working alongside Threat Dragon
+
+Threat Dragon does not notice when a file changes on disk. After tdtm writes the model, close and
+reopen it in Threat Dragon before you triage, otherwise Threat Dragon's next save overwrites the
+new threats with its older copy. `tdtm analyze model.json --watch` re-runs every time you save, so
+the loop is: draw, save, reopen, triage.
+
 ### Telling tdtm what an element really is
 
 Threat Dragon has five generic shapes. TMT has 52 specific stencils, each with attributes the rules

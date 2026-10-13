@@ -143,3 +143,36 @@ def test_coverage(capsys):
     assert "I25 " in rest and "Machine Trust Boundary" in rest
     assert "T6 " in rest and "tag attributes so that" in rest  # authenticated, unencrypted flow
     assert "SU " not in td_alone and "Legacy" in out
+
+
+def test_watch_reruns_on_change_but_not_on_its_own_write(tmp_path):
+    from tdtm.cli import watch
+
+    path = tmp_path / "m.json"
+    path.write_text("{}")
+    runs = []
+
+    def run():  # like analyze: rewrites the file it watches
+        runs.append(path.read_text())
+        path.write_text(path.read_text() + " ")
+
+    def sleep(_):
+        if len(sleeps) == 2:  # the user saves in Threat Dragon
+            path.write_text('{"edited": 1}')
+        sleeps.append(1)
+
+    sleeps = []
+    watch(path, run, interval=0, sleep=sleep, ticks=5)
+    assert runs == ["{}", '{"edited": 1}']
+
+
+def test_watch_flag_runs_analyze_until_interrupted(model_copy, monkeypatch, capsys):
+    import tdtm.cli as cli
+
+    def stop(*_a, **_k):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(cli.time, "sleep", stop)
+    assert main(["analyze", str(model_copy), "--watch"]) == 0
+    out = capsys.readouterr().out
+    assert "24 added" in out and "watching" in out

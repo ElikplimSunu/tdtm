@@ -7,6 +7,7 @@ import json
 import re
 import shutil
 import sys
+import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -80,7 +81,49 @@ def _where(cid: str, model: Model, doc) -> str:
     return f"cell {name or cid[:8]!r}"
 
 
+def _stamp(path: Path) -> tuple[int, int] | None:
+    try:
+        st = path.stat()
+    except FileNotFoundError:
+        return None  # mid-save: some editors replace the file
+    return st.st_mtime_ns, st.st_size
+
+
+def watch(path: Path, run, *, interval: float = 1.0, sleep=None, ticks: int | None = None):
+    """Call `run` now and whenever `path` changes. `run`'s own write does not count as a change."""
+    # ponytail: stdlib polling once a second; fine for one file, no watcher dependency needed
+    sleep = sleep or time.sleep  # looked up per call so tests can patch it
+    run()
+    last = _stamp(path)
+    n = 0
+    while ticks is None or n < ticks:
+        sleep(interval)
+        n += 1
+        now = _stamp(path)
+        if now is not None and now != last:
+            run()
+            last = _stamp(path)
+
+
 def cmd_analyze(args: argparse.Namespace) -> int:
+    if not args.watch:
+        return _analyze_once(args)
+
+    def run():
+        try:
+            _analyze_once(args)
+        except UsageError as e:  # e.g. half-written file: report and keep watching
+            print(f"tdtm: {e}", file=sys.stderr)
+
+    print(f"watching {args.model}; press Ctrl-C to stop")
+    try:
+        watch(Path(args.model), run)
+    except KeyboardInterrupt:
+        print("stopped")
+    return 0
+
+
+def _analyze_once(args: argparse.Namespace) -> int:
     from .merge import merge
     from .rules.engine import run_sdl
 
@@ -250,6 +293,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="track generated threats in MODEL.tdtm.json instead of inside the model",
     )
     a.add_argument("--strict", action="store_true", help="exit with code 3 on @tmt tag errors")
+    a.add_argument("--watch", action="store_true", help="re-run whenever MODEL changes")
     a.set_defaults(func=cmd_analyze)
 
     i = sub.add_parser("inspect", help="show resolved stencils, attributes, zones and crossings")

@@ -404,7 +404,10 @@ membership, so its crossing rules follow from `inBoundary` on each end.
 ```
 tdtm analyze MODEL [--pack sdl|pytm|all] [--template PATH] [--dry-run] [--prune]
                    [--include-legacy] [--out PATH]   # default: overwrite MODEL after writing MODEL.bak
-tdtm inspect MODEL        # elements, resolved stencils/attributes, zones, crossings (debug view)
+                   [--sidecar]   # tracking data in MODEL.tdtm.json instead of in the threats (6.3)
+                   [--strict]    # exit 3 on @tmt tag errors, write nothing
+                   [--watch]     # re-run whenever MODEL changes (polls once a second)
+tdtm inspect MODEL [--template PATH]   # elements, stencils/attributes, zones, crossings
 tdtm stencils [--kind process|store|...]   # valid @tmt stencils and attributes with allowed values
 tdtm report MODEL [--out report.html]       # TMT-style HTML report from what is in the model
 tdtm coverage [--template PATH]             # which rules can fire from TD props alone vs need tags
