@@ -1,4 +1,4 @@
-"""Set the version of tdtm and ThreatSketch everywhere it is written, and date the changelog.
+"""Set the version of the app and the command everywhere it is written, and date the changelog.
 
 Usage: uv run python scripts/bump.py 0.3.1
 
@@ -30,7 +30,9 @@ def sub(path: Path, pattern: str, repl: str) -> None:
 def main(version: str) -> None:
     if not SEMVER.match(version):
         sys.exit(f"bump: {version!r} is not a semantic version like 1.2.3")
-    sub(ROOT / "src/tdtm/__init__.py", r'^__version__ = ".*"$', f'__version__ = "{version}"')
+    sub(
+        ROOT / "src/threatsketch/__init__.py", r'^__version__ = ".*"$', f'__version__ = "{version}"'
+    )
     sub(ROOT / "app/src-tauri/Cargo.toml", r'^version = ".*"$', f'version = "{version}"')
     lock = ROOT / "app/src-tauri/Cargo.lock"
     if lock.exists():

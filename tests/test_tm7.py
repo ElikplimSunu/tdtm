@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from tdtm.cli import main
-from tdtm.tm7 import Tm7Error, import_tm7
+from threatsketch.cli import main
+from threatsketch.tm7 import Tm7Error, import_tm7
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SMALL = FIXTURES / "tm7" / "small.tm7"
@@ -84,7 +84,7 @@ def test_analyze_after_import_keeps_tmt_work(tmp_path, capsys):
     assert main(["import", str(SMALL), "--out", str(out)]) == 0
     assert main(["analyze", str(out)]) == 0
     summary = capsys.readouterr().out
-    # S3 is untouched TMT output: tdtm generates the same threat. T1 was triaged in TMT: kept.
+    # S3 is untouched TMT output: we generate the same threat. T1 was triaged in TMT: kept.
     # Checkout fires 12 rules (11 for actor -> process across a box, plus T13.1 for a web app
     # with input but not output sanitizing); Save order fires S7.1, I24 and D2.
     assert "13 added, 0 refreshed, 1 unchanged, 1 kept as you edited them" in summary
@@ -119,7 +119,7 @@ def test_import_rejects_doctype(tmp_path):
 )
 def test_parity_with_real_tmt_output(tmp_path, capsys):
     """PLAN 3.4. A real model drawn in TMT 7.3 with the SDL template: 7 elements, a boundary box,
-    12 flows, 54 generated threats, all untouched. tdtm must generate exactly the same threats."""
+    12 flows, 54 generated threats, all untouched. We must generate exactly the same threats."""
     path = tmp_path / "mb.json"
     assert main(["import", str(PRIVATE / "mobile-banking.tm7"), "--out", str(path)]) == 0
     assert main(["analyze", str(path)]) == 0
@@ -239,9 +239,9 @@ def test_export_then_import_keeps_the_model(source, tmp_path):
     canonical(tm7)  # well-formed XML
     assert main(["import", str(tm7), "--out", str(back)]) == 0
 
-    from tdtm.resolve import resolve
-    from tdtm.rules.tb7 import load_template
-    from tdtm.td_adapter import load
+    from threatsketch.resolve import resolve
+    from threatsketch.rules.tb7 import load_template
+    from threatsketch.td_adapter import load
 
     t = load_template()
     (before, _), (after, _) = load(model), load(back)

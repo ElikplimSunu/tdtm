@@ -1,7 +1,7 @@
 """Facts about the external formats that the design in docs/SPEC.md depends on.
 
 If one of these fails after updating a fixture or template, SPEC.md is out of date: fix SPEC first.
-These read the raw files directly and do not use tdtm code.
+These read the raw files directly and do not use threatsketch code.
 """
 
 import json
@@ -11,7 +11,7 @@ from collections import Counter
 
 import pytest
 
-from tdtm import DEFAULT_TEMPLATE
+from threatsketch import DEFAULT_TEMPLATE
 
 from .conftest import TD_MODELS
 

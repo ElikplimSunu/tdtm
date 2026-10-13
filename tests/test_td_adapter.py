@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from tdtm.model import Kind, Point, Rect
-from tdtm.td_adapter import load, save
+from threatsketch.model import Kind, Point, Rect
+from threatsketch.td_adapter import load, save
 
 from .conftest import TD_MODELS
 

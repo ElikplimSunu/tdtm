@@ -2,9 +2,9 @@
 
 `merge(doc, generated, *, packs=("sdl",), prune=False, sidecar=None) -> MergeSummary`
 
-- A threat is tdtm-owned when it carries a `tdtm` key (inline mode) or its id is in `sidecar`
+- A threat is ours when it carries a `tdtm` key (inline mode) or its id is in `sidecar`
   (sidecar mode, SPEC 6.3: pass the dict, save it beside the model). A threat with neither is
-  human-written and never touched, unless its id is one tdtm would have generated: then it is
+  human-written and never touched, unless its id is one we would have generated: then it is
   ours with the key stripped, kept as if edited so re-runs never duplicate it.
 - An owned threat whose fields no longer match its fingerprint was edited by a human: never
   overwritten, never marked stale, never pruned.
@@ -90,7 +90,7 @@ def merge(
 
     def stamp(t: dict, key: str) -> None:
         m = {"key": key, "fingerprint": fingerprint(t), "version": __version__}
-        if sidecar is None:  # keep anything else under `tdtm`, e.g. what `tdtm import` kept
+        if sidecar is None:  # keep anything else under `tdtm`, e.g. what `threatsketch import` kept
             t["tdtm"] = {**(t.get("tdtm") if isinstance(t.get("tdtm"), dict) else {}), **m}
         else:
             sidecar[t["id"]] = m

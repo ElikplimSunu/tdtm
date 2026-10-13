@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from tdtm.resolve import resolve
-from tdtm.rules.engine import run_sdl
-from tdtm.rules.tb7 import load_template
-from tdtm.td_adapter import load
+from threatsketch.resolve import resolve
+from threatsketch.rules.engine import run_sdl
+from threatsketch.rules.tb7 import load_template
+from threatsketch.td_adapter import load
 
 FIXTURES = Path(__file__).parent / "fixtures"
 GOLDEN = sorted(  # private/ is gitignored: models from coursework, run only where present

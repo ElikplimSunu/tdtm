@@ -1,9 +1,9 @@
 import pytest
 
-from tdtm.model import Element, Kind
-from tdtm.resolve import _resolve_element
-from tdtm.rules.filters import Context, FilterSyntaxError, evaluate, parse
-from tdtm.rules.tb7 import load_template
+from threatsketch.model import Element, Kind
+from threatsketch.resolve import _resolve_element
+from threatsketch.rules.filters import Context, FilterSyntaxError, evaluate, parse
+from threatsketch.rules.tb7 import load_template
 
 
 @pytest.fixture(scope="module")

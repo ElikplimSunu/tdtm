@@ -21,12 +21,12 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-/** What the tdtm CLI writes for `model` (a path), as parsed JSON. */
+/** What the threatsketch CLI writes for `model` (a path), as parsed JSON. */
 function cliAnalyze(model: string) {
   const dir = mkdtempSync(join(tmpdir(), "threatsketch-"));
   const copy = join(dir, "model.json");
   copyFileSync(model, copy);
-  execFileSync("uv", ["run", "--project", REPO, "tdtm", "analyze", copy], { stdio: "pipe" });
+  execFileSync("uv", ["run", "--project", REPO, "threatsketch", "analyze", copy], { stdio: "pipe" });
   return JSON.parse(readFileSync(copy, "utf8"));
 }
 
@@ -45,7 +45,7 @@ async function download(page: Page, click: () => Promise<void>) {
 
 async function newModel(page: Page) {
   await page.goto("./");
-  await expect(page.getByTestId("engine-status")).toContainText("tdtm", { timeout: 30_000 });
+  await expect(page.getByTestId("engine-status")).toContainText("Knowledge Base", { timeout: 30_000 });
   await page.getByRole("button", { name: "New threat model" }).click();
   await expect(page.locator(".canvas svg").first()).toBeVisible();
 }
@@ -67,7 +67,7 @@ test("opens the example: TMT's 38 threats, drawn TMT-style", async ({ page }) =>
   await expect(page.locator('g[data-cell-id="webapp"] circle').first()).toHaveAttribute("stroke", "#1f2328");
 });
 
-test("saving writes exactly what the tdtm CLI writes", async ({ page }) => {
+test("saving writes exactly what the threatsketch CLI writes", async ({ page }) => {
   await openExample(page);
   const saved = await download(page, () => page.getByRole("button", { name: "Save" }).click());
   expect(saved.name).toBe("online-shop.json");
@@ -172,12 +172,12 @@ test("delete and undo", async ({ page }) => {
 
 test("import a TMT .tm7, then export .tm7, report and CSV", async ({ page }) => {
   await page.goto("./");
-  await expect(page.getByTestId("engine-status")).toContainText("tdtm", { timeout: 30_000 });
+  await expect(page.getByTestId("engine-status")).toContainText("Knowledge Base", { timeout: 30_000 });
   const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.getByRole("button", { name: /Open a file/ }).click()]);
   await chooser.setFiles(SMALL_TM7);
   await expect(page.getByTestId("threat-row").first()).toBeVisible();
   const expected = JSON.parse(execFileSync("uv", ["run", "--project", REPO, "python", "-c",
-    `import json,sys; from tdtm.tm7 import import_tm7; from tdtm import api; print(json.dumps(len(api.analyze(import_tm7(sys.argv[1])[0])["threats"])))`, SMALL_TM7]).toString());
+    `import json,sys; from threatsketch.tm7 import import_tm7; from threatsketch import api; print(json.dumps(len(api.analyze(import_tm7(sys.argv[1])[0])["threats"])))`, SMALL_TM7]).toString());
   await expect(page.getByTestId("threat-row")).toHaveCount(expected);
 
   await page.getByRole("button", { name: "Export" }).click();
@@ -221,7 +221,7 @@ test("multiple diagrams: add, rename, switch", async ({ page }) => {
 test("private: the Mobile Banking model from real TMT gives TMT's 54 threats", async ({ page }) => {
   test.skip(!existsSync(PRIVATE_TM7), "coursework model not on this machine");
   await page.goto("./");
-  await expect(page.getByTestId("engine-status")).toContainText("tdtm", { timeout: 30_000 });
+  await expect(page.getByTestId("engine-status")).toContainText("Knowledge Base", { timeout: 30_000 });
   const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.getByRole("button", { name: /Open a file/ }).click()]);
   await chooser.setFiles(PRIVATE_TM7);
   await expect(page.getByTestId("threat-count")).toHaveText("54 threats");
@@ -229,7 +229,7 @@ test("private: the Mobile Banking model from real TMT gives TMT's 54 threats", a
 
 test("works offline after the first visit", async ({ page, context }) => {
   await page.goto("./");
-  await expect(page.getByTestId("engine-status")).toContainText("tdtm");
+  await expect(page.getByTestId("engine-status")).toContainText("Knowledge Base");
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 30_000 }).catch(() => page.reload());
   await page.evaluate(async () => {
@@ -239,7 +239,7 @@ test("works offline after the first visit", async ({ page, context }) => {
   });
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByTestId("engine-status")).toContainText("tdtm");
+  await expect(page.getByTestId("engine-status")).toContainText("Knowledge Base");
   await page.getByRole("button", { name: /explore an example/ }).click();
   await expect(page.getByTestId("threat-count")).toHaveText("38 threats");
 });

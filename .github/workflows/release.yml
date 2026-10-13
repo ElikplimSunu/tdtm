@@ -25,7 +25,7 @@ jobs:
       - run: uv sync --locked
       - name: Tag matches the version in the code
         if: env.RELEASE == 'true'
-        run: test "v$(uv run python -c 'import tdtm; print(tdtm.__version__)')" = "$GITHUB_REF_NAME"
+        run: test "v$(uv run python -c 'import threatsketch; print(threatsketch.__version__)')" = "$GITHUB_REF_NAME"
       - run: uv run pytest -q
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm, cache-dependency-path: app/package-lock.json }
@@ -69,7 +69,7 @@ jobs:
           projectPath: app
           args: ${{ matrix.args }}
           tagName: ${{ env.RELEASE == 'true' && github.ref_name || '' }}
-          releaseName: ThreatSketch and tdtm ${{ github.ref_name }}
+          releaseName: ThreatSketch ${{ github.ref_name }}
           releaseBody: See CHANGELOG.md. The full notes are added when the release is published.
           releaseDraft: true
           includeUpdaterJson: true

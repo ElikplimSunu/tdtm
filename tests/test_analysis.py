@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from tdtm.analysis import serve, snapshot
-from tdtm.cli import main
-from tdtm.rules.tb7 import load_template
+from threatsketch.analysis import serve, snapshot
+from threatsketch.cli import main
+from threatsketch.rules.tb7 import load_template
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -88,7 +88,7 @@ def test_snapshot_follows_file_changes(analyzed):
 
 
 def test_view_command(analyzed, monkeypatch, capsys):
-    import tdtm.cli as cli
+    import threatsketch.cli as cli
 
     opened = []
     monkeypatch.setattr(cli.webbrowser, "open", opened.append)
@@ -104,7 +104,7 @@ def test_view_command(analyzed, monkeypatch, capsys):
 
 
 def test_open_starts_the_analysis_view(analyzed, monkeypatch, capsys):
-    import tdtm.cli as cli
+    import threatsketch.cli as cli
 
     monkeypatch.setattr(cli.webbrowser, "open", lambda _url: None)
 

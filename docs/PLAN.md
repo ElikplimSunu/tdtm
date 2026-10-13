@@ -38,7 +38,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
   a curve, and the real `v2-threat-model.json` (3 curves) gives crossings a human agrees with.
   Record that human check in the test docstring.
 - [x] **1.5 Resolve effective stencil + attributes per element** (SPEC 3.5 precedence, 4.1, 4.2).
-- [x] **1.6 `tdtm inspect`.** Prints each element: kind, stencil, effective attributes (marking
+- [x] **1.6 `threatsketch inspect`.** Prints each element: kind, stencil, effective attributes (marking
   source: tag/TD/static/default), zone; each flow: source → target, crossed boundaries.
 
 ## Phase 2: SDL rule pack (the main feature)
@@ -56,17 +56,17 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
   *Done when:* running twice changes nothing; editing a generated threat's mitigation then
   re-running keeps the edit; deleting a tag makes threats `[stale]`; `--prune` removes unedited
   stale ones; `hasOpenThreats` is correct; output validates against the v2 schema.
-- [x] **2.5 `tdtm analyze`** wired end to end, with `--dry-run` printing a diff summary and a
+- [x] **2.5 `threatsketch analyze`** wired end to end, with `--dry-run` printing a diff summary and a
   `.bak` written before overwriting.
-- [ ] **2.6 [manual] Smoke test in Threat Dragon.** Human: run `tdtm analyze` on a model drawn in
+- [ ] **2.6 [manual] Smoke test in Threat Dragon.** Human: run `threatsketch analyze` on a model drawn in
   Threat Dragon, reopen it, confirm threats appear on flows and elements turn red. Screenshot to
   `docs/img/`.
 
 ## Phase 3: Make it pleasant
 
-- [x] **3.1 `tdtm stencils` and `tdtm coverage`.**
-- [x] **3.2 `tdtm report`** HTML (SPEC 9).
-- [x] **3.3 `tdtm analyze --watch`**: re-run when the model file changes (stdlib polling, no deps).
+- [x] **3.1 `threatsketch stencils` and `threatsketch coverage`.**
+- [x] **3.2 `threatsketch report`** HTML (SPEC 9).
+- [x] **3.3 `threatsketch analyze --watch`**: re-run when the model file changes (stdlib polling, no deps).
 - [ ] **3.4 [manual, optional: needs Windows] TMT parity test.** *Partly done 2026-10-13:* a
   real TMT 7.3 model (private, gitignored) imports and gives exactly TMT's 54 threats; see SPEC
   10. Still open for the golden models, which cover curves, tags and encryption. Someone on Windows draws `tests/fixtures/golden/*`
@@ -88,7 +88,7 @@ Decided 2026-10-13: one TMT-like app instead of Threat Dragon plus the CLI. A ne
 of Threat Dragon (its Electron + vue-cli + Vue compat stack cannot be made light or smooth).
 Microsoft TMT is the visual standard; connecting works like Figma or Lucidchart.
 
-- [x] **5.1 Engine API** `src/tdtm/api.py`: plain dicts in and out; tests show it equals the CLI.
+- [x] **5.1 Engine API** `src/threatsketch/api.py`: plain dicts in and out; tests show it equals the CLI.
 - [x] **5.2 Engine in the browser**: Pyodide in a Web Worker, wheel built from this repo.
 - [x] **5.3 Canvas** (AntV X6 2.x) that opens Threat Dragon files and saves them unchanged, drawn
   in TMT's style; + handles to connect; stencil palette, properties, threat list, triage.

@@ -1,4 +1,4 @@
-"""`tdtm` command line. SPEC section 8."""
+"""`threatsketch` command line. SPEC section 8."""
 
 from __future__ import annotations
 
@@ -115,7 +115,7 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         try:
             _analyze_once(args)
         except UsageError as e:  # e.g. half-written file: report and keep watching
-            print(f"tdtm: {e}", file=sys.stderr)
+            print(f"threatsketch: {e}", file=sys.stderr)
 
     print(f"watching {args.model}; press Ctrl-C to stop")
     try:
@@ -133,7 +133,8 @@ def _analyze_once(args: argparse.Namespace) -> int:
     if errors and args.strict:
         _report_problems(model, errors)
         print(
-            "tdtm: tag errors; nothing written (drop --strict to continue anyway)", file=sys.stderr
+            "threatsketch: tag errors; nothing written (drop --strict to continue anyway)",
+            file=sys.stderr,
         )
         return 3
 
@@ -386,7 +387,7 @@ def cmd_open(args: argparse.Namespace) -> int:
             _analyze_once(analyze)
             _write_reports(model, args)
         except UsageError as e:  # e.g. caught Threat Dragon mid-save: say so, keep watching
-            print(f"tdtm: {e}", file=sys.stderr)
+            print(f"threatsketch: {e}", file=sys.stderr)
             return
         wrote = _stamp(model) != before
         if first:
@@ -395,7 +396,7 @@ def cmd_open(args: argparse.Namespace) -> int:
                 open_in_threat_dragon(model)
             if not args.no_view:
                 servers.append(_start_view(model, args, browser=not args.no_launch))
-            print(f"watching {model}: save in Threat Dragon and tdtm updates the threats")
+            print(f"watching {model}: save in Threat Dragon and threatsketch updates the threats")
             print("press Ctrl-C to stop")
         elif wrote and args.reload:
             open_in_threat_dragon(model)
@@ -433,9 +434,10 @@ def cmd_export(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="tdtm", description="TMT-style threat generation for OWASP Threat Dragon models."
+        prog="threatsketch",
+        description="TMT-style threat generation for OWASP Threat Dragon models.",
     )
-    p.add_argument("--version", action="version", version=f"tdtm {__version__}")
+    p.add_argument("--version", action="version", version=f"threatsketch {__version__}")
     sub = p.add_subparsers(dest="command", required=True)
 
     a = sub.add_parser("analyze", help="generate threats and merge them into the model")
@@ -520,7 +522,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return args.func(args)
     except UsageError as e:
-        print(f"tdtm: {e}", file=sys.stderr)
+        print(f"threatsketch: {e}", file=sys.stderr)
         return 2
 
 

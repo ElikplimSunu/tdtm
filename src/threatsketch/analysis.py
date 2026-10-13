@@ -128,7 +128,7 @@ def serve(
                 status, reply = 503, {"error": "model not readable right now"}
             self._send(status, "application/json", json.dumps(reply).encode())
 
-        def log_message(self, *_args) -> None:  # keep the terminal for tdtm's own messages
+        def log_message(self, *_args) -> None:  # keep the terminal for threatsketch's own messages
             pass
 
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)

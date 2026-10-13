@@ -26,7 +26,7 @@ from .rules.tb7 import load_template
 from .tags import TAG_LINE
 from .td_adapter import load_raw
 
-STATES = {  # TMT state -> (Threat Dragon status, tmtState kept under the threat's tdtm key)
+STATES = {  # TMT state -> (Threat Dragon status, tmtState kept under the threat's threatsketch key)
     "Not Started": ("Open", ""),
     "Needs Investigation": ("Open", "Needs Investigation"),
     "Not Applicable": ("NotApplicable", ""),
@@ -210,7 +210,7 @@ def _threats(raw: dict):
 
 
 def set_threat(raw: dict, key: str, state: str, priority: str, justification: str) -> dict:
-    """Set TMT state, priority and justification on the threat with this tdtm key or id."""
+    """Set TMT state, priority and justification on the threat with this threatsketch key or id."""
     if state not in STATES or priority not in PRIORITIES or not isinstance(justification, str):
         raise ValueError("bad state, priority or justification")
     found = [

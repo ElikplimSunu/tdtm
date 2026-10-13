@@ -3,7 +3,7 @@
 `run_pytm(model) -> list[GeneratedThreat]`.
 
 pytm is imported lazily so the core works without the extra installed. pytm evaluates its threat
-conditions with `eval`; tdtm only ever lets it load its own bundled threat library, never a file
+conditions with `eval`; we only ever let it load its own bundled threat library, never a file
 from the user (CLAUDE.md rule 1).
 
 Mapping (SPEC 7.2): actor -> Actor, process -> Process (Server if `isWebApplication`), store ->
@@ -16,7 +16,7 @@ import re
 
 from ..model import GeneratedThreat, Kind, Model
 
-# pytm's library has no STRIDE field; this is tdtm's reading of each SID prefix (SPEC 7.2).
+# pytm's library has no STRIDE field; this is threatsketch's reading of each SID prefix (SPEC 7.2).
 CATEGORY_BY_PREFIX = {
     "INP": "T",  # input validation and injection
     "SC": "T",  # script injection, XSS

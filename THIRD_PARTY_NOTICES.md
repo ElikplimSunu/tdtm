@@ -2,9 +2,9 @@
 
 ## Microsoft Threat Modeling Templates
 
-`src/tdtm/data/templates/default.tb7` comes from https://github.com/microsoft/threat-modeling-templates
+`src/threatsketch/data/templates/default.tb7` comes from https://github.com/microsoft/threat-modeling-templates
 and is used under the MIT License. Copyright (c) Microsoft Corporation. The full licence text is in
-`src/tdtm/data/templates/LICENSE-microsoft-templates`.
+`src/threatsketch/data/templates/LICENSE-microsoft-templates`.
 
 ## OWASP Threat Dragon
 

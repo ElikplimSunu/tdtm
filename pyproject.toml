@@ -25,8 +25,8 @@ Issues = "https://github.com/ElikplimSunu/threatsketch/issues"
 pytm = ["pytm>=1.4"]
 
 [project.scripts]
-tdtm = "tdtm.cli:main"
-threatsketch = "tdtm.cli:main"
+threatsketch = "threatsketch.cli:main"
+tdtm = "threatsketch.cli:main"  # the old name, so existing instructions keep working
 
 [dependency-groups]
 dev = ["pytest>=8", "jsonschema>=4", "ruff>=0.6"]
@@ -36,14 +36,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-path = "src/tdtm/__init__.py"  # the one version for tdtm and ThreatSketch; scripts/bump.py sets it
+path = "src/threatsketch/__init__.py"  # the one version; scripts/bump.py sets it
 
 [tool.hatch.build.targets.sdist]
-include = ["/src/tdtm", "/tests", "/examples", "/README.md", "/CHANGELOG.md", "/LICENSE", "/THIRD_PARTY_NOTICES.md"]
+include = ["/src/threatsketch", "/tests", "/examples", "/README.md", "/CHANGELOG.md", "/LICENSE", "/THIRD_PARTY_NOTICES.md"]
 exclude = ["/tests/fixtures/private"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/tdtm"]
+packages = ["src/threatsketch"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

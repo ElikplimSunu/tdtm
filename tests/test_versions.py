@@ -1,11 +1,11 @@
-"""One version for tdtm and ThreatSketch, written the same everywhere (scripts/bump.py)."""
+"""One version for the app and the command, written the same everywhere (scripts/bump.py)."""
 
 import json
 import re
 import tomllib
 from pathlib import Path
 
-from tdtm import __version__
+from threatsketch import __version__
 
 ROOT = Path(__file__).parent.parent
 

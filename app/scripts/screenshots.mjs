@@ -12,7 +12,7 @@ async function shot(name, scheme, act) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, colorScheme: scheme });
   await page.addInitScript(() => localStorage.clear());
   await page.goto(base);
-  await page.getByTestId("engine-status").getByText("tdtm").waitFor({ timeout: 60_000 });
+  await page.getByTestId("engine-status").getByText("Knowledge Base").waitFor({ timeout: 60_000 });
   await act(page);
   await page.mouse.move(0, 0);
   await page.waitForTimeout(400);

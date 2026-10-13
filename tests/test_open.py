@@ -1,4 +1,4 @@
-"""`tdtm open`: one command from model (or .tm7) to Threat Dragon with threats and reports."""
+"""`threatsketch open`: one command from a model (or .tm7) to Threat Dragon, threats, reports."""
 
 import json
 import shutil
@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-import tdtm.cli as cli
-import tdtm.launcher as launcher
-from tdtm.cli import main
+import threatsketch.cli as cli
+import threatsketch.launcher as launcher
+from threatsketch.cli import main
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

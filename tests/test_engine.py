@@ -1,9 +1,9 @@
 import pytest
 
-from tdtm.model import Diagram, Element, Kind, Model, Point, Rect
-from tdtm.resolve import resolve
-from tdtm.rules.engine import fill_placeholders, run_sdl
-from tdtm.rules.tb7 import load_template
+from threatsketch.model import Diagram, Element, Kind, Model, Point, Rect
+from threatsketch.resolve import resolve
+from threatsketch.rules.engine import fill_placeholders, run_sdl
+from threatsketch.rules.tb7 import load_template
 
 CSRF = "8404dcf5-bdd8-4902-abc2-3b6c967b0261"
 

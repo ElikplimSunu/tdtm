@@ -1,4 +1,4 @@
-// Runs tdtm's Python engine (api.py) under Pyodide, off the main thread, so drawing never waits.
+// Runs the Python engine (threatsketch.api) under Pyodide, off the main thread, so drawing never waits.
 // Messages in: { id, fn, args }. Out: { id, ok, result } | { id, ok: false, error } | { ready }.
 
 const FUNCTIONS = new Set([
@@ -16,7 +16,7 @@ const boot = (async () => {
   mark("script");
   const py = await loadPyodide({ indexURL: `${base}pyodide/` });
   mark("pyodide");
-  const wheel = await fetch(`${base}engine/tdtm.whl`).then((r) => {
+  const wheel = await fetch(`${base}engine/threatsketch.whl`).then((r) => {
     if (!r.ok) throw new Error(`engine download failed: ${r.status}`);
     return r.arrayBuffer();
   });
@@ -24,7 +24,7 @@ const boot = (async () => {
   mark("wheel");
   py.runPython(`
 import base64, json
-from tdtm import api, __version__
+from threatsketch import api, __version__
 
 def _call(name, args_json):
     args = json.loads(args_json)
@@ -32,7 +32,7 @@ def _call(name, args_json):
         args[0] = base64.b64decode(args[0])
     return json.dumps(getattr(api, name)(*args), ensure_ascii=False)
 `);
-  mark("tdtm");
+  mark("engine");
   const call = py.globals.get("_call");
   const version = py.runPython("__version__");
   self.postMessage({ ready: true, version, ms: Math.round(performance.now() - started), phases });

@@ -2,8 +2,8 @@
   "version": "2.6.2",
   "summary": {
     "title": "Online shop",
-    "owner": "tdtm example",
-    "description": "Example model for tdtm: a customer orders from a web shop that stores orders and charges cards.",
+    "owner": "ThreatSketch example",
+    "description": "Example model for ThreatSketch: a customer orders from a web shop that stores orders and charges cards.",
     "id": 0
   },
   "detail": {

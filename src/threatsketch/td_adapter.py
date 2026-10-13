@@ -24,7 +24,7 @@ class Document:
 
 
 def _threat(t: dict) -> Threat:
-    tdtm = t.get("tdtm")
+    meta = t.get("tdtm")
     return Threat(
         title=t.get("title", ""),
         type=t.get("type", ""),
@@ -33,7 +33,7 @@ def _threat(t: dict) -> Threat:
         description=t.get("description", ""),
         mitigation=t.get("mitigation", ""),
         id=t.get("id"),
-        tdtm_key=tdtm.get("key") if isinstance(tdtm, dict) else None,
+        tdtm_key=meta.get("key") if isinstance(meta, dict) else None,
         raw=t,
     )
 
@@ -119,6 +119,6 @@ def load_raw(raw: dict) -> tuple[Model, Document]:
 def save(doc: Document, path: str | Path) -> None:
     """Write atomically: a watcher or Threat Dragon never sees a half-written model."""
     path = Path(path)
-    tmp = path.with_name(f".{path.name}.tdtm-tmp")
+    tmp = path.with_name(f".{path.name}.threatsketch-tmp")
     tmp.write_text(json.dumps(doc.raw, indent=2, ensure_ascii=False), encoding="utf-8")
     os.replace(tmp, path)

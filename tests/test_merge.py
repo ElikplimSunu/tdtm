@@ -3,17 +3,17 @@ import shutil
 
 import pytest
 
-from tdtm.merge import merge
-from tdtm.resolve import resolve
-from tdtm.rules.engine import run_sdl
-from tdtm.rules.tb7 import load_template
-from tdtm.td_adapter import load, save
+from threatsketch.merge import merge
+from threatsketch.resolve import resolve
+from threatsketch.rules.engine import run_sdl
+from threatsketch.rules.tb7 import load_template
+from threatsketch.td_adapter import load, save
 
 TEMPLATE = load_template()
 
 
 def analyze(path, **kw):
-    """One tdtm run on `path`, in place. Returns the merge summary."""
+    """One threatsketch run on `path`, in place. Returns the merge summary."""
     model, doc = load(path)
     assert resolve(model, TEMPLATE) == []
     summary = merge(doc, run_sdl(model, TEMPLATE), **kw)

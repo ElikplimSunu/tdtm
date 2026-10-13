@@ -2,12 +2,12 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig } from "vitest/config";
 
-// BASE is "/tdtm/" for GitHub Pages, "/" elsewhere (dev, tests, the desktop app).
+// BASE is "/threatsketch/" for GitHub Pages, "/" elsewhere (dev, tests, the desktop app).
 export default defineConfig({
   base: process.env.BASE ?? "/",
   plugins: [
     svelte(),
-    // Installable, and works offline after the first visit: the engine (Pyodide + tdtm, ~13 MB)
+    // Installable, and works offline after the first visit: the engine (Pyodide + threatsketch, ~13 MB)
     // is cached with the app. Not in the desktop app, which ships the files itself.
     VitePWA({
       disable: !!process.env.TAURI_ENV_PLATFORM,
