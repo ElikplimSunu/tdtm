@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -116,4 +117,8 @@ def load_raw(raw: dict) -> tuple[Model, Document]:
 
 
 def save(doc: Document, path: str | Path) -> None:
-    Path(path).write_text(json.dumps(doc.raw, indent=2, ensure_ascii=False), encoding="utf-8")
+    """Write atomically: a watcher or Threat Dragon never sees a half-written model."""
+    path = Path(path)
+    tmp = path.with_name(f".{path.name}.tdtm-tmp")
+    tmp.write_text(json.dumps(doc.raw, indent=2, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, path)

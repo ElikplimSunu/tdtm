@@ -1,25 +1,40 @@
 """TMT's Analysis View as a local page: every threat in one grid, with filters and properties.
 
 `snapshot(path, template) -> dict` reads the model fresh. `serve(path, template, port=0)` starts a
-background HTTP server on 127.0.0.1 and returns `(server, url)`. Read-only: threats are edited in
-Threat Dragon, and the page refreshes when the model file changes.
+background HTTP server on 127.0.0.1 and returns `(server, url)`. The page refreshes when the model
+file changes, and can set a generated threat's state, priority and justification: the change is
+saved to the model and to the triage journal (`journal.py`, SPEC 13).
 
-Safety: binds to 127.0.0.1 only, rejects any Host header but its own (DNS rebinding), answers GET
-only, and the page puts model text into the DOM as text, never as HTML. The diagram SVG comes from
+Safety: binds to 127.0.0.1 only and rejects any Host header but its own (DNS rebinding). Changes
+need the random token embedded in the page: other web pages cannot read it, and the custom header
+it travels in cannot be sent cross-origin without a preflight this server never answers. The page
+puts model text into the DOM as text, never as HTML; the diagram SVG comes from
 `diagram.render_svg`, which escapes every name.
 """
 
 from __future__ import annotations
 
 import json
+import secrets
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from . import journal
 from .diagram import render_svg
+from .merge import merge
 from .model import Kind
 from .report import generated_by, tmt_category, tmt_state
-from .td_adapter import load
+from .td_adapter import load, save
+
+STATES = {  # TMT state -> (Threat Dragon status, tmtState kept under the tdtm key)
+    "Not Started": ("Open", ""),
+    "Needs Investigation": ("Open", "Needs Investigation"),
+    "Not Applicable": ("NotApplicable", ""),
+    "Mitigated": ("Mitigated", ""),
+}
+PRIORITIES = ("High", "Medium", "Low", "Critical", "TBD")
+MAX_BODY = 100_000
 
 
 def snapshot(path: str | Path, template) -> dict:
@@ -47,6 +62,7 @@ def snapshot(path: str | Path, template) -> dict:
                         "justification": t.mitigation,
                         "priority": t.severity,
                         "generatedBy": generated_by(t),
+                        "editable": bool(t.tdtm_key),
                     }
                 )
     return {
@@ -57,8 +73,41 @@ def snapshot(path: str | Path, template) -> dict:
     }
 
 
-def serve(path: str | Path, template, port: int = 0) -> tuple[ThreadingHTTPServer, str]:
+def edit_threat(path: Path, body: dict, lock: threading.Lock) -> tuple[int, dict]:
+    """Apply one analysis-view edit to the model and the journal. -> (HTTP status, reply)."""
+    key, state = body.get("key"), body.get("state")
+    priority, text = body.get("priority"), body.get("justification", "")
+    if not (isinstance(key, str) and state in STATES and priority in PRIORITIES
+            and isinstance(text, str) and len(text) <= 20_000):  # fmt: skip
+        return 400, {"error": "bad edit"}
+    with lock:
+        _, doc = load(path)
+        found = [
+            t
+            for c in doc.cells.values()
+            for t in c.get("data", {}).get("threats") or []
+            if isinstance(t.get("tdtm"), dict) and t["tdtm"].get("key") == key
+        ]
+        if not found:
+            return 404, {"error": "no generated threat with that key"}
+        status, tmt = STATES[state]
+        new = {"status": status, "severity": priority, "mitigation": text, "tmtState": tmt}
+        for t in found:
+            journal.set_values(t, new)
+        merge(doc, [], packs=())  # recompute hasOpenThreats and the red outlines
+        save(doc, path)
+        triage = journal.read(path)
+        triage[key] = journal.entry(new)
+        journal.write(path, triage)
+    return 200, {"ok": True}
+
+
+def serve(
+    path: str | Path, template, port: int = 0, lock: threading.Lock | None = None
+) -> tuple[ThreadingHTTPServer, str]:
     path = Path(path)
+    lock = lock or threading.Lock()
+    token = secrets.token_urlsafe(24)
 
     class Handler(BaseHTTPRequestHandler):
         def _send(self, status: int, ctype: str, body: bytes) -> None:
@@ -70,12 +119,16 @@ def serve(path: str | Path, template, port: int = 0) -> tuple[ThreadingHTTPServe
             self.end_headers()
             self.wfile.write(body)
 
-        def do_GET(self) -> None:
+        def _host_ok(self) -> bool:
             port_ = self.server.server_address[1]
-            if self.headers.get("Host") not in (f"127.0.0.1:{port_}", f"localhost:{port_}"):
+            return self.headers.get("Host") in (f"127.0.0.1:{port_}", f"localhost:{port_}")
+
+        def do_GET(self) -> None:
+            if not self._host_ok():
                 return self._send(403, "text/plain", b"forbidden")
             if self.path == "/":
-                return self._send(200, "text/html; charset=utf-8", PAGE.encode())
+                page = PAGE.replace("__TDTM_TOKEN__", token)
+                return self._send(200, "text/html; charset=utf-8", page.encode())
             if self.path == "/api/model":
                 try:
                     body = json.dumps(snapshot(path, template)).encode()
@@ -85,12 +138,32 @@ def serve(path: str | Path, template, port: int = 0) -> tuple[ThreadingHTTPServe
             self._send(404, "text/plain", b"not found")
 
         def do_POST(self) -> None:
-            self._send(405, "text/plain", b"read-only")
+            if not self._host_ok() or not secrets.compare_digest(
+                self.headers.get("X-Tdtm-Token", ""), token
+            ):
+                return self._send(403, "text/plain", b"forbidden")
+            if self.path != "/api/threat":
+                return self._send(404, "text/plain", b"not found")
+            length = int(self.headers.get("Content-Length") or 0)
+            if length > MAX_BODY:
+                return self._send(413, "text/plain", b"too large")
+            try:
+                body = json.loads(self.rfile.read(length) or b"{}")
+            except ValueError:
+                return self._send(400, "text/plain", b"not JSON")
+            if not isinstance(body, dict):
+                return self._send(400, "text/plain", b"not an object")
+            try:
+                status, reply = edit_threat(path, body, lock)
+            except (OSError, ValueError, KeyError):
+                status, reply = 503, {"error": "model not readable right now"}
+            self._send(status, "application/json", json.dumps(reply).encode())
 
         def log_message(self, *_args) -> None:  # keep the terminal for tdtm's own messages
             pass
 
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    server.token = token
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server, f"http://127.0.0.1:{server.server_address[1]}/"
 
@@ -135,6 +208,13 @@ section.props h2 { margin: 0; padding: 6px 10px; background: var(--head); font-s
 section.props dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px;
                    margin: 0; padding: 10px; }
 section.props dt { color: var(--muted); } section.props dd { margin: 0; white-space: pre-wrap; }
+section.props select, section.props textarea { font: inherit; padding: 3px 6px;
+  border: 1px solid var(--line); border-radius: 2px; background: #fff; }
+section.props textarea { width: 100%; min-height: 64px; resize: vertical; }
+section.props button { font: inherit; padding: 4px 14px; border: 1px solid #2b579a;
+  background: #2b579a; color: #fff; border-radius: 2px; cursor: pointer; }
+section.props button:disabled { opacity: .6; cursor: default; }
+.saved { color: #1e7d32; margin-left: 10px; } .failed { color: #b00020; margin-left: 10px; }
 .note { color: var(--muted); margin-top: 8px; }
 </style></head>
 <body>
@@ -155,12 +235,16 @@ section.props dt { color: var(--muted); } section.props dd { margin: 0; white-sp
 <th>Priority</th><th>Justification</th></tr></thead>
 <tbody id="rows"></tbody></table></div>
 <section class="props"><h2>Threat Properties</h2><dl id="props"></dl></section>
-<p class="note">Read-only. Change state, priority and justification (mitigation) in Threat Dragon;
-this page updates when the model is saved.</p>
+<p class="note">Changes saved here go into the model and are kept if Threat Dragon later saves an
+older copy. Reopen the model in Threat Dragon to see them there. Threats people wrote in Threat
+Dragon are edited there.</p>
 </main>
 <script>
 "use strict";
-let data = null, selected = null;
+const TOKEN = "__TDTM_TOKEN__";
+const STATES = ["Not Started", "Needs Investigation", "Not Applicable", "Mitigated"];
+const PRIORITIES = ["High", "Medium", "Low"];
+let data = null, selected = null, savedAt = 0;
 const folded = new Set();
 const $ = (id) => document.getElementById(id);
 const el = (tag, text, cls) => {
@@ -209,16 +293,56 @@ function renderRows() {
   $("count").textContent = rows.length + " of " + data.threats.length + " threats";
 }
 
+function choice(options, current) {
+  const sel = el("select");
+  for (const o of options.includes(current) ? options : [current, ...options]) {
+    const opt = el("option", o); opt.value = o; sel.append(opt);
+  }
+  sel.value = current;
+  return sel;
+}
+
+async function save(t, state, priority, justification, button, msg) {
+  button.disabled = true; msg.textContent = ""; msg.className = "";
+  try {
+    const r = await fetch("/api/threat", {method: "POST",
+      headers: {"Content-Type": "application/json", "X-Tdtm-Token": TOKEN},
+      body: JSON.stringify({key: t.key, state, priority, justification})});
+    if (!r.ok) throw new Error(String(r.status));
+    savedAt = Date.now();
+    data = null;  // redraw everything with the saved values
+    await refresh();
+  } catch (e) {
+    msg.textContent = "Not saved (" + e.message + ")."; msg.className = "failed";
+  } finally { button.disabled = false; }
+}
+
 function renderProps() {
   const t = data.threats.find((x) => x.key === selected), dl = $("props");
   dl.replaceChildren();
   if (!t) { dl.append(el("dd", "Select a threat to see its properties.")); return; }
-  const fields = [["Title", t.title], ["Category", t.category], ["State", t.state],
-    ["Priority", t.priority], ["Interaction", t.interaction],
+  const fixed = [["Title", t.title], ["Category", t.category], ["Interaction", t.interaction],
     ["Flow", t.source ? t.source + " \\u2192 " + t.target : ""], ["Description", t.description],
-    ["Justification", t.justification || "<no mitigation provided>"],
-    ["Diagram", t.diagram], ["Generated by", t.generatedBy || "a person"]];
-  for (const [k, v] of fields) dl.append(el("dt", k), el("dd", v));
+    ["Diagram", t.diagram], ["Generated by", t.generatedBy || "a person, in Threat Dragon"]];
+  if (!t.editable) {
+    fixed.splice(2, 0, ["State", t.state], ["Priority", t.priority],
+      ["Justification", t.justification || "<no mitigation provided>"]);
+    for (const [k, v] of fixed) dl.append(el("dt", k), el("dd", v));
+    return;
+  }
+  const state = choice(STATES, t.state), priority = choice(PRIORITIES, t.priority);
+  const text = el("textarea"); text.value = t.justification || "";
+  text.placeholder = "Why this threat is mitigated or does not apply";
+  const button = el("button", "Save"), msg = el("span"), actions = el("dd");
+  actions.append(button, msg);
+  button.addEventListener("click", () =>
+    save(t, state.value, priority.value, text.value, button, msg));
+  for (const [k, v] of fixed.slice(0, 2)) dl.append(el("dt", k), el("dd", v));
+  for (const [k, input] of [["State", state], ["Priority", priority], ["Justification", text]]) {
+    const dd = el("dd"); dd.append(input); dl.append(el("dt", k), dd);
+  }
+  for (const [k, v] of fixed.slice(2)) dl.append(el("dt", k), el("dd", v));
+  dl.append(el("dt", ""), actions);
 }
 
 function render() {
@@ -245,8 +369,10 @@ async function refresh() {
     const r = await fetch("/api/model", {cache: "no-store"});
     if (!r.ok) throw new Error(String(r.status));
     const d = await r.json();
-    if (!data || d.stamp !== data.stamp) { data = d; render(); }
-    $("status").textContent = "Up to date";
+    const editing = document.activeElement && document.activeElement.closest("#props");
+    if (!data || (d.stamp !== data.stamp && !editing)) { data = d; render(); }
+    $("status").textContent = Date.now() - savedAt < 8000
+      ? "Saved. Reopen the model in Threat Dragon to see it there." : "Up to date";
   } catch (e) {
     $("status").textContent = "Waiting for the model...";
   }

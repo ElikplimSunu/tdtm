@@ -161,8 +161,16 @@ def _analyze_once(args: argparse.Namespace) -> int:
             if isinstance(m, dict) and "key" in m:
                 titles.setdefault(m["key"], t.get("title", ""))
 
+    from . import journal
+
     before = json.dumps([doc.raw, sidecar], sort_keys=True)
     s = merge(doc, generated, packs=packs, prune=args.prune, sidecar=sidecar)
+    triage, restored = journal.read(args.model) if sidecar is None else {}, 0
+    if triage:  # re-apply analysis-view edits a stale Threat Dragon save overwrote (SPEC 13)
+        restored, triage_changed = journal.apply(doc, triage)
+        merge(doc, [], packs=())  # restyle after restored states
+        if triage_changed and not args.dry_run:
+            journal.write(args.model, triage)
     changed = json.dumps([doc.raw, sidecar], sort_keys=True) != before
     _report_problems(model, errors)
     if args.dry_run:
@@ -172,7 +180,9 @@ def _analyze_once(args: argparse.Namespace) -> int:
     print(
         f"{len(s.added)} added, {len(s.refreshed)} refreshed, {len(s.unchanged)} unchanged, "
         f"{len(s.kept_edited)} kept as you edited them, {len(s.stale)} newly stale, "
-        f"{len(s.pruned)} pruned" + (" (dry run: nothing written)" if args.dry_run else "")
+        f"{len(s.pruned)} pruned"
+        + (f", {restored} restored from the analysis view" if restored else "")
+        + (" (dry run: nothing written)" if args.dry_run else "")
     )
     if args.dry_run:
         return 0

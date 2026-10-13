@@ -23,7 +23,8 @@ Select a flow to see its threats, with the same titles and categories TMT would 
 ![Threat Dragon showing the generated threats on the Place order flow: Spoofing the Customer External Entity, Cross Site Scripting, Potential Data Repudiation](docs/img/threat-dragon-threats.jpg)
 
 `tdtm open` also serves an analysis view in your browser, like TMT's Analysis View: every threat
-in one grid with filters, and its properties underneath. It refreshes whenever you save:
+in one grid with filters, and its properties underneath, where you set its state (including Needs
+Investigation), priority and justification. It refreshes whenever you save:
 
 ![tdtm's analysis view: a grid of all 38 threats with state, title, category, interaction and priority, and the Cross Site Scripting threat's properties below](docs/img/analysis-view.jpg)
 

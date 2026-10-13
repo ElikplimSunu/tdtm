@@ -535,13 +535,26 @@ TMT's Analysis View as a local web page. Diagram drawings (foldable), a grid of 
 category and priority and a text search, and a Threat Properties panel for the selected row.
 The page polls `/api/model` every 2 s and redraws when the file's mtime and size change.
 
-Read-only for now: edits happen in Threat Dragon. Editing from the page is planned with a triage
-journal, because Threat Dragon keeps its own copy of the model in memory and would overwrite
-page edits on its next save.
+**Editing.** For threats tdtm generated, the properties panel sets State (TMT's four: Not
+Started, Needs Investigation, Not Applicable, Mitigated), Priority and Justification.
+`POST /api/threat` writes them into the model (status, severity, mitigation; Needs Investigation
+is status Open plus `tdtm.tmtState`), restyles the outlines, saves atomically, and records the
+values in the **triage journal** `<model>.triage.json`. Threats people wrote in Threat Dragon are
+read-only here.
 
-Safety: `ThreadingHTTPServer` bound to 127.0.0.1, any Host header other than its own address is
-refused (DNS rebinding), GET only, model text reaches the DOM through `textContent` only; the one
-`innerHTML` is the server-rendered SVG, in which `diagram.py` escapes every name.
+The journal exists because Threat Dragon keeps its own copy of the model in memory: saving there
+can overwrite page edits. Every analyze run re-applies it (`journal.py`): a threat back in its
+generated state (fingerprint intact) gets the journal's values; a threat that differs from both was
+changed in Threat Dragon, which wins and updates the journal. Known limit: setting a threat back
+to exactly its generated values in Threat Dragon looks like a stale save, so the older edit
+returns. Sidecar mode does not use the journal.
+
+Safety: `ThreadingHTTPServer` bound to 127.0.0.1; any Host header other than its own is refused
+(DNS rebinding). A change needs `X-Tdtm-Token`, a random value embedded in the page that other
+origins cannot read, and a custom header cannot cross origins without a preflight this server
+never answers. Bodies over 100 kB are refused and every field is validated. Model text reaches the
+DOM through `textContent` only; the one `innerHTML` is the server-rendered SVG, in which
+`diagram.py` escapes every name. Model writes are atomic (temp file, then rename).
 
 ## 14. `.tm7` export
 

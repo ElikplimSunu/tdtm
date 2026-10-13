@@ -40,7 +40,7 @@ up to date every time you save.
 | Out Of Scope | the *Out of Scope* checkbox |
 | Switch to Analysis View | save in Threat Dragon: tdtm adds the threats and the analysis view in your browser updates |
 | Filter the threat list | the analysis view's state, category and priority filters and search box |
-| Change State, Priority, Justification | in Threat Dragon: select the flow, open the threat, set *Status*, *Severity*, *Mitigations* |
+| Change State, Priority, Justification | in the analysis view: select the threat, set State, Priority, Justification, Save. Or in Threat Dragon: select the flow, open the threat, set *Status*, *Severity*, *Mitigations* |
 | Reports > Create Full Report | `mymodel.report.html`, written next to the model on every save |
 | Export the threat list to CSV | `mymodel.csv`, in TMT's own CSV format, written on every save |
 | Save as `.tm7` | `tdtm export mymodel.json` |
@@ -84,8 +84,12 @@ The report, the CSV and the analysis view use TMT's words.
   tdtm adds threats, reopen the model before you edit; if you save Threat Dragon's older copy, tdtm
   adds the threats again but your own changes in that copy win. `tdtm open --reload` reopens for
   you, which also takes Threat Dragon back to the model's summary page.
-- **No "Needs Investigation" state** in Threat Dragon. A `.tm7` that uses it keeps it (the report,
-  CSV and export show it), but Threat Dragon itself shows such threats as Open.
+- **No "Needs Investigation" state** in Threat Dragon. Set it in the analysis view (or bring it
+  in from a `.tm7`): the analysis view, report, CSV and export show it, while Threat Dragon itself
+  shows such threats as Open.
+- **Edits in the analysis view** are kept in `mymodel.triage.json` next to the model, so they
+  survive Threat Dragon saving an older copy. A later change to the same threat in Threat Dragon
+  wins.
 - **Threat numbers** differ from TMT's for models drawn in Threat Dragon. Titles, categories,
   descriptions and priorities do not.
 - **Threats on elements.** Threat Dragon also lets you add threats to an actor, process or store;
