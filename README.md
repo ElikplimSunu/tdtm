@@ -34,8 +34,8 @@ ThreatSketch.
   draw a data flow, or click it to link the nearest element on that side.
 - **Triage.** Not Started, Needs Investigation, Not Applicable and Mitigated, with priority and
   justification.
-- **Hand-ins.** A report laid out like TMT's Full Report, the threat list in TMT's CSV format, or
-  a `.tm7` for TMT.
+- **Hand-ins.** A report laid out like TMT's Full Report (HTML or PDF), the threat list in TMT's
+  CSV format, or a `.tm7` for TMT.
 - **Files.** Opens Threat Dragon `.json` and TMT `.tm7`; saves Threat Dragon `.json`, which Threat
   Dragon also opens. Nothing is uploaded: the threat engine runs on your computer.
 
@@ -60,10 +60,15 @@ list; the ones you have decided on stand out.
 
 ![The threat list with threats marked Mitigated, Needs Investigation and Not Applicable](docs/img/threatsketch-triage.jpg)
 
-**Report.** The threat report follows TMT's Full Report: summary by state, the diagram, then
-every interaction and its threats. Export it, the CSV or a `.tm7` from the Export menu.
+**Report.** The threat report follows TMT's Full Report: a summary by state and by STRIDE
+category, the diagram, then every interaction, the boundaries it crosses, and its threats. It
+prints to A4 with page numbers; Export > Threat report (PDF) saves it as a PDF
+([example PDF](docs/example-report.pdf)). The Export menu
+also has the HTML report, TMT's CSV and a `.tm7`.
 
-![The threat report: Threat Model Summary table and the diagram](docs/img/threatsketch-report.jpg)
+![The threat report: model details and the Threat Model Summary by state and by STRIDE category](docs/img/threatsketch-report.jpg)
+
+![Threats in the report: each with its state, category, priority, rule, description and justification](docs/img/threatsketch-report-threats.jpg)
 
 **Dark mode** follows your system. Files, reports and exports stay black on white, as in TMT.
 

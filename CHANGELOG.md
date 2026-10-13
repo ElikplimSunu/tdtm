@@ -6,6 +6,17 @@ One version covers the app and the command-line tool. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Export the threat report as a PDF (Export > Threat report (PDF), or Save as PDF in the report).
+
+### Changed
+
+- The threat report is redesigned: TMT's sections in TMT's order on a clean, printable layout
+  with a summary by state and by STRIDE category, the diagram in TMT's style, the trust boundaries
+  each flow crosses, and A4 pages with page numbers. Fonts are embedded; the file needs nothing
+  from the network.
+
 ## [0.3.1] - 2026-10-13
 
 ### Fixed

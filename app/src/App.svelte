@@ -223,7 +223,7 @@
     }
   }
 
-  async function exportAs(kind: "json" | "tm7" | "csv" | "html") {
+  async function exportAs(kind: "json" | "tm7" | "csv" | "html" | "pdf") {
     exportOpen = false;
     if (!editor) return;
     const m = editor.snapshot();
@@ -236,6 +236,12 @@
       }
       if (kind === "csv") await files.saveText(await engine.reportCsv(m), `${baseName()}.csv`, "text/csv");
       if (kind === "html") await files.saveText(await engine.reportHtml(m), `${baseName()}.report.html`, "text/html");
+      if (kind === "pdf") {
+        // the browser's own PDF: the report opens with its print dialog, where Save as PDF is a choice
+        const autoPrint = "<" + "script>addEventListener('load',()=>setTimeout(print,300))<" + "/script>";
+        const html = (await engine.reportHtml(m)).replace("</" + "head>", autoPrint + "</" + "head>");
+        await files.showHtml(html, `${baseName()}.report.html`);
+      }
     } catch (e: any) {
       say(`Export failed: ${e?.message ?? e}`, "error");
     }
@@ -430,6 +436,7 @@
             <div class="scrim" onclick={() => (exportOpen = false)}></div>
             <div class="dropdown" role="menu">
               <button role="menuitem" onclick={() => exportAs("tm7")}><b>Microsoft TMT model</b><span>.tm7, opens in TMT 7</span></button>
+              <button role="menuitem" onclick={() => exportAs("pdf")}><b>Threat report (PDF)</b><span>opens the print dialog: choose Save as PDF</span></button>
               <button role="menuitem" onclick={() => exportAs("html")}><b>Threat report</b><span>.html, TMT's Full Report layout</span></button>
               <button role="menuitem" onclick={() => exportAs("csv")}><b>Threat list</b><span>.csv, TMT's export columns</span></button>
               <button role="menuitem" onclick={() => exportAs("json")}><b>Save a copy</b><span>.json, opens in Threat Dragon too</span></button>

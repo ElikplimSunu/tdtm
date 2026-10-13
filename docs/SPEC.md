@@ -435,15 +435,19 @@ Exit codes: 0 ok, 1 usage error, 2 model/template error, 3 tag errors (with `--s
 
 ## 9. Report
 
-`threatsketch report MODEL` writes one self-contained HTML file laid out like TMT's Full Report: model
-details (name, owner, reviewer, contributors, description), a Threat Model Summary counting TMT
-states (Not Started, Not Applicable, Needs Investigation, Mitigation Implemented, Total, Total
-Migrated), then per diagram an SVG drawing of it (`diagram.py`, from the model's own geometry; red
-flows have open threats), a per-diagram summary, and each interaction that has threats:
-`N. Title [State: ...] [Priority: ...]` with Category (TMT's category name), Description and
-Justification (`<no mitigation provided>` when empty). Threats people attached to other elements
-follow under `Element:`. **[approximate]**: written from memory of TMT 7.3's report; compare with
-a real TMT report and adjust.
+`threatsketch report MODEL` (and the app's Report and Export) writes one self-contained HTML file
+with TMT's Full Report sections in TMT's order: model details (name, owner, reviewer,
+contributors, description, template), the Threat Model Summary by TMT state (Not Started, Needs
+Investigation, Not Applicable, Mitigation Implemented, with the total) plus counts by STRIDE
+category, then per diagram an SVG drawing of it (`diagram.py`, from the model's own geometry, in
+TMT's style: ink lines, red dashed boundaries), and each interaction that has threats, with its
+route and the boundaries it crosses: title, state, category, priority, rule, description and
+justification (`<no mitigation provided>` when empty). Threats people attached to other elements
+follow under `Element:`. Styles are `data/report.css`; IBM Plex is embedded from `data/fonts`, so
+nothing is fetched. It prints to A4 with page numbers and never splits a threat across pages; the
+"Save as PDF" button and `#print` open the print dialog (PDF is the browser's, no PDF library).
+**[approximate]**: the section order is from memory of TMT 7.3's report; compare with a real TMT
+report and adjust.
 
 ### 9a. CSV export
 

@@ -1,8 +1,8 @@
 """Draw a diagram as inline SVG from its own geometry, the way the report and analysis view show it.
 
-Shapes as in TMT and Threat Dragon: actors are rectangles, processes circles, stores two lines,
-boundaries dashed red. Flows run edge to edge with an arrow; a flow with an open threat is red,
-which is how Threat Dragon marks it. Flows are drawn straight through their vertices.
+Shapes as in TMT and the ThreatSketch canvas: actors are rectangles, processes circles, stores two
+lines, boundaries dashed red; everything else in ink. Flows run edge to edge with an arrow,
+straight through their vertices. Colours are the app's design tokens (app/src/app.css).
 """
 
 from __future__ import annotations
@@ -14,18 +14,13 @@ from .model import Diagram, Element, Kind, Point, Rect
 
 PAD = 40
 STYLE = """
-.shape { fill: #ffffff; stroke: #333333; stroke-width: 1.5; }
-.boundary { fill: none; stroke: #c0392b; stroke-width: 2; stroke-dasharray: 8 5; }
-.flow { fill: none; stroke: #333333; stroke-width: 1.5; }
-.flow.open { stroke: #d62c1a; stroke-width: 2.2; }
-text { font: 12px "Segoe UI", system-ui, sans-serif; fill: #1b2631; }
-text.boundary-label { fill: #c0392b; font-weight: 600; }
-text.flow-label { font-size: 11px; paint-order: stroke; stroke: #ffffff; stroke-width: 4px; }
+.shape { fill: #fbfcfc; stroke: #1b2026; stroke-width: 1.5; }
+.boundary { fill: none; stroke: #c0392f; stroke-width: 1.5; stroke-dasharray: 7 5; }
+.flow { fill: none; stroke: #1b2026; stroke-width: 1.3; }
+text { font: 12px "IBM Plex Sans", system-ui, "Segoe UI", sans-serif; fill: #1b2026; }
+text.boundary-label { fill: #c0392f; font-weight: 600; }
+text.flow-label { font-size: 11px; paint-order: stroke; stroke: #fbfcfc; stroke-width: 4px; }
 """
-
-
-def _open(e: Element) -> bool:
-    return any(t.status.lower() == "open" for t in e.threats)
 
 
 def _edge_point(rect: Rect, towards: Point, ellipse: bool) -> Point:
@@ -105,9 +100,7 @@ def render_svg(d: Diagram) -> str:
         parts.append(f'<text x="{c.x}" y="{c.y + 4}" text-anchor="middle">{escape(e.label)}</text>')
     for f in d.of_kind(Kind.FLOW):
         pts = _flow_points(d, f)
-        is_open = _open(f)
-        cls, marker = ("flow open", "arrow-open") if is_open else ("flow", "arrow")
-        parts.append(f'<polyline class="{cls}" points="{_pts(pts)}" marker-end="url(#{marker})"/>')
+        parts.append(f'<polyline class="flow" points="{_pts(pts)}" marker-end="url(#arrow)"/>')
         mid = (
             pts[len(pts) // 2]
             if len(pts) > 2
@@ -118,11 +111,10 @@ def render_svg(d: Diagram) -> str:
             f' text-anchor="middle">{escape(f.label)}</text>'
         )
 
-    markers = "".join(
-        f'<marker id="{mid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10"'
-        f' markerHeight="10" markerUnits="userSpaceOnUse" orient="auto">'
-        f'<path d="M0,0 L10,5 L0,10 z" fill="{colour}"/></marker>'
-        for mid, colour in (("arrow", "#333333"), ("arrow-open", "#d62c1a"))
+    markers = (
+        '<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9"'
+        ' markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">'
+        '<path d="M0,0 L10,5 L0,10 z" fill="#1b2026"/></marker>'
     )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x0:.0f} {y0:.0f} {width:.0f} '

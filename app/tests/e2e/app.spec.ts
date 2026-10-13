@@ -189,7 +189,7 @@ test("import a TMT .tm7, then export .tm7, report and CSV", async ({ page }) => 
   expect(tm7.name).toBe("small.tm7");
   expect(tm7.text).toContain("<ThreatModel");
   await page.getByRole("button", { name: "Export" }).click();
-  const html = await download(page, () => page.getByRole("menuitem", { name: /Threat report/ }).click());
+  const html = await download(page, () => page.getByRole("menuitem", { name: /^Threat report \.html/ }).click());
   expect(html.text).toContain("Threat Model Summary");
   await page.getByRole("button", { name: "Export" }).click();
   const csv = await download(page, () => page.getByRole("menuitem", { name: /Threat list/ }).click());
@@ -283,4 +283,17 @@ test("the first model in docs/coming-from-tmt.md works as written", async ({ pag
   // the customer's flows cross the boundary; the shop-to-orders flows do not
   await page.locator(`g.x6-edge[data-cell-id="${flows.find((f: any) => f.source.cell === customer).id}"]`).click({ force: true });
   await expect(page.locator(".props")).toContainText("Crosses");
+});
+
+test("PDF export opens the styled report with the print dialog", async ({ page }) => {
+  await openExample(page);
+  await page.getByRole("button", { name: "Export" }).click();
+  const [popup] = await Promise.all([
+    page.waitForEvent("popup"),
+    page.getByRole("menuitem", { name: /Threat report \(PDF\)/ }).click(),
+  ]);
+  await popup.waitForLoadState();
+  await expect(popup.locator("h1")).toHaveText("Online shop");
+  await expect(popup.locator(".stat").first()).toContainText("38");
+  expect(await popup.content()).toContain("setTimeout(print");
 });
