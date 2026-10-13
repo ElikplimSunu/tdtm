@@ -301,6 +301,95 @@ def cmd_import(args: argparse.Namespace) -> int:
     return 0
 
 
+def _blank_model(title: str) -> dict:
+    diagram = {
+        "id": 0,
+        "title": "Main diagram",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram description",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "version": "2.6.2",
+        "cells": [],
+    }
+    return {
+        "version": "2.6.2",
+        "summary": {"title": title, "owner": "", "description": "", "id": 0},
+        "detail": {
+            "contributors": [],
+            "diagramTop": 1,
+            "reviewer": "",
+            "threatTop": 0,
+            "diagrams": [diagram],
+        },
+    }
+
+
+def _write_reports(model_path: Path, args: argparse.Namespace) -> None:
+    from .report import render, render_csv
+
+    model, _ = load(model_path)
+    html, csv_path = model_path.with_suffix(".report.html"), model_path.with_suffix(".csv")
+    html.write_text(render(model), encoding="utf-8")
+    csv_path.write_text(render_csv(model, _template(args)), encoding="utf-8", newline="")
+    print(f"reports: {html.name}, {csv_path.name}")
+
+
+def cmd_open(args: argparse.Namespace) -> int:
+    from .launcher import open_in_threat_dragon
+
+    model = Path(args.model)
+    if model.suffix.lower() == ".tm7":
+        target = model.with_suffix(".json")
+        if target.exists():
+            print(f"using existing {target.name} (it may hold your triage; delete it to re-import)")
+        else:
+            cmd_import(argparse.Namespace(model=str(model), out=str(target), force=False))
+        model = target
+    elif not model.exists():
+        model.write_text(json.dumps(_blank_model(model.stem), indent=2), encoding="utf-8")
+        print(f"created {model}: an empty STRIDE model to draw in")
+
+    analyze = argparse.Namespace(
+        model=str(model),
+        pack=args.pack,
+        template=args.template,
+        include_legacy=False,
+        dry_run=False,
+        prune=False,
+        out=None,
+        sidecar=False,
+        strict=False,
+    )
+    first = True
+
+    def on_change():
+        nonlocal first
+        before = _stamp(model)
+        try:
+            _analyze_once(analyze)
+            _write_reports(model, args)
+        except UsageError as e:  # e.g. caught Threat Dragon mid-save: say so, keep watching
+            print(f"tdtm: {e}", file=sys.stderr)
+            return
+        wrote = _stamp(model) != before
+        if first:
+            first = False
+            if not args.no_launch:
+                open_in_threat_dragon(model)
+            print(f"watching {model}: save in Threat Dragon and tdtm updates the threats")
+            print("press Ctrl-C to stop")
+        elif wrote and args.reload:
+            open_in_threat_dragon(model)
+        elif wrote:
+            print(f"threats updated: reopen {model.name} in Threat Dragon to see them")
+
+    try:
+        watch(model, on_change)
+    except KeyboardInterrupt:
+        print("stopped")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="tdtm", description="TMT-style threat generation for OWASP Threat Dragon models."
@@ -340,6 +429,21 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--out", default="report.html", help="ending in .csv writes TMT's CSV format")
     r.add_argument("--template", help="for category names (default: SDL TM Knowledge Base)")
     r.set_defaults(func=cmd_report)
+
+    o = sub.add_parser(
+        "open",
+        help="one command: create or import, add threats, write reports, open Threat Dragon, watch",
+    )
+    o.add_argument("model", help="a Threat Dragon .json (created if missing) or a TMT .tm7")
+    o.add_argument("--pack", choices=["sdl", "pytm", "all"], default="sdl")
+    o.add_argument("--template", help="path to a .tb7 template (default: SDL TM Knowledge Base)")
+    o.add_argument(
+        "--reload",
+        action="store_true",
+        help="after each update, reopen the model in Threat Dragon (it lands on the summary page)",
+    )
+    o.add_argument("--no-launch", action="store_true", help="do not start Threat Dragon")
+    o.set_defaults(func=cmd_open)
 
     m = sub.add_parser("import", help="convert a Microsoft TMT .tm7 model to Threat Dragon JSON")
     m.add_argument("model", help="the .tm7 file")

@@ -57,14 +57,20 @@ brew install --cask threat-dragon
 uv tool install git+https://github.com/ElikplimSunu/tdtm
 ```
 
-Then, for each model:
+Then one command per model:
 
-1. Draw the diagram in Threat Dragon and save it, e.g. `model.json`. Already have a TMT model?
-   `tdtm import model.tm7` converts it, keeping TMT's threats and your triage.
-2. `tdtm analyze model.json` adds the threats TMT would generate.
-3. Reopen `model.json` in Threat Dragon and triage: status, priority, mitigation.
-4. `tdtm report model.json` writes a TMT-style HTML report;
-   `tdtm report model.json --out threats.csv` writes TMT's CSV export format.
+```bash
+tdtm open model.json      # or model.tm7 to start from a TMT model
+```
+
+It creates `model.json` if it does not exist (or converts the `.tm7`, keeping TMT's threats and
+your triage), adds the threats TMT would generate, writes `model.report.html` (TMT-style report)
+and `model.csv` (TMT's CSV export format) next to it, opens it in Threat Dragon, and keeps
+watching. Draw and save in Threat Dragon; each save updates the threats and both reports. When new
+threats arrive, reopen the model in Threat Dragon (File > Open Recent) to see them, or start with
+`--reload` to have that done for you. Ctrl-C stops watching.
+
+The same steps one at a time: `tdtm import`, `tdtm analyze`, `tdtm report` (see Usage).
 
 To update tdtm later: `uv tool upgrade tdtm`.
 
@@ -92,6 +98,7 @@ uv run tdtm report model.json             # TMT-style HTML report
 uv run tdtm report model.json --out threats.csv  # TMT's own CSV export format
 uv run tdtm coverage                      # which rules need @tmt tags to fire
 uv run tdtm import model.tm7              # convert a TMT model, keeping TMT's threats and triage
+uv run tdtm open model.json               # all of the above, opened in Threat Dragon and kept updated
 ```
 
 Re-running is safe: threats you edited in Threat Dragon keep your changes, and threats whose rule no

@@ -498,3 +498,24 @@ State `Mitigated`/`NotApplicable` map across, everything else is `Open`.
 Unverified (no example in the sample file): line boundaries (`GE.TB.L`), annotations (`GE.A`,
 skipped with a warning), multiple drawing surfaces, user-added custom threats. A `.tm7` with a
 DOCTYPE or entity declarations is refused: TMT never writes one, and it is the usual XML attack.
+
+## 12. `tdtm open` and driving Threat Dragon (macOS)
+
+`tdtm open MODEL [--reload] [--no-launch] [--pack ...] [--template ...]`: create a blank STRIDE
+model if MODEL is missing, or import a `.tm7` to `<stem>.json` (reusing an existing `.json`, which
+may hold triage); analyze; write `<stem>.report.html` and `<stem>.csv`; open it in Threat Dragon;
+then watch and repeat on every save.
+
+Threat Dragon 2.6.2 facts (td.vue/src at ff27a5e, and its log at
+`~/Library/Logs/Threat Dragon/main.log`), checked on a real install:
+- `open -a Threat-Dragon-ng FILE` reaches the app as macOS `open-file`. When the app is running
+  and its page has loaded, it opens FILE (if nothing is unsaved; otherwise it asks) and logs
+  `Open model confirmation from renderer for file name: FILE`. [confirmed]
+- On a cold start the same command crashes with a main-process `TypeError ... 'webContents'`
+  dialog: the menu module only gets its window on `did-finish-load`. [confirmed, observed]
+  So tdtm launches the app empty, waits for `Checking for update` in the log (window created),
+  waits `LOAD_MARGIN` (4 s) more for the page, then sends the file. No log line marks page load,
+  so the margin is a calibrated guess. [assumed]
+- An opened model lands on the model summary page, not the diagram. Because a reload while the
+  user has unsaved edits makes Threat Dragon ask to discard them, automatic reload after each update
+  is opt-in (`--reload`); by default tdtm prints a reminder to reopen.
