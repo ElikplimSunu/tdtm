@@ -177,10 +177,11 @@ def test_report_csv_in_tmt_format(tmp_path):
         "Justification": "",
         "Last Modified": "Generated",
     }
+    # a threat triaged in TMT: TMT's CSV shows when, as TMT displays it (checked against TMT 7.3)
     assert (rows["2"]["State"], rows["2"]["Justification"], rows["2"]["Last Modified"]) == (
         "Mitigated",
         "Input is validated on the server.",
-        "",
+        "01/10/2026 10:00:00 am",
     )
 
 

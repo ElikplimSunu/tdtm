@@ -101,11 +101,9 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 - [x] **1.2b Dataflow Order** written back on export (found by the reference model's round trip).
 - [x] **1.3 Geometry.** Checked: positions and sizes come through exactly (shapes TMT placed 4px
   apart are 4px apart). What looked like overlaps is how shapes are drawn: phase 3.
-- [ ] **1.4 Threat fields.** Edited title/description/category: done. Changed By and Last
-  Modified are listed, "Generated" until triaged. **TMT checked:** a threat triaged in TMT shows
-  `MACHINE\user` and the local time (`13/10/2026 9:56:59 pm`) in both, so the CSV's empty Last
-  Modified for triaged threats is wrong. Needs a `.tm7` saved after triage, to see how TMT stores
-  `ModifiedAt` and map it. Then: record who/when on triage here too. Threats added by hand.
+- [ ] **1.4 Threat fields.** Done: edited title/description/category; Changed By and Last
+  Modified as TMT stores and shows them (SPEC 11), triage here stamps the time. Left: Changed By
+  on triage here (no user name in a browser; the desktop app could), threats added by hand.
 - [x] **1.5 Stencil icons.** `api.palette()` gives each stencil's icon (a data URL; inherited from
   the parent when missing) and where TMT puts it (`iconAt`: center, lower-right, before-label).
 - [ ] **1.6 Notes** (the `.tm7`'s `Notes`: Id, text, date, added by): import, export, keep in

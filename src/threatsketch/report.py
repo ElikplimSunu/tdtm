@@ -67,16 +67,28 @@ def tmt_state(t: Threat) -> str:
     return TMT_STATE.get(t.status, t.status)
 
 
+def tmt_time(stamp: str) -> str:
+    """TMT's ModifiedAt (ISO 8601, 7-digit fractions, an offset) as TMT lists it: the stored wall
+    time, "13/10/2026 9:56:59 pm" (SPEC 11).
+    ponytail: TMT follows the Windows locale; this is the en-GB form a real TMT 7.3 showed. Pass a
+    locale if models from other locales need their own form."""
+    try:
+        t = datetime.fromisoformat(stamp)
+    except ValueError:
+        return stamp
+    return f"{t:%d/%m/%Y} {t.hour % 12 or 12}:{t:%M:%S} {'pm' if t.hour >= 12 else 'am'}"
+
+
 def tmt_changed(t: Threat) -> tuple[str, str]:
-    """(Changed By, Last Modified) as TMT's CSV lists them: Last Modified reads "Generated" until
-    the threat is triaged, then nothing; Changed By is who TMT recorded (kept from a `.tm7`).
-    [unverified] whether TMT shows a date for a triaged threat (TMT-PARITY 1.4)."""
+    """(Changed By, Last Modified) as TMT lists them: "Generated" until the threat is triaged,
+    then who (`MACHINE\\user`, from a `.tm7`) and when (TMT's ModifiedAt, or ours on triage)."""
     meta = t.raw.get("tdtm")
     if not isinstance(meta, dict):
         return "", ""
     if meta.get("fingerprint") == fingerprint(t.raw):
         return "", "Generated"
-    return (meta.get("tm7") or {}).get("changedBy") or "", ""
+    keep = meta.get("tm7") or {}
+    return keep.get("changedBy") or "", tmt_time(keep.get("modifiedAt") or "")
 
 
 def tmt_category(t: Threat, template) -> str:
