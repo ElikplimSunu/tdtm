@@ -48,7 +48,8 @@ ThreatSketch.
 ![The start screen: New threat model, Open a file, Open the example](docs/img/threatsketch-welcome.jpg)
 
 **Draw and connect.** Hover an element for a **+** on each side; drag it to another element, or
-click it to link the nearest one.
+click it to link the nearest one. A flow stays on the sides you chose, and two flows between the
+same elements bow apart, as in TMT. Under Line in a flow's properties, choose curved or elbow.
 
 ![Payment Provider hovered, with a + handle on each side](docs/img/threatsketch-connect.jpg)
 

@@ -48,11 +48,37 @@ def _flow_points(d: Diagram, f: Element) -> list[Point]:
     return [start, *mids, end]
 
 
-def _twin_shift(d: Diagram, f: Element) -> float:
-    """How far to move a flow sideways so flows joining the same two shapes do not overlap."""
+def _twins(d: Diagram, f: Element) -> tuple[int, int]:
+    """This flow's place among the flows joining the same two shapes (by id), and their count."""
     pair = {f.source_id, f.target_id}
     twins = sorted(g.cell_id for g in d.of_kind(Kind.FLOW) if {g.source_id, g.target_id} == pair)
-    return (twins.index(f.cell_id) - (len(twins) - 1) / 2) * 16
+    return twins.index(f.cell_id), len(twins)
+
+
+def _twin_shift(d: Diagram, f: Element) -> float:
+    """How far to move a flow sideways so flows joining the same two shapes do not overlap."""
+    i, n = _twins(d, f)
+    return (i - (n - 1) / 2) * 16
+
+
+def _label_at(d: Diagram, f: Element) -> float:
+    """Where along a flow its name goes: staggered among flows joining the same two shapes, as
+    the canvas does it, so their names do not sit on top of each other."""
+    i, n = _twins(d, f)
+    step = 0 if n < 2 else min(0.25, 0.6 / (n - 1))
+    from_lo = 0.5 + (i - (n - 1) / 2) * step
+    return from_lo if f.source_id == min(f.source_id, f.target_id) else 1 - from_lo
+
+
+def _point_along(points: list[Point], t: float) -> Point:
+    lengths = [math.dist((a.x, a.y), (b.x, b.y)) for a, b in zip(points, points[1:], strict=False)]
+    left = sum(lengths) * t
+    for (a, b), length in zip(zip(points, points[1:], strict=False), lengths, strict=True):
+        if left <= length and length:
+            k = left / length
+            return Point(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k)
+        left -= length
+    return points[-1]
 
 
 def _side_by_side(d: Diagram, f: Element, points: list[Point], shift: float) -> list[Point]:
@@ -146,11 +172,7 @@ def render_svg(d: Diagram) -> str:
         else:
             pts = _side_by_side(d, f, _flow_points(d, f), shift)
         parts.append(f'<polyline class="flow" points="{_pts(pts)}" marker-end="url(#arrow)"/>')
-        mid = (
-            pts[len(pts) // 2]
-            if len(pts) > 2
-            else Point((pts[0].x + pts[-1].x) / 2, (pts[0].y + pts[-1].y) / 2)
-        )
+        mid = pts[len(pts) // 2] if f.points else _point_along(pts, _label_at(d, f))
         parts.append(
             f'<text class="flow-label" x="{mid.x:.1f}" y="{mid.y - 4:.1f}"'
             f' text-anchor="middle">{escape(f.label)}</text>'

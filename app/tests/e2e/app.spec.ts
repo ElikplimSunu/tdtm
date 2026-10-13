@@ -55,7 +55,9 @@ async function plus(page: Page, cellId: string, side: string) {
   await page.evaluate((id) => {
     const graph = (window as any).threatsketch.editor.graph;
     const cell = graph.getCellById(id);
-    if (!graph.getGraphArea().containsRect(cell.getBBox().inflate(40))) graph.centerCell(cell);
+    const r = graph.getPlugin("scroller").container.getBoundingClientRect();
+    const view = graph.clientToLocal({ x: r.x, y: r.y, width: r.width, height: r.height });
+    if (!view.containsRect(cell.getBBox().inflate(40))) graph.centerCell(cell);
   }, cellId);
   const node = page.locator(`g.x6-node[data-cell-id="${cellId}"]`);
   const handle = node.locator(`[port-group="${side}"] circle`);
@@ -125,6 +127,10 @@ test("flows both ways between two shapes run side by side, not on top of each ot
   // each flow's ends sit apart from the other flow's, so the two lines never coincide
   expect(Math.abs(ends[0][0] - ends[1][1])).toBeGreaterThan(8);
   expect(Math.abs(ends[0][1] - ends[1][0])).toBeGreaterThan(8);
+  // and their names do not sit on top of each other
+  const [a, b] = await page.locator(".x6-edge-label").evaluateAll((ls) => ls.map((l) => l.getBoundingClientRect().toJSON()));
+  const overlap = a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  expect(overlap, JSON.stringify([a, b])).toBe(false);
 });
 
 test("elbow lines: chosen per flow, saved in the file, and new flows follow the last choice", async ({ page }) => {

@@ -355,9 +355,11 @@ export class Editor {
     if (!c) return;
     this.graph.cleanSelection();
     this.graph.select(c);
-    const box = c.getBBox();
-    const view = this.graph.getGraphArea();
-    if (!view.containsRect(box)) this.graph.centerCell(c);
+    // the part of the canvas in view; padded, as a level flow's box has no height and X6 never
+    // counts a box with no height as inside anything
+    const r = this.graph.getPlugin<Scroller>("scroller")!.container.getBoundingClientRect();
+    const view = this.graph.clientToLocal({ x: r.x, y: r.y, width: r.width, height: r.height });
+    if (!view.containsRect(c.getBBox().inflate(8))) this.graph.centerCell(c);
   }
 
   /** Link `fromId` to the nearest element on its `side`, or to a new process placed there. */
@@ -422,7 +424,23 @@ export class Editor {
     }
     this.spread(s);
     this.spread(t);
+    this.stagger(s, t);
     this.graph.stopBatch("anchor");
+  }
+
+  /** Flows joining the same two shapes carry their names at different points along them. */
+  private stagger(a: XCell, b: XCell) {
+    const twins = this.graph.getConnectedEdges(a)
+      .filter((e) => [e.getSourceCellId(), e.getTargetCellId()].sort().join() === [a.id, b.id].sort().join())
+      .sort((x, y) => (x.id < y.id ? -1 : 1));
+    const lo = a.id < b.id ? a.id : b.id;
+    twins.forEach((e, i) => {
+      const step = twins.length < 2 ? 0 : Math.min(0.25, 0.6 / (twins.length - 1));
+      const fromLo = 0.5 + (i - (twins.length - 1) / 2) * step; // measured from the same end for all
+      const position = e.getSourceCellId() === lo ? fromLo : 1 - fromLo;
+      const first = e.getLabels()[0];
+      if (first && typeof first === "object" && first.position !== position) e.setLabelAt(0, { ...first, position });
+    });
   }
 
   /** Space out the flows that meet `node` on the same side, ordered by where their other end is. */
@@ -523,7 +541,7 @@ export class Editor {
 
 type Side = "top" | "right" | "bottom" | "left";
 const OPPOSITE: Record<Side, Side> = { top: "bottom", right: "left", bottom: "top", left: "right" };
-const SPREAD = 18; // px between flows that share a side
+const SPREAD = 20; // px between flows that share a side
 
 /**
  * A flow end pinned to a point on `node`'s outline. Rectangles and stores end exactly there (their

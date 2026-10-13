@@ -52,6 +52,7 @@ function sidedManhattan(this: any, vertices: any, options: any, view: any) {
 
 const OUT: Record<string, [number, number]> = { top: [0, -1], right: [1, 0], bottom: [0, 1], left: [-1, 0] };
 const smooth = Registry.Connector.presets.smooth;
+const BOW = 2.5; // how much further than its offset on the side a shared-side flow bows out
 const manhattan = Registry.Router.presets.manhattan;
 
 /**
@@ -60,12 +61,17 @@ const manhattan = Registry.Router.presets.manhattan;
  * round instead of cutting back across its own shape. With bends, or unpinned, it is X6's own curve.
  */
 function sidedSmooth(this: any, s: any, t: any, route: any[], options: any, view: any) {
-  const a = OUT[view?.cell?.getSource?.()?.anchor?.name], b = OUT[view?.cell?.getTarget?.()?.anchor?.name];
+  const from = view?.cell?.getSource?.()?.anchor, to = view?.cell?.getTarget?.()?.anchor;
+  const a = OUT[from?.name], b = OUT[to?.name];
   if (route?.length || !a || !b) return smooth.call(this, s, t, route, options, view);
   const k = Math.max(40, Math.hypot(t.x - s.x, t.y - s.y) / 2.5);
+  // a flow moved off a side's middle (it shares the side) bows further that way, as TMT's do, so
+  // two flows between the same shapes part in the middle, where their names are
+  const bow = (end: any) => [(end?.args?.dx ?? 0) * BOW, (end?.args?.dy ?? 0) * BOW];
+  const [ox, oy] = bow(from), [px, py] = bow(to);
   const path = new Path();
   path.appendSegment(Path.createSegment("M", s));
-  path.appendSegment(Path.createSegment("C", s.x + a[0] * k, s.y + a[1] * k, t.x + b[0] * k, t.y + b[1] * k, t.x, t.y));
+  path.appendSegment(Path.createSegment("C", s.x + a[0] * k + ox, s.y + a[1] * k + oy, t.x + b[0] * k + px, t.y + b[1] * k + py, t.x, t.y));
   return options.raw ? path : path.serialize();
 }
 

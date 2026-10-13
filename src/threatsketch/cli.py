@@ -281,15 +281,12 @@ def cmd_coverage(args: argparse.Namespace) -> int:
 def cmd_report(args: argparse.Namespace) -> int:
     from .report import render, render_csv
 
-    try:
-        model, _ = load(args.model)
-    except (OSError, ValueError, KeyError) as e:
-        raise UsageError(f"cannot read model {args.model}: {e}") from e
+    model, _, template, _ = _load(args)  # resolved: zones and boundary crossings, as the app has
     if args.out.lower().endswith(".csv"):
         # newline="" keeps the CRLF line endings TMT's export uses
-        Path(args.out).write_text(render_csv(model, _template(args)), encoding="utf-8", newline="")
+        Path(args.out).write_text(render_csv(model, template), encoding="utf-8", newline="")
     else:
-        Path(args.out).write_text(render(model, _template(args)), encoding="utf-8")
+        Path(args.out).write_text(render(model, template), encoding="utf-8")
     print(f"wrote {args.out}")
     return 0
 
@@ -316,11 +313,14 @@ def cmd_import(args: argparse.Namespace) -> int:
 
 def _write_reports(model_path: Path, args: argparse.Namespace) -> None:
     from .report import render, render_csv
+    from .resolve import resolve
 
     model, _ = load(model_path)
+    template = _template(args)
+    resolve(model, template)  # zones and boundary crossings, which the report shows
     html, csv_path = model_path.with_suffix(".report.html"), model_path.with_suffix(".csv")
-    html.write_text(render(model, _template(args)), encoding="utf-8")
-    csv_path.write_text(render_csv(model, _template(args)), encoding="utf-8", newline="")
+    html.write_text(render(model, template), encoding="utf-8")
+    csv_path.write_text(render_csv(model, template), encoding="utf-8", newline="")
     print(f"reports: {html.name}, {csv_path.name}")
 
 

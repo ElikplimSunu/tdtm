@@ -78,6 +78,7 @@ def test_report_command(fixtures, tmp_path, capsys):
     assert main(["report", str(path), "--out", str(out)]) == 0
     assert "Spoofing the User External Entity" in out.read_text()
     assert str(out) in capsys.readouterr().out
+    assert "crosses <span" in out.read_text()  # resolved, as in the app: boundary crossings shown
 
 
 def test_review_flags_a_model_nobody_could_act_on(fixtures, tmp_path):

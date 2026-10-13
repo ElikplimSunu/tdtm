@@ -60,8 +60,12 @@ def test_flows_both_ways_between_two_shapes_do_not_overlap():
         d.elements[id_] = Element(id_, 0, Kind.ACTOR, id_, rect=Rect(x, 0, 100, 60))
     for id_, s, t in (("f1", "a", "b"), ("f2", "b", "a")):
         d.elements[id_] = Element(id_, 0, Kind.FLOW, id_, source_id=s, target_id=t)
-    lines = [p for p in render_svg(d).split("<") if p.startswith('polyline class="flow"')]
+    svg = render_svg(d)
+    lines = [p for p in svg.split("<") if p.startswith('polyline class="flow"')]
     assert len(lines) == 2 and lines[0] != lines[1]
+    labels = [p for p in svg.split("<") if p.startswith('text class="flow-label"')]
+    xs = [float(p.split(' x="')[1].split('"')[0]) for p in labels]
+    assert abs(xs[0] - xs[1]) > 30  # their names sit apart along the lines
 
 
 def test_elbow_flows_bend_at_right_angles_and_two_way_ones_stay_apart():
