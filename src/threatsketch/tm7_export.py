@@ -238,8 +238,9 @@ def _properties(e, template) -> str:
         _p_value("StringDisplayAttribute", "Name", "", e.name, "string"),
     ]
     if e.kind in (Kind.FLOW, Kind.BOUNDARY_BOX, Kind.BOUNDARY_CURVE):
+        order = ((data.get("tdtm") or {}).get("tm7") or {}).get("dataflowOrder", "0")
         parts.append(
-            _p_value("StringDisplayAttribute", "Dataflow Order", DATAFLOW_ORDER, "0", "string")
+            _p_value("StringDisplayAttribute", "Dataflow Order", DATAFLOW_ORDER, order, "string")
         )
     if e.kind in (Kind.BOUNDARY_BOX, Kind.BOUNDARY_CURVE):
         area = "Trust Boundary Area" if e.kind is Kind.BOUNDARY_BOX else "Trust Boundary Line"

@@ -271,6 +271,8 @@ def render(model: Model, template=None) -> str:
         ("Owner", model.owner),
         ("Reviewer", model.reviewer),
         ("Contributors", ", ".join(model.contributors)),
+        ("Assumptions", model.assumptions),
+        ("External Dependencies", model.external_dependencies),
         ("Created", f"{created:%d %B %Y, %H:%M}"),
         ("Template", template.name or "SDL TM Knowledge Base"),
         ("Diagrams", str(len(model.diagrams))),

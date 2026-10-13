@@ -103,3 +103,16 @@ def test_review_flags_a_model_nobody_could_act_on(fixtures, tmp_path):
     assert any(n.startswith("24 of 24 threats are still Not Started") for n in notes)
     assert not any("default name" in n or "trust boundary" in n for n in notes)
     assert "<h2>Review before sharing</h2>" in render(model, tpl)
+
+
+def test_report_shows_tmt_assumptions_and_external_dependencies(fixtures, tmp_path):
+    path = analyzed(fixtures, tmp_path)
+    raw = json.loads(path.read_text())
+    meta = {"Assumptions": "TLS everywhere", "ExternalDependencies": "SMS"}
+    raw["tdtm"] = {"tm7": {"meta": meta}}
+    path.write_text(json.dumps(raw))
+    model, _ = load(path)
+    assert (model.assumptions, model.external_dependencies) == ("TLS everywhere", "SMS")
+    html = render(model)
+    assert "<dt>Assumptions</dt><dd>TLS everywhere</dd>" in html
+    assert "<dt>External Dependencies</dt><dd>SMS</dd>" in html

@@ -307,13 +307,14 @@ test("multiple diagrams: add, rename, switch", async ({ page }) => {
   expect(m.detail.diagrams.map((d: any) => [d.title, d.cells.length])).toEqual([["Online shop", 13], ["Admin", 1]]);
 });
 
-test("private: the Mobile Banking model from real TMT gives TMT's 54 threats", async ({ page }) => {
+test("private: the Mobile Banking model from real TMT gives TMT's threats", async ({ page }) => {
   test.skip(!existsSync(PRIVATE_TM7), "coursework model not on this machine");
+  const tmt = readFileSync(PRIVATE_TM7, "utf8").split("<b:FlowGuid>").length - 1; // one per TMT threat
   await page.goto("./");
   await expect(page.getByTestId("engine-status")).toContainText("Knowledge Base", { timeout: 30_000 });
   const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.getByRole("button", { name: /Open a file/ }).click()]);
   await chooser.setFiles(PRIVATE_TM7);
-  await expect(page.getByTestId("threat-count")).toHaveText("54 threats");
+  await expect(page.getByTestId("threat-count")).toHaveText(`${tmt} threats`);
 });
 
 test("works offline after the first visit", async ({ page, context }) => {
@@ -386,4 +387,14 @@ test("PDF export opens the styled report with the print dialog", async ({ page }
   await expect(popup.locator("h1")).toHaveText("Online shop");
   await expect(popup.locator(".stat").first()).toContainText("38");
   expect(await popup.content()).toContain("setTimeout(print");
+});
+
+test("TMT's assumptions and external dependencies reach the .tm7 and the saved model", async ({ page }) => {
+  await openExample(page);
+  await page.getByTestId("model-assumptions").fill("All traffic uses TLS 1.2+");
+  await page.getByTestId("model-assumptions").blur();
+  await page.getByRole("button", { name: "Export" }).click();
+  const tm7 = await download(page, () => page.getByRole("menuitem", { name: /Microsoft TMT model/ }).click());
+  expect(tm7.text).toContain("<Assumptions>All traffic uses TLS 1.2+</Assumptions>");
+  expect((await snapshot(page)).tdtm.tm7.meta.Assumptions).toBe("All traffic uses TLS 1.2+");
 });
