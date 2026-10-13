@@ -56,7 +56,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
   *Done when:* running twice changes nothing; editing a generated threat's mitigation then
   re-running keeps the edit; deleting a tag makes threats `[stale]`; `--prune` removes unedited
   stale ones; `hasOpenThreats` is correct; output validates against the v2 schema.
-- [ ] **2.5 `tdtm analyze`** wired end to end, with `--dry-run` printing a diff summary and a
+- [x] **2.5 `tdtm analyze`** wired end to end, with `--dry-run` printing a diff summary and a
   `.bak` written before overwriting.
 - [ ] **2.6 [manual] Smoke test in Threat Dragon.** Human: run `tdtm analyze` on a model drawn in
   Threat Dragon, reopen it, confirm threats appear on flows and elements turn red. Screenshot to

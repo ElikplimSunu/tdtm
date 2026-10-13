@@ -45,3 +45,75 @@ def test_inspect_reports_tag_errors_and_skipped_diagrams(capsys, fixtures, tmp_p
 def test_missing_model_is_exit_code_2(capsys, tmp_path):
     assert main(["inspect", str(tmp_path / "nope.json")]) == 2
     assert "nope.json" in capsys.readouterr().err
+
+
+def tdtm_threats(path):
+    import json
+
+    raw = json.loads(path.read_text())
+    cells = [c for d in raw["detail"]["diagrams"] for c in d["cells"]]
+    return [t for c in cells for t in c["data"].get("threats", []) if "tdtm" in t]
+
+
+@pytest.fixture
+def model_copy(fixtures, tmp_path):
+    import shutil
+
+    path = tmp_path / "model.json"
+    shutil.copy(fixtures / "golden" / "2-actor-process-curve.json", path)
+    return path
+
+
+def test_analyze_writes_threats_and_a_backup(model_copy, capsys):
+    original = model_copy.read_bytes()
+    assert main(["analyze", str(model_copy)]) == 0
+    out = capsys.readouterr().out
+    assert "24 added" in out
+    assert model_copy.with_name("model.json.bak").read_bytes() == original
+    assert len(tdtm_threats(model_copy)) == 24
+
+    after = model_copy.read_bytes()
+    assert main(["analyze", str(model_copy)]) == 0
+    out = capsys.readouterr().out
+    assert "0 added" in out and "24 unchanged" in out
+    assert model_copy.read_bytes() == after
+
+
+def test_analyze_dry_run_changes_nothing(model_copy, capsys):
+    original = model_copy.read_bytes()
+    assert main(["analyze", str(model_copy), "--dry-run"]) == 0
+    out = capsys.readouterr().out
+    assert "+ flow 'Request' (User -> App): Spoofing the User External Entity" in out
+    assert "dry run" in out
+    assert model_copy.read_bytes() == original
+    assert not model_copy.with_name("model.json.bak").exists()
+
+
+def test_analyze_out_leaves_the_model_alone(model_copy, tmp_path):
+    original = model_copy.read_bytes()
+    assert main(["analyze", str(model_copy), "--out", str(tmp_path / "new.json")]) == 0
+    assert model_copy.read_bytes() == original
+    assert len(tdtm_threats(tmp_path / "new.json")) == 24
+    assert not model_copy.with_name("model.json.bak").exists()
+
+
+def test_analyze_strict_stops_on_tag_errors(model_copy, capsys):
+    import json
+
+    raw = json.loads(model_copy.read_text())
+    raw["detail"]["diagrams"][0]["cells"][1]["data"]["description"] = "@tmt: Nonsense"
+    model_copy.write_text(json.dumps(raw))
+    original = model_copy.read_bytes()
+    assert main(["analyze", str(model_copy), "--strict"]) == 3
+    assert "Nonsense" in capsys.readouterr().err
+    assert model_copy.read_bytes() == original
+    assert main(["analyze", str(model_copy)]) == 0  # without --strict: warn and carry on
+
+
+def test_analyze_sidecar(model_copy):
+    assert main(["analyze", str(model_copy), "--sidecar"]) == 0
+    assert tdtm_threats(model_copy) == []
+    assert model_copy.with_name("model.tdtm.json").exists()
+    before = model_copy.read_bytes()
+    assert main(["analyze", str(model_copy), "--sidecar"]) == 0
+    assert model_copy.read_bytes() == before

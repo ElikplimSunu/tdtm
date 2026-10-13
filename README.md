@@ -6,9 +6,9 @@ Automatic STRIDE threat generation for [OWASP Threat Dragon](https://owasp.org/w
 models, using the same rules as Microsoft's Threat Modeling Tool (TMT). Draw on macOS or Linux, get
 the threat list TMT would give you on Windows.
 
-> **Status: early development.** The design, test fixtures and CLI skeleton are in place. The
-> commands below are the planned interface and do not work yet. Progress is tracked in
-> [docs/PLAN.md](docs/PLAN.md).
+> **Status: early development.** `tdtm analyze` and `tdtm inspect` work and are tested against
+> hand-checked examples; the other commands are still being built. Not yet checked against real
+> TMT output. Progress is tracked in [docs/PLAN.md](docs/PLAN.md).
 
 ## Why
 
@@ -58,16 +58,20 @@ uv sync
 uv run tdtm --help
 ```
 
-## Usage (planned)
+## Usage
 
 ```bash
 uv run tdtm analyze model.json            # add threats to the model, keeping a .bak copy
 uv run tdtm analyze model.json --dry-run  # show what would change
+uv run tdtm analyze model.json --prune    # also remove generated threats whose rule stopped firing
 uv run tdtm inspect model.json            # how each element was read: stencil, attributes, zone
-uv run tdtm stencils --kind process       # valid @tmt stencils and attributes
-uv run tdtm report model.json             # TMT-style HTML report
-uv run tdtm coverage                      # which rules fire from Threat Dragon properties alone
+uv run tdtm stencils --kind process       # valid @tmt stencils and attributes (coming)
+uv run tdtm report model.json             # TMT-style HTML report (coming)
+uv run tdtm coverage                      # which rules fire from Threat Dragon properties alone (coming)
 ```
+
+Re-running is safe: threats you edited in Threat Dragon keep your changes, and threats whose rule no
+longer fires are marked `[stale]` rather than deleted. Only STRIDE diagrams get threats.
 
 ### Telling tdtm what an element really is
 
