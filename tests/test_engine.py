@@ -57,7 +57,7 @@ def test_titles_use_names_and_threats_attach_to_the_flow(t):
     s3 = next(g for g in gen if g.rule_id == "S3")
     assert s3.title == "Spoofing the User External Entity (User → App)"
     assert "User may be spoofed" in s3.description
-    assert (s3.cell_id, s3.category, s3.severity, s3.pack) == ("f", "S", "TBD", "sdl")
+    assert (s3.cell_id, s3.category, s3.severity, s3.pack) == ("f", "S", "High", "sdl")
     assert s3.key == "sdl:S3:f:fwd"
     s8 = next(g for g in gen if g.rule_id == "S8")
     assert s8.title == "Spoofing of the User External Destination Entity (App → User)"

@@ -47,7 +47,7 @@ def test_first_run_writes_threat_dragon_shaped_threats(golden, td_schema_path):
     assert (s3["type"], s3["status"], s3["severity"], s3["modelType"]) == (
         "Spoofing",
         "Open",
-        "TBD",
+        "High",
         "STRIDE",
     )
     assert (s3["new"], s3["score"], s3["mitigation"]) == (False, "", "")

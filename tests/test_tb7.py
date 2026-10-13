@@ -74,3 +74,4 @@ def test_threat_types(t):
     assert by_id["SU"].legacy and by_id["SU"].include == "source is 'ROOT'"
     assert sum(bool(tt.exclude) for tt in t.threat_types) == 11
     assert all(tt.priority is None for tt in t.threat_types)  # SDL leaves Priority empty
+    assert t.default_priority == "High"  # ...so TMT uses the template-level first value

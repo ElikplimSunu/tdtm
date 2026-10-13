@@ -6,6 +6,8 @@
 - `Template.attributes_for(stencil_id)`: the parent's attributes, plus the stencil's own new ones,
   with its static overrides applied (SPEC 3.1).
 - `Template.categories`: letter -> name. `Template.threat_types`: in file order.
+- `Template.default_priority`: first value of the template-level Priority list ("High" in SDL),
+  which TMT gives every threat whose type sets no priority (SPEC 6.4)
 """
 
 from __future__ import annotations
@@ -59,6 +61,7 @@ class Template:
     stencils: dict[str, Stencil]
     categories: dict[str, str]
     threat_types: list[ThreatType]
+    default_priority: str | None = None
 
     def is_a(self, stencil_id: str, ancestor_id: str) -> bool:
         if ancestor_id == ROOT:
@@ -96,6 +99,7 @@ def _attribute(el: ET.Element) -> Attribute:
 
 
 def _metadatum(tt: ET.Element, name: str) -> str | None:
+    """First value of the named ThreatMetaDatum under `tt` (a ThreatType or ThreatMetaData)."""
     for m in tt.findall("PropertiesMetaData/ThreatMetaDatum"):
         if _text(m, "Name") == name:
             return _text(m, "Values/Value") or None
@@ -143,4 +147,5 @@ def load_template(path: str | Path | None = None) -> Template:
             )
             for tt in root.findall("ThreatTypes/ThreatType")
         ],
+        default_priority=_metadatum(root.find("ThreatMetaData"), "Priority"),
     )

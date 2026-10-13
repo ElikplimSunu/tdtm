@@ -376,8 +376,10 @@ confirms by hand. Either way the `id` fallback in 6.2 prevents duplicates.
 
 ### 6.4 Defaults for new threats
 
-`status: "Open"`, `severity`: from rule pack (SDL template has empty Priority → `"TBD"`;
-pytm severity maps directly), `modelType: "STRIDE"`, `mitigation`: pack text or `""`,
+`status: "Open"`, `severity`: the threat type's own Priority, else the first value of the
+template-level Priority list (`ThreatMetaData`: `High, Medium, Low` in SDL, so `"High"`), else
+`"TBD"`. [confirmed against TMT 7.3: all 54 untouched threats in a real model have priority
+High.] pytm severity maps directly, `modelType: "STRIDE"`, `mitigation`: pack text or `""`,
 `type`: category mapped to TD STRIDE strings (Abuse → keep `"Abuse"`, flag in report),
 `new: false`, `number`: `threatTop + 1` per threat in output order, `score: ""`. Threats on a
 bidirectional flow get `(source → target)` appended to the title, since both directions land on

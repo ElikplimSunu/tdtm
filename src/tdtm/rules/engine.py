@@ -65,7 +65,7 @@ def run_sdl(model: Model, template, *, include_legacy: bool = False) -> list[Gen
                             category=tt.category,
                             title=fill_placeholders(tt.short_title, names) + suffix,
                             description=fill_placeholders(tt.description, names),
-                            severity=tt.priority or "TBD",
+                            severity=tt.priority or template.default_priority or "TBD",
                         )
                     )
     return out
