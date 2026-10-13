@@ -337,6 +337,9 @@ def _write_reports(model_path: Path, args: argparse.Namespace) -> None:
 def cmd_open(args: argparse.Namespace) -> int:
     from .launcher import open_in_threat_dragon
 
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)  # show progress live even when piped
+
     model = Path(args.model)
     if model.suffix.lower() == ".tm7":
         target = model.with_suffix(".json")

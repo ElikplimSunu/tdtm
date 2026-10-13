@@ -11,6 +11,17 @@ the threat list TMT would give you on Windows.
 > curves, tags or encryption are checked against hand-worked examples only so far. Progress is
 > tracked in [docs/PLAN.md](docs/PLAN.md).
 
+## What it looks like
+
+`tdtm open examples/online-shop.json` adds 38 threats to the example model and opens it in
+Threat Dragon. Flows that carry open threats are outlined in red:
+
+![The example model in Threat Dragon after tdtm: every data flow carries generated threats and is outlined in red](docs/img/threat-dragon-diagram.jpg)
+
+Select a flow to see its threats, with the same titles and categories TMT would give them:
+
+![Threat Dragon showing the generated threats on the Place order flow: Spoofing the Customer External Entity, Cross Site Scripting, Potential Data Repudiation](docs/img/threat-dragon-threats.jpg)
+
 ## Why
 
 TMT's best feature is rule-driven threat generation. Every data flow in the diagram is checked
@@ -72,6 +83,7 @@ threats arrive, reopen the model in Threat Dragon (File > Open Recent) to see th
 
 The same steps one at a time: `tdtm import`, `tdtm analyze`, `tdtm report` (see Usage).
 
+To try it on the example: `tdtm open examples/online-shop.json` from a clone of this repo.
 To update tdtm later: `uv tool upgrade tdtm`.
 
 ## Install for development
