@@ -8,15 +8,15 @@ const base = process.argv[3] ?? "http://localhost:5173/";
 mkdirSync(out, { recursive: true });
 
 const browser = await chromium.launch({ channel: "chrome" });
-async function shot(name, scheme, act) {
+async function shot(name, scheme, act, { keepPointer = false } = {}) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, colorScheme: scheme });
   await page.addInitScript(() => localStorage.clear());
   await page.goto(base);
   await page.getByTestId("engine-status").getByText("Knowledge Base").waitFor({ timeout: 60_000 });
-  await act(page);
-  await page.mouse.move(0, 0);
+  const target = (await act(page)) ?? page;
+  if (!keepPointer) await page.mouse.move(0, 0);
   await page.waitForTimeout(400);
-  await page.screenshot({ path: `${out}/${name}.png` });
+  await target.screenshot({ path: `${out}/${name}.png` });
   await page.close();
   console.log(`${out}/${name}.png`);
 }
@@ -40,6 +40,29 @@ await shot("threatsketch-hover", "light", async (page) => {
   await page.waitForTimeout(200);
   const box = await page.locator('g.x6-node[data-cell-id="payments"] [port-group="bottom"] circle').boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+}, { keepPointer: true });
+await shot("threatsketch-triage", "light", async (page) => {
+  await example(page);
+  const rows = page.getByTestId("threat-row");
+  const triage = async (i, state, priority, text) => {
+    await rows.nth(i).click();
+    await page.getByTestId("threat-state").selectOption(state);
+    await page.getByTestId("threat-priority").selectOption(priority);
+    await page.getByTestId("threat-justification").fill(text);
+    await page.getByTestId("threat-justification").blur();
+    await page.waitForTimeout(400);
+  };
+  await triage(0, "Mitigated", "High", "Customers sign in with a password and a one-time code.");
+  await triage(2, "Needs Investigation", "Medium", "Check whether order changes are logged with the user ID.");
+  await triage(3, "Not Applicable", "Low", "The web app runs behind a load balancer with health checks.");
+  await triage(1, "Mitigated", "High", "All output is encoded by the template engine; a CSP blocks inline scripts.");
+});
+await shot("threatsketch-report", "light", async (page) => {
+  await example(page);
+  const [popup] = await Promise.all([page.waitForEvent("popup"), page.getByRole("button", { name: "Report" }).click()]);
+  await popup.setViewportSize({ width: 1100, height: 900 });
+  await popup.waitForLoadState();
+  return popup;
 });
 await shot("threatsketch-dark", "dark", async (page) => {
   await example(page);
