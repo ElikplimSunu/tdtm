@@ -43,7 +43,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
 
 ## Phase 2: SDL rule pack (the main feature)
 
-- [ ] **2.1 `rules/filters`: tokenizer, parser, evaluator** (SPEC 3.4/3.5). No eval.
+- [x] **2.1 `rules/filters`: tokenizer, parser, evaluator** (SPEC 3.4/3.5). No eval.
   *Done when:* all 47 Include and 11 Exclude strings in default.tb7 parse; hand-written truth-table
   tests for `is`, descendant `is`, `crosses`, attributes, `ROOT`, precedence of and/or.
 - [ ] **2.2 `rules/engine`: run a template over a model.** Per flow (both directions if

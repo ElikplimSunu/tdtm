@@ -237,7 +237,8 @@ flow F (source S, target T) and each threat type R:
 - `x.attr is 'V'`: x's effective attribute value equals V, where effective value = the stencil's
   static value, else the `@tmt` tag value, else the value derived from a Threat Dragon property
   (4.2), else the attribute default. A static value cannot be changed in TMT, so a tag that
-  disagrees with one is ignored with a warning. Unknown attr → no match.
+  disagrees with one is ignored with a warning. Values compare case-insensitively. Unknown attr
+  → no match.
 - `flow crosses 'ID'`: the flow crosses at least one boundary whose stencil is or descends from ID.
 
 Bidirectional TD flows (`isBidirectional: true`) are evaluated in both directions **[assumed]**; TMT has no bidirectional flows, so two interactions is the faithful mapping.
