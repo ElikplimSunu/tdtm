@@ -116,3 +116,14 @@ def test_report_shows_tmt_assumptions_and_external_dependencies(fixtures, tmp_pa
     html = render(model)
     assert "<dt>Assumptions</dt><dd>TLS everywhere</dd>" in html
     assert "<dt>External Dependencies</dt><dd>SMS</dd>" in html
+
+
+def test_tmt_time_is_shown_as_tmt_shows_it():
+    """TMT stores ModifiedAt as ISO 8601 with 7-digit fractions and an offset, and lists it as
+    "13/10/2026 9:56:59 pm" (a real TMT 7.3 CSV): the stored wall time, no leading zero hour."""
+    from threatsketch.report import tmt_time
+
+    assert tmt_time("2026-10-13T21:56:59.6125953+00:00") == "13/10/2026 9:56:59 pm"
+    assert tmt_time("2026-10-01T10:00:00") == "01/10/2026 10:00:00 am"
+    assert tmt_time("2026-10-13T00:05:09+02:00") == "13/10/2026 12:05:09 am"
+    assert tmt_time("") == "" and tmt_time("not a time") == "not a time"
