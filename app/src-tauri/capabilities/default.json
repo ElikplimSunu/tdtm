@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Open and save the files the user picks; show the report; install signed updates.",
+  "description": "Open and save the files the user picks; show the report; open the Help menu's pages; install signed updates.",
   "windows": [
     "main"
   ],
@@ -19,6 +19,20 @@
       "allow": [
         {
           "path": "$APPCACHE/**"
+        }
+      ]
+    },
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://github.com/ElikplimSunu/threatsketch*"
+        },
+        {
+          "url": "https://learn.microsoft.com/*"
+        },
+        {
+          "url": "https://www.microsoft.com/*"
         }
       ]
     },

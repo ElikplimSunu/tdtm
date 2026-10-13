@@ -104,6 +104,12 @@ export async function showHtml(html: string, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
+/** Open a web page (Help menu): the default browser in the desktop app, a new tab otherwise. */
+export async function openUrl(url: string) {
+  if (isDesktop) return (await import("@tauri-apps/plugin-opener")).openUrl(url);
+  window.open(url, "_blank", "noopener");
+}
+
 /** A yes/no question: the native dialog in the desktop app, the browser's otherwise. */
 export async function ask(message: string): Promise<boolean> {
   if (!isDesktop) return confirm(message);

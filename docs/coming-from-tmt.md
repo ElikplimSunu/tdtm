@@ -12,18 +12,18 @@ exactly the same 54 threats as TMT, and its CSV export matched TMT's row for row
 
 | In TMT | In ThreatSketch |
 |---|---|
-| File > New, choose *SDL TM Knowledge Base* | **New threat model** (the SDL template is built in) |
-| File > Open a `.tm7` | **Open**, pick the `.tm7`: its diagram, threats and your triage come along |
+| File > New, choose *SDL TM Knowledge Base* | **File > New Model** (the SDL template is built in) |
+| File > Open a `.tm7` | **File > Open**, pick the `.tm7`: its diagram, threats and your triage come along |
 | Stencils pane | **Stencils** on the left, with the same groups and names; drag one onto the canvas or click it |
 | Draw a data flow | Hover an element: a **+** appears on each side. Drag it to the other element, or click it to link the nearest element on that side |
 | Trust Border Boundary / Trust Line Boundary | **Trust border boundaries** (a box) and **Trust line boundaries** (a line) in the stencils |
 | Properties pane (Name, Out Of Scope, Sanitizes Input ...) | **Properties** on the right: name, stencil, out of scope, and every TMT property of the stencil. Properties the stencil fixes are shown locked |
-| Switch to Analysis View | Not needed: the **threat list** below the diagram updates as you draw |
+| Design View / Analysis View | The same, in **View** or the toolbar: Design shows the stencils, Analysis the **threat list**. The list updates as you draw; **View** shows or hides each pane |
 | Filter the threat list | The state filters, category and priority menus, and search above the list |
 | Change State, Priority, Justification | Select the threat; set them on the right |
-| Reports > Create Full Report | **Report** (opens it) or **Export > Threat report** |
-| Export the threat list to CSV | **Export > Threat list**, in TMT's own CSV columns |
-| Save as `.tm7` | **Export > Microsoft TMT model** |
+| Reports > Create Full Report | **Reports > Create Full Report**; **Reports** also saves it as HTML or PDF |
+| Export the threat list to CSV | **Reports > Export Threat List**, in TMT's own CSV columns |
+| Save as `.tm7` | **File > Export as TMT Model** |
 | Save | **Save** (⌘S). Models are saved as Threat Dragon `.json`, which OWASP Threat Dragon opens too |
 
 ## A first model, step by step
@@ -35,9 +35,10 @@ exactly the same 54 threats as TMT, and its CSV export matched TMT's row for row
    same from *Shop* to *Orders*, and back the other way for the replies.
 4. Drag a **Generic Trust Border Boundary** onto the canvas and resize it from its corners so it
    holds *Shop* and *Orders* but not *Customer*.
-5. The threat list fills in as you go. Select a threat, set its state, priority and
-   justification on the right.
-6. **Save**, then **Export** the report, the CSV or a `.tm7` to hand in.
+5. Switch to **Analysis View**: the threat list filled in as you went. Select a threat, set its
+   state, priority and justification on the right.
+6. **Save**, then use **Reports** for the report or the CSV, or **File > Export as TMT Model** for
+   a `.tm7`, to hand in.
 
 ## The same words
 
