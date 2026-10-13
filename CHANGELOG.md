@@ -6,6 +6,8 @@ One version covers the app and the command-line tool. The format follows
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-13
+
 ### Fixed
 
 - Selecting a second threat on the same data flow cleared the selection instead of showing it.
