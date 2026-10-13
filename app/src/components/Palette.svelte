@@ -62,7 +62,7 @@
                     onclick={() => onadd(sec.kind, s.generic ? null : s.id)}
                     title={`${s.name}: drag onto the canvas, or click to add`}
                   >
-                    <span class="glyph"><Icon name={sec.kind} size={18} /></span>
+                    <span class="glyph"><Icon name={sec.kind} size={16} /></span>
                     <span class="name">{s.name}</span>
                   </button>
                 {/each}
@@ -74,38 +74,38 @@
       <section>
         <div class="items">
           <button class="item" draggable="true" ondragstart={(e) => drag(e, "text", { id: "", name: "Note", generic: true })} onclick={() => onadd("text", null)}>
-            <span class="glyph"><Icon name="text" size={18} /></span><span class="name">Note</span>
+            <span class="glyph"><Icon name="text" size={16} /></span><span class="name">Note</span>
           </button>
         </div>
       </section>
     {/if}
   </div>
   <div class="tip">
-    Hover an element and drag a <b class="plus">+</b> to draw a data flow, or click it to link the nearest element.
+    Hover an element and drag a <b class="plus">+</b> to draw a data flow; click it to link the nearest element on that side.
   </div>
 </aside>
 
 <style>
   .palette { display: flex; flex-direction: column; min-height: 0; background: var(--panel); border-right: 1px solid var(--border); }
-  .head { padding: 12px 12px 8px; border-bottom: 1px solid var(--border); }
-  .title { font-weight: 600; margin-bottom: 8px; }
-  .search { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 6px; color: var(--faint); background: var(--panel); }
+  .head { padding: var(--s-3) var(--s-3) var(--s-2); }
+  .title { font-weight: 600; margin-bottom: var(--s-2); }
+  .search { display: flex; align-items: center; gap: var(--s-2); height: 28px; padding: 0 var(--s-2); border: 1px solid var(--border-strong); border-radius: var(--r-1); color: var(--faint); background: var(--panel); }
   .search:focus-within { border-color: var(--accent); box-shadow: var(--focus); }
   .search input { border: 0; outline: 0; background: transparent; width: 100%; color: var(--text); }
-  .list { flex: 1; overflow: auto; padding: 6px 6px 12px; }
-  .pad { padding: 8px; }
-  .sec { display: flex; align-items: center; gap: 4px; width: 100%; padding: 8px 6px 4px; border: 0; background: none; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); }
+  .list { flex: 1; overflow: auto; padding: 0 var(--s-2) var(--s-3); }
+  .pad { padding: var(--s-2); }
+  .sec { display: flex; align-items: center; gap: var(--s-1); width: 100%; padding: var(--s-3) var(--s-1) var(--s-1); border: 0; background: none; font-size: var(--fs-small); font-weight: 600; color: var(--muted); }
   .sec:hover { color: var(--text); }
   .chev { display: inline-flex; transition: transform 0.12s; }
   .chev.closed { transform: rotate(-90deg); }
-  .count { margin-left: auto; font-weight: 500; color: var(--faint); }
-  .items { display: grid; gap: 1px; }
-  .item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 8px; border: 0; border-radius: 6px; background: none; text-align: left; cursor: grab; }
+  .count { margin-left: auto; font: var(--fs-caption) var(--mono); color: var(--faint); }
+  .items { display: grid; }
+  .item { display: flex; align-items: center; gap: var(--s-2); width: 100%; height: 28px; padding: 0 var(--s-2); border: 0; border-radius: var(--r-1); background: none; text-align: left; cursor: grab; color: var(--text); }
   .item:hover { background: var(--hover); }
   .item:active { cursor: grabbing; }
-  .item.generic .name { font-weight: 600; }
-  .glyph { display: grid; place-items: center; width: 28px; height: 24px; border-radius: 5px; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); }
+  .item.generic .name { font-weight: 500; }
+  .glyph { display: grid; place-items: center; width: 20px; color: var(--muted); }
   .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tip { padding: 10px 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
-  .plus { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; line-height: 1; }
+  .tip { padding: var(--s-2) var(--s-3) var(--s-3); border-top: 1px solid var(--border); font-size: var(--fs-small); color: var(--muted); }
+  .plus { font-weight: 600; color: var(--accent-text); }
 </style>

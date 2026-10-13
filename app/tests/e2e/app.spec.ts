@@ -32,7 +32,7 @@ function cliAnalyze(model: string) {
 
 async function openExample(page: Page) {
   await page.goto("./");
-  await page.getByRole("button", { name: /explore an example/ }).click();
+  await page.getByRole("button", { name: /Open the example/ }).click();
   await expect(page.getByTestId("threat-count")).toHaveText("38 threats");
 }
 
@@ -63,8 +63,8 @@ test("opens the example: TMT's 38 threats, drawn TMT-style", async ({ page }) =>
   await expect(page.getByTestId("threat-row")).toHaveCount(38);
   // trust boundaries are red dashed, as in TMT; open-threat outlines are not drawn
   const box = page.locator('g[data-cell-id="backend"] rect').first();
-  await expect(box).toHaveAttribute("stroke", "#d13438");
-  await expect(page.locator('g[data-cell-id="webapp"] circle').first()).toHaveAttribute("stroke", "#1f2328");
+  await expect(box).toHaveAttribute("stroke", "#c0392f");
+  await expect(page.locator('g[data-cell-id="webapp"] circle').first()).toHaveAttribute("stroke", "#1b2026");
 });
 
 test("saving writes exactly what the threatsketch CLI writes", async ({ page }) => {
@@ -240,7 +240,7 @@ test("works offline after the first visit", async ({ page, context }) => {
   await context.setOffline(true);
   await page.reload();
   await expect(page.getByTestId("engine-status")).toContainText("Knowledge Base");
-  await page.getByRole("button", { name: /explore an example/ }).click();
+  await page.getByRole("button", { name: /Open the example/ }).click();
   await expect(page.getByTestId("threat-count")).toHaveText("38 threats");
 });
 

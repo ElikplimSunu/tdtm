@@ -58,11 +58,11 @@
     <div class="title">Threat list</div>
     <div class="filters" role="tablist" aria-label="Filter by state">
       <button role="tab" class="seg" class:on={filter === "All"} aria-selected={filter === "All"} onclick={() => (filter = "All")}>
-        All <b>{threats.length}</b>
+        All <b class="num">{threats.length}</b>
       </button>
       {#each STATES as s}
         <button role="tab" class="seg" title={s} class:on={filter === s} aria-selected={filter === s} onclick={() => (filter = s)}>
-          <span class="dot {cls(s)}"></span><span class="lbl">{SHORT[s] ?? s}</span> <b>{counts[s]}</b>
+          <span class="state {cls(s)}"><span class="dot"></span></span><span class="lbl">{SHORT[s] ?? s}</span> <b class="num">{counts[s]}</b>
         </button>
       {/each}
     </div>
@@ -100,8 +100,8 @@
         onclick={() => onselect(t.key)}
         onkeydown={(e) => e.key === "Enter" && onselect(t.key)}
       >
-        <div class="cell c-id">{t.id ?? ""}</div>
-        <div class="cell c-state"><span class="chip {cls(t.state)}"><span class="dot {cls(t.state)}"></span>{t.state}</span></div>
+        <div class="cell c-id num">{t.id ?? ""}</div>
+        <div class="cell c-state"><span class="state {cls(t.state)}"><span class="dot"></span>{t.state}</span></div>
         <div class="cell c-title" title={t.title}>{t.title}</div>
         <div class="cell c-category">{t.category}</div>
         <div class="cell c-interaction" title={t.source ? `${t.source} → ${t.target}` : ""}>{t.interaction}</div>
@@ -123,31 +123,30 @@
 
 <style>
   .threats { container-type: inline-size; display: flex; flex-direction: column; min-height: 0; height: 100%; background: var(--panel); }
-  .bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-  .title { font-weight: 600; margin-right: 6px; }
-  .filters { display: flex; gap: 2px; padding: 2px; border-radius: 7px; background: var(--panel-2); border: 1px solid var(--border); }
-  .seg { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border: 0; border-radius: 5px; background: none; color: var(--muted); font-size: 12px; white-space: nowrap; }
-  .seg b { font-weight: 600; color: var(--text); }
+  .bar { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2) var(--s-3); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .title { font-weight: 600; margin-right: var(--s-2); }
+  .filters { display: flex; gap: 2px; padding: 2px; border-radius: var(--r-1); background: var(--panel-2); border: 1px solid var(--border); }
+  .seg { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 var(--s-2); border: 0; border-radius: 2px; background: none; color: var(--muted); font-size: var(--fs-small); white-space: nowrap; }
+  .seg b { font-weight: 500; color: var(--text); }
   .seg:hover { color: var(--text); }
-  .seg.on { background: var(--panel); color: var(--text); box-shadow: var(--shadow); }
+  .seg.on { background: var(--panel); color: var(--text); box-shadow: 0 0 0 1px var(--border-strong); }
   .spacer { flex: 1; }
-  .input.small { width: 132px; height: 28px; min-height: 28px; padding: 2px 8px; font-size: 12px; }
-  .search { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 6px; color: var(--faint); width: 180px; }
+  .input.small { width: 132px; height: 26px; min-height: 26px; padding: 0 var(--s-2); font-size: var(--fs-small); }
+  .search { display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 var(--s-2); border: 1px solid var(--border-strong); border-radius: var(--r-1); color: var(--faint); width: 180px; }
   .search:focus-within { border-color: var(--accent); box-shadow: var(--focus); }
-  .search input { border: 0; outline: 0; background: transparent; width: 100%; font-size: 12px; color: var(--text); }
+  .search input { border: 0; outline: 0; background: transparent; width: 100%; font-size: var(--fs-small); color: var(--text); }
   .table { flex: 1; overflow: auto; outline: none; }
-  .row { display: grid; grid-template-columns: 56px 170px minmax(240px, 3fr) 150px minmax(140px, 1.4fr) 80px; align-items: center; min-height: 34px; border-bottom: 1px solid var(--border); cursor: pointer; }
-  .row:not(.headrow):hover { background: var(--hover); }
-  .row.sel { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
-  .headrow { position: sticky; top: 0; z-index: 1; background: var(--panel-2); min-height: 30px; cursor: default; }
-  .cell { padding: 0 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .h { border: 0; background: none; text-align: left; height: 30px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted); }
+  .row { display: grid; grid-template-columns: 56px 168px minmax(240px, 3fr) 152px minmax(140px, 1.4fr) 80px; align-items: center; min-height: 32px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .row:not(.headrow):hover { background: var(--panel-2); }
+  .row.sel { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+  .headrow { position: sticky; top: 0; z-index: 1; background: var(--panel); min-height: 28px; cursor: default; border-bottom-color: var(--border-strong); }
+  .cell { padding: 0 var(--s-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .h { border: 0; background: none; text-align: left; height: 28px; font-size: var(--fs-small); font-weight: 500; color: var(--muted); }
   .h:hover { color: var(--text); }
-  .arrow { margin-left: 4px; }
-  .c-id { color: var(--muted); font-variant-numeric: tabular-nums; }
-  .c-title { font-weight: 500; }
+  .arrow { margin-left: var(--s-1); }
+  .c-id { color: var(--muted); font-size: var(--fs-small); }
   .c-category, .c-interaction, .c-priority { color: var(--muted); }
   @container (max-width: 1080px) { .seg .lbl { display: none; } .search { width: 150px; } }
   @container (max-width: 700px) { .bar .input.small { display: none; } }
-  .empty { padding: 28px; text-align: center; color: var(--muted); }
+  .empty { padding: var(--s-6) var(--s-4); color: var(--muted); }
 </style>

@@ -34,6 +34,7 @@
   let renaming = $state<number | null>(null);
   let theme = $state<string>(readTheme());
   let fromThreat = false;
+  const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl+";
   let update = $state.raw<updates.Update | null>(null);
 
   onMount(() => {
@@ -405,7 +406,7 @@
 <div class="app" class:has-model={!!model} style="--threats: {threatHeight}px">
   <header class="top">
     <div class="brand">
-      <img class="mark" src="{import.meta.env.BASE_URL}favicon.svg" alt="" width="26" height="26" />
+      <img class="mark" src="{import.meta.env.BASE_URL}favicon.svg" alt="" width="22" height="22" />
       <span class="name">ThreatSketch</span>
     </div>
     {#if model}
@@ -416,8 +417,8 @@
         <span class="file">{fileName || "not saved yet"}{#if dirty}<span class="dirty" title="Unsaved changes">•</span>{/if}</span>
       </div>
       <div class="tools">
-        <button class="btn icon" onclick={() => editor?.undo()} title="Undo (⌘Z)" aria-label="Undo"><Icon name="undo" /></button>
-        <button class="btn icon" onclick={() => editor?.redo()} title="Redo (⇧⌘Z)" aria-label="Redo"><Icon name="redo" /></button>
+        <button class="btn icon" onclick={() => editor?.undo()} title={`Undo (${MOD}Z)`} aria-label="Undo"><Icon name="undo" /></button>
+        <button class="btn icon" onclick={() => editor?.redo()} title={`Redo (${MOD}Shift+Z)`} aria-label="Redo"><Icon name="redo" /></button>
       </div>
     {/if}
     <div class="actions">
@@ -439,7 +440,7 @@
           {/if}
         </div>
         <button class="btn outline" onclick={report}><Icon name="report" />Report</button>
-        <button class="btn primary" onclick={() => save()} title="Save (⌘S)"><Icon name="save" />Save</button>
+        <button class="btn primary" onclick={() => save()} title={`Save (${MOD}S)`}><Icon name="save" />Save</button>
       {/if}
     </div>
   </header>
@@ -475,14 +476,14 @@
       <div class="canvas" bind:this={canvas}></div>
       {#if empty}
         <div class="hint">
-          <b>Start your diagram</b>
-          <span>Drag a stencil from the left, or click one to add it. Then hover an element and drag its <i>+</i> to draw a data flow.</span>
+          <b>Empty diagram</b>
+          <span>Click or drag a stencil from the left. Hover an element and drag its <i>+</i> to draw a data flow.</span>
         </div>
       {/if}
       <div class="zoom">
-        <button class="btn icon" onclick={() => editor?.zoom(-0.1)} aria-label="Zoom out" title="Zoom out (⌘ scroll)"><Icon name="zoomout" /></button>
+        <button class="btn icon" onclick={() => editor?.zoom(-0.1)} aria-label="Zoom out" title={`Zoom out (${MOD}scroll)`}><Icon name="zoomout" /></button>
         <button class="btn icon" onclick={() => editor?.fit()} aria-label="Fit to screen" title="Fit to screen"><Icon name="fit" /></button>
-        <button class="btn icon" onclick={() => editor?.zoom(0.1)} aria-label="Zoom in" title="Zoom in (⌘ scroll)"><Icon name="zoomin" /></button>
+        <button class="btn icon" onclick={() => editor?.zoom(0.1)} aria-label="Zoom in" title={`Zoom in (${MOD}scroll)`}><Icon name="zoomin" /></button>
       </div>
     </div>
   </main>
@@ -529,22 +530,21 @@
 
   {#if !model}
     <div class="welcome">
-      <div class="card">
-        <img class="bigmark" src="{import.meta.env.BASE_URL}favicon.svg" alt="" width="64" height="64" />
+      <div class="start">
         <h1>ThreatSketch</h1>
-        <p class="lede">Draw a data-flow diagram and get Microsoft TMT's STRIDE threats as you draw, from the same SDL TM Knowledge Base template TMT uses.</p>
-        <div class="start">
-          <button class="btn primary big" onclick={newModel}><Icon name="new" />New threat model</button>
-          <button class="btn outline big" onclick={open}><Icon name="open" />Open a file…</button>
-        </div>
-        <button class="btn example" onclick={example}>Or explore an example: an online shop with 38 threats →</button>
+        <p class="lede">Data-flow diagrams, threat-modelled with Microsoft TMT's SDL rules.</p>
+        <h2>Start</h2>
+        <button class="row" onclick={newModel}><Icon name="new" /><span>New threat model</span></button>
+        <button class="row" onclick={open}><Icon name="open" /><span>Open a file…</span><span class="kbd">{MOD}O</span></button>
+        <button class="row" onclick={example}><Icon name="report" /><span>Open the example</span><span class="hint2">online shop, 38 threats</span></button>
         {#if draft}
-          <button class="restore" onclick={restore}>
-            <b>Restore unsaved work</b>
-            <span>{draft.model?.summary?.title || "Untitled"} · {new Date(draft.at).toLocaleString()}</span>
+          <h2>Unsaved work</h2>
+          <button class="row" onclick={restore}>
+            <Icon name="undo" /><span>Restore unsaved work</span>
+            <span class="hint2">{draft.model?.summary?.title || "Untitled"}, {new Date(draft.at).toLocaleString()}</span>
           </button>
         {/if}
-        <p class="fine">Opens Threat Dragon <code>.json</code> and Microsoft TMT <code>.tm7</code> files, or drop one here. Your models never leave this computer.</p>
+        <p class="fine">Opens Threat Dragon <code>.json</code> and Microsoft TMT <code>.tm7</code> files; you can also drop one here. Models stay on this computer.</p>
       </div>
     </div>
   {/if}
@@ -568,82 +568,81 @@
   .app {
     height: 100%;
     display: grid;
-    grid-template-columns: 248px minmax(0, 1fr) 320px;
-    grid-template-rows: 52px minmax(0, 1fr) var(--threats) 28px;
+    grid-template-columns: 240px minmax(0, 1fr) 320px;
+    grid-template-rows: 48px minmax(0, 1fr) var(--threats) 28px;
     grid-template-areas: "top top top" "pal stage props" "threats threats props" "status status status";
   }
-  .app:not(.has-model) { grid-template-rows: 52px minmax(0, 1fr) 0 28px; grid-template-areas: "top top top" "stage stage stage" "threats threats threats" "status status status"; }
+  .app:not(.has-model) { grid-template-rows: 48px minmax(0, 1fr) 0 28px; grid-template-areas: "top top top" "stage stage stage" "threats threats threats" "status status status"; }
   .app > :global(.palette) { grid-area: pal; }
   .app > :global(.props) { grid-area: props; }
-  .top { grid-area: top; display: flex; align-items: center; gap: 12px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--border); }
-  .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; letter-spacing: -0.01em; padding-right: 12px; border-right: 1px solid var(--border); height: 28px; }
-  .mark { display: block; width: 28px; height: 28px; }
-  .doc { display: flex; flex-direction: column; min-width: 0; }
-  .doctitle { border: 0; background: none; padding: 0; font-weight: 600; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 360px; }
+
+  .top { grid-area: top; display: flex; align-items: center; gap: var(--s-3); padding: 0 var(--s-3); background: var(--panel); border-bottom: 1px solid var(--border); }
+  .brand { display: flex; align-items: center; gap: var(--s-2); font-weight: 600; padding-right: var(--s-3); height: 24px; }
+  .has-model .brand { border-right: 1px solid var(--border); }
+  .mark { display: block; width: 22px; height: 22px; }
+  .doc { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+  .doctitle { border: 0; background: none; padding: 0; font-weight: 500; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 360px; }
   .doctitle:hover { color: var(--accent-text); }
-  .file { font-size: 11px; color: var(--muted); }
-  .dirty { color: var(--accent); margin-left: 4px; font-size: 16px; line-height: 0; vertical-align: -2px; }
-  .tools { display: flex; gap: 2px; margin-left: 8px; }
-  .actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .file { font-size: var(--fs-caption); color: var(--muted); }
+  .dirty { color: var(--accent); margin-left: var(--s-1); }
+  .tools { display: flex; gap: 2px; margin-left: var(--s-2); }
+  .actions { margin-left: auto; display: flex; align-items: center; gap: var(--s-1); }
   .menu { position: relative; }
   .scrim { position: fixed; inset: 0; z-index: 20; }
-  .dropdown { position: absolute; right: 0; top: 36px; z-index: 21; width: 270px; padding: 6px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-lg); }
-  .dropdown button { display: grid; width: 100%; padding: 8px 10px; border: 0; border-radius: 6px; background: none; text-align: left; }
+  .dropdown { position: absolute; right: 0; top: 32px; z-index: 21; width: 264px; padding: var(--s-1); background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--r-2); box-shadow: var(--shadow-pop); }
+  .dropdown button { display: grid; width: 100%; padding: 6px var(--s-2); border: 0; border-radius: var(--r-1); background: none; text-align: left; }
   .dropdown button:hover { background: var(--hover); }
-  .dropdown b { font-weight: 600; }
-  .dropdown span { font-size: 12px; color: var(--muted); }
+  .dropdown b { font-weight: 500; }
+  .dropdown span { font-size: var(--fs-small); color: var(--muted); }
 
-  .stage { grid-area: stage; display: grid; grid-template-rows: 38px minmax(0, 1fr); min-height: 0; min-width: 0; }
+  .stage { grid-area: stage; display: grid; grid-template-rows: 32px minmax(0, 1fr); min-height: 0; min-width: 0; }
   .stage.hidden { visibility: hidden; }
-  .tabs { display: flex; align-items: flex-end; gap: 2px; padding: 0 8px; background: var(--panel-2); border-bottom: 1px solid var(--border); overflow-x: auto; }
-  .tab { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border: 1px solid transparent; border-bottom: 0; border-radius: 7px 7px 0 0; background: none; color: var(--muted); white-space: nowrap; }
+  .tabs { display: flex; align-items: flex-end; gap: 2px; padding: 0 var(--s-2); background: var(--panel-2); border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .tab { display: inline-flex; align-items: center; gap: var(--s-1); height: 28px; padding: 0 var(--s-3); border: 1px solid transparent; border-bottom: 0; border-radius: var(--r-1) var(--r-1) 0 0; background: none; color: var(--muted); white-space: nowrap; }
   .tab:hover { color: var(--text); }
-  .tab.on { background: var(--canvas); border-color: var(--border); color: var(--text); font-weight: 600; margin-bottom: -1px; height: 31px; }
-  .tab.add { padding: 0 8px; }
-  .x { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 4px; color: var(--muted); }
+  .tab.on { background: var(--canvas); border-color: var(--border); color: var(--text); font-weight: 500; margin-bottom: -1px; height: 29px; }
+  .tab.add { padding: 0 var(--s-2); }
+  .x { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: var(--r-1); color: var(--muted); }
   .x:hover { background: var(--hover); color: var(--text); }
-  .tabedit { height: 26px; margin-bottom: 2px; padding: 0 8px; border: 1px solid var(--accent); border-radius: 6px; background: var(--panel); outline: none; box-shadow: var(--focus); }
+  .tabedit { height: 24px; margin-bottom: 2px; padding: 0 var(--s-2); border: 1px solid var(--accent); border-radius: var(--r-1); background: var(--panel); outline: none; box-shadow: var(--focus); }
   .canvaswrap { position: relative; min-height: 0; }
   .canvas { position: absolute; inset: 0; }
-  .hint { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); display: grid; gap: 6px; max-width: 380px; padding: 18px 22px; text-align: center; border: 1.5px dashed var(--border-strong); border-radius: 12px; color: var(--muted); background: var(--panel); pointer-events: none; }
-  .hint b { color: var(--text); font-size: 14px; }
-  .hint i { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); color: #fff; font-style: normal; font-size: 12px; line-height: 1; }
-  .zoom { position: absolute; right: 14px; bottom: 14px; display: flex; gap: 2px; padding: 3px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow); }
-  .threatpane { grid-area: threats; position: relative; min-height: 0; border-top: 1px solid var(--border); }
+  .hint { position: absolute; left: var(--s-6); top: var(--s-5); display: grid; gap: var(--s-1); max-width: 340px; color: var(--muted); pointer-events: none; }
+  .hint b { color: var(--text); font-weight: 600; font-size: var(--fs-h3); }
+  .hint i { font-style: normal; font-weight: 600; color: var(--accent-text); }
+  .zoom { position: absolute; right: var(--s-3); bottom: var(--s-3); display: flex; gap: 2px; padding: 2px; background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--r-2); }
+
+  .threatpane { grid-area: threats; position: relative; min-height: 0; border-top: 1px solid var(--border-strong); }
   .resizer { position: absolute; left: 0; right: 0; top: -4px; height: 8px; z-index: 5; cursor: row-resize; }
   .resizer:hover { background: linear-gradient(transparent 3px, var(--accent) 3px, var(--accent) 5px, transparent 5px); }
 
-  .status { grid-area: status; display: flex; align-items: center; gap: 16px; padding: 0 12px; font-size: 12px; color: var(--muted); background: var(--panel); border-top: 1px solid var(--border); }
-  .engine { display: inline-flex; align-items: center; gap: 7px; }
-  .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
-  .engine.ready .pulse { background: var(--s-ok); }
-  .engine.loading .pulse { background: var(--s-inv); animation: blink 1s ease-in-out infinite; }
-  .engine.failed { color: var(--s-new); }
-  .engine.failed .pulse { background: var(--s-new); }
-  @keyframes blink { 50% { opacity: 0.3; } }
-  .warn { display: inline-flex; align-items: center; gap: 5px; color: var(--s-inv); cursor: help; }
+  .status { grid-area: status; display: flex; align-items: center; gap: var(--s-4); padding: 0 var(--s-3); font-size: var(--fs-small); color: var(--muted); background: var(--panel); border-top: 1px solid var(--border); }
+  .engine { display: inline-flex; align-items: center; gap: var(--s-2); }
+  .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
+  .engine.ready .pulse { background: var(--st-ok); }
+  .engine.failed { color: var(--danger); }
+  .engine.failed .pulse { background: var(--danger); }
+  .warn { display: inline-flex; align-items: center; gap: var(--s-1); color: var(--st-inv); cursor: help; }
   .grow { flex: 1; }
 
-  .welcome { position: fixed; inset: 52px 0 28px; display: grid; place-items: center; padding: 24px; background:
-    radial-gradient(circle at 1px 1px, var(--border-strong) 1px, transparent 0) 0 0 / 22px 22px, var(--bg); }
-  .card { width: min(560px, 100%); padding: 36px 36px 28px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-lg); text-align: center; }
-  .bigmark { display: inline-block; width: 68px; height: 68px; }
-  h1 { margin: 14px 0 6px; font-size: 26px; letter-spacing: -0.02em; }
-  .lede { margin: 0 auto 22px; max-width: 440px; color: var(--muted); font-size: 14px; line-height: 1.55; }
-  .start { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-  .big { height: 40px; padding: 0 16px; font-size: 14px; border-radius: 8px; }
-  .example { margin-top: 14px; color: var(--accent-text); }
-  .restore { display: grid; gap: 2px; width: 100%; margin-top: 18px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-2); text-align: left; }
-  .restore:hover { border-color: var(--accent); }
-  .restore span { font-size: 12px; color: var(--muted); }
-  .fine { margin: 22px 0 0; font-size: 12px; color: var(--faint); }
-  .fine code { font: 11px var(--mono); }
+  .welcome { position: fixed; inset: 48px 0 28px; overflow: auto; background: var(--bg); }
+  .start { max-width: 520px; margin: 12vh 0 var(--s-8) 14vw; }
+  h1 { margin: 0; font-size: var(--fs-h1); font-weight: 600; }
+  .lede { margin: var(--s-1) 0 var(--s-8); color: var(--muted); }
+  h2 { margin: var(--s-6) 0 var(--s-2); font-size: var(--fs-small); font-weight: 600; color: var(--muted); }
+  .row { display: flex; align-items: center; gap: var(--s-3); width: 100%; height: 36px; padding: 0 var(--s-2); margin-left: calc(-1 * var(--s-2)); border: 0; border-radius: var(--r-1); background: none; text-align: left; color: var(--accent-text); }
+  .row:hover { background: var(--hover); }
+  .row :global(.icon) { color: var(--muted); }
+  .row .kbd, .row .hint2 { margin-left: auto; font-size: var(--fs-small); color: var(--muted); }
+  .kbd { font-family: var(--mono); }
+  .fine { margin: var(--s-8) 0 0; font-size: var(--fs-small); color: var(--muted); max-width: 420px; }
+  .fine code { font: var(--fs-caption) var(--mono); }
 
-  .dropzone { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(79, 107, 237, 0.12); border: 3px dashed var(--accent); pointer-events: none; font-size: 16px; }
-  .dropzone div { padding: 14px 22px; background: var(--panel); border-radius: 10px; box-shadow: var(--shadow-lg); }
-  .update { position: fixed; right: 16px; bottom: 44px; z-index: 45; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-lg); }
-  .toast { position: fixed; left: 50%; bottom: 44px; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 8px; max-width: min(640px, 90vw); padding: 8px 8px 8px 14px; background: #1d2433; color: #fff; border-radius: 10px; box-shadow: var(--shadow-lg); }
-  .toast.error { background: #b42318; }
-  .toast .btn { color: #fff; }
-  .toast .btn:hover { background: rgba(255, 255, 255, 0.12); }
+  .dropzone { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; background: rgb(47 93 135 / 0.08); border: 2px dashed var(--accent); pointer-events: none; }
+  .dropzone div { padding: var(--s-3) var(--s-5); background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--r-2); box-shadow: var(--shadow-pop); }
+  .update { position: fixed; right: var(--s-4); bottom: 40px; z-index: 45; display: flex; align-items: center; gap: var(--s-2); padding: var(--s-1) var(--s-1) var(--s-1) var(--s-3); background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--r-2); box-shadow: var(--shadow-pop); }
+  .toast { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: var(--s-2); max-width: min(640px, 90vw); padding: var(--s-1) var(--s-1) var(--s-1) var(--s-3); background: var(--neutral-900); color: var(--neutral-0); border-radius: var(--r-2); box-shadow: var(--shadow-pop); }
+  .toast.error { background: var(--danger-600); }
+  .toast .btn { color: inherit; }
+  .toast .btn:hover { background: rgb(255 255 255 / 0.12); }
 </style>
