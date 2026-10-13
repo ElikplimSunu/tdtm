@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
+import xml.etree.ElementTree as ET
 
 from . import __version__
+from .model import Kind, Model
 
 
 def _not_yet(task: str):
@@ -14,6 +17,67 @@ def _not_yet(task: str):
         return 1
 
     return run
+
+
+GUID = re.compile(r"[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}")
+
+
+class UsageError(Exception):
+    """A problem with the model or template the user pointed at (exit code 2)."""
+
+
+def _load(args: argparse.Namespace):
+    """Load and resolve. Returns (model, doc, template, tag errors)."""
+    from .resolve import resolve
+    from .rules.tb7 import load_template
+    from .td_adapter import load
+
+    try:
+        template = load_template(getattr(args, "template", None))
+    except (OSError, ET.ParseError) as e:
+        raise UsageError(f"cannot read template: {e}") from e
+    try:
+        model, doc = load(args.model)
+    except (OSError, ValueError, KeyError) as e:
+        raise UsageError(f"cannot read model {args.model}: {e}") from e
+    return model, doc, template, resolve(model, template)
+
+
+def _report_problems(model: Model, errors: list[str]) -> None:
+    for w in model.warnings:
+        print(f"warning: {w}", file=sys.stderr)
+    for e in errors:
+        print(f"tag error: {e}", file=sys.stderr)
+
+
+def cmd_inspect(args: argparse.Namespace) -> int:
+    model, _, template, errors = _load(args)
+    for d in model.diagrams:
+        print(f"Diagram {d.id}: {d.title}")
+        if d.diagram_type != "STRIDE":
+            print(f"  not analysed ({d.diagram_type} diagram)\n")
+            continue
+        for e in d.elements.values():
+            stencil = f"{e.stencil} ({template.stencils[e.stencil].name})"
+            if e.kind is Kind.FLOW:
+                src, tgt = d.elements[e.source_id].label, d.elements[e.target_id].label
+                print(f"  flow {e.label!r}: {src} -> {tgt}  {stencil}")
+                crossed = ", ".join(d.elements[b].label for b in e.crosses) or "none"
+                print(f"    crosses: {crossed}")
+            else:
+                print(f"  {e.kind.value.replace('_', ' ')} {e.label!r}  {stencil}")
+                if e.kind in (Kind.ACTOR, Kind.PROCESS, Kind.STORE):
+                    print(f"    zone: {d.elements[e.zone].label if e.zone else 'outer'}")
+            if e.out_of_scope:
+                print("    out of scope")
+            for name, value in e.attributes.items():
+                shown = name
+                if GUID.fullmatch(name):  # show GUID-named attributes by their display name
+                    shown = f"{template.attributes_for(e.stencil)[name].display_name} ({name})"
+                print(f"    {shown} = {value}  [{e.attr_source[name]}]")
+        print()
+    _report_problems(model, errors)
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -35,7 +99,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     i = sub.add_parser("inspect", help="show resolved stencils, attributes, zones and crossings")
     i.add_argument("model")
-    i.set_defaults(func=_not_yet("1.6"))
+    i.add_argument("--template", help="path to a .tb7 template (default: SDL TM Knowledge Base)")
+    i.set_defaults(func=cmd_inspect)
 
     s = sub.add_parser("stencils", help="list valid @tmt stencils and attributes")
     s.add_argument("--kind")
@@ -55,7 +120,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except UsageError as e:
+        print(f"tdtm: {e}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

@@ -110,6 +110,12 @@ class Element:
     zone: str | None = None  # innermost boundary box cell id, None = outer zone
     crosses: list[str] = field(default_factory=list)  # flows: boundary cell ids crossed
 
+    @property
+    def label(self) -> str:
+        """Name on one line (Threat Dragon names can contain line breaks), or kind + short id."""
+        kind = self.kind.value.replace("_", " ")
+        return " ".join(self.name.split()) or f"{kind} {self.cell_id[:8]}"
+
 
 @dataclass
 class Diagram:

@@ -38,7 +38,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
   a curve, and the real `v2-threat-model.json` (3 curves) gives crossings a human agrees with.
   Record that human check in the test docstring.
 - [x] **1.5 Resolve effective stencil + attributes per element** (SPEC 3.5 precedence, 4.1, 4.2).
-- [ ] **1.6 `tdtm inspect`.** Prints each element: kind, stencil, effective attributes (marking
+- [x] **1.6 `tdtm inspect`.** Prints each element: kind, stencil, effective attributes (marking
   source: tag/TD/static/default), zone; each flow: source → target, crossed boundaries.
 
 ## Phase 2: SDL rule pack (the main feature)
