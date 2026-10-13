@@ -281,7 +281,17 @@ A flow crosses:
   `--curve-samples N` to subdivide a Catmull-Rom spline through the points if the polyline
   approximation proves wrong on real diagrams **[verify]**.
 
-Flows that enter and leave the same box (both ends outside) do not cross it.
+Flows that enter and leave the same box (both ends outside) do not cross it. A flow running
+along a curve (collinear) does not cross it.
+
+On Threat Dragon's demo model every crossing decision has at least 39 px of clearance and none
+changes when the curves are smoothed, so the polyline approximation holds there and
+`--curve-samples` is not implemented (add it if a real diagram is misjudged).
+
+Threat Dragon 2.6 computes its own `containedElements`/`crossingFlows`/`trustBoundaryIds` on
+save (`service/diagram/boundary-utils.js`): an element is inside only if its whole box is inside,
+and curves are judged by their bounding box. tdtm does not read those keys: TMT treats a line
+boundary as a line, which a bounding box cannot model.
 
 ## 6. Merge
 
