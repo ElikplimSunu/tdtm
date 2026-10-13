@@ -2,6 +2,6 @@
 
 from importlib.resources import files
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 DEFAULT_TEMPLATE = files("threatsketch") / "data" / "templates" / "default.tb7"

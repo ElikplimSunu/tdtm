@@ -6,6 +6,8 @@ One version covers the app and the command-line tool. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-13
+
 ### Added
 
 - Export the threat report as a PDF (Export > Threat report (PDF), or Save as PDF in the report).
