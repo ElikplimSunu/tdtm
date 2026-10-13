@@ -71,6 +71,9 @@ tdtm follows these rules:
 
 ## Quick start on a Mac (instead of TMT)
 
+Already know TMT? [Coming from Microsoft TMT](docs/coming-from-tmt.md) maps every TMT step and term
+to Threat Dragon and tdtm.
+
 Install once (needs [Homebrew](https://brew.sh); `brew install uv` if you do not have uv):
 
 ```bash
@@ -162,6 +165,7 @@ lines intersect. Boxes become TMT border boundaries; curves become line boundari
 
 ## Documentation
 
+- [docs/coming-from-tmt.md](docs/coming-from-tmt.md): TMT steps and terms, mapped to tdtm.
 - [docs/SPEC.md](docs/SPEC.md): design, file format facts, rule semantics, merge behaviour.
 - [docs/PLAN.md](docs/PLAN.md): roadmap and task list with acceptance criteria.
 
