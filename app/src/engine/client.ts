@@ -1,5 +1,5 @@
 // The app's handle on the engine worker: `engine.call("analyze", [model])` returns a promise.
-import type { AnalyzeResult, Model, Palette } from "../lib/types";
+import type { AnalyzeResult, Model, Palette, ThreatEdit } from "../lib/types";
 
 type Pending = { resolve: (v: any) => void; reject: (e: Error) => void };
 
@@ -49,9 +49,10 @@ class Engine {
   setElement(model: Model, cellId: string, stencil: string, attributes: Record<string, string>) {
     return this.call<Model>("set_element", [model, cellId, stencil, attributes]);
   }
-  setThreat(model: Model, key: string, state: string, priority: string, justification: string) {
-    return this.call<Model>("set_threat", [model, key, state, priority, justification]);
+  setThreat(model: Model, key: string, t: ThreatEdit) {
+    return this.call<Model>("set_threat", [model, key, t.state, t.priority, t.justification, t.title, t.category, t.description]);
   }
+  categories() { return this.call<string[]>("categories"); }
   importTm7(bytes: Uint8Array, title: string) {
     let bin = "";
     for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));

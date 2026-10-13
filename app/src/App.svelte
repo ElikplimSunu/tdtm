@@ -17,6 +17,7 @@
 
   let engineState = $state<EngineState>(engine.state);
   let palette = $state.raw<PaletteT | null>(null);
+  let categories = $state.raw<string[]>([]);
   let model = $state.raw<Model | null>(null);
   let analysis = $state.raw<AnalyzeResult | null>(null);
   let version = $state(0); // bumped whenever the model changes underneath, to refresh what derives from it
@@ -57,6 +58,7 @@
       if (s.status === "ready" && !palette) {
         palette = await engine.palette();
         editor?.setPalette(palette);
+        categories = await engine.categories();
       }
     });
     const keys = (e: KeyboardEvent) => {
@@ -627,7 +629,8 @@
       onupdate={(id, change) => editor?.update(id, change)}
       online={(id, style) => { editor?.setLineStyle(id, style); version++; }}
       onstencil={(id, s, a) => editor?.setElement(id, s, a)}
-      onthreat={(key, s, pr, j) => editor?.setThreat(key, s, pr, j)}
+      onthreat={(key, edit) => editor?.setThreat(key, edit)}
+      {categories}
       onselectthreat={selectThreat}
       onshowcell={showCell}
       ondelete={() => editor?.removeSelected()}

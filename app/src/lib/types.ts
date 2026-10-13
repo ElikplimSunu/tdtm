@@ -15,6 +15,9 @@ export type ThreatRow = {
   generatedBy: string; editable: boolean;
 };
 
+/** What TMT's Threat Properties pane edits. */
+export type ThreatEdit = { state: string; priority: string; justification: string; title: string; category: string; description: string };
+
 export type Attribute = { name: string; label: string; value: string; values: string[]; source: string; static: boolean };
 export type ElementInfo = { kind: string; stencil: string; stencilName: string; zone: string | null; crosses: string[]; attributes: Attribute[] };
 

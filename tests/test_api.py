@@ -208,3 +208,26 @@ def test_threat_rows_carry_tmt_changed_by_and_last_modified():
     t["tdtm"]["tm7"] = {"changedBy": "CONTOSO\\\\student", "modifiedAt": "2026-10-09T23:01:17"}
     row = next(r for r in api.analyze(raw)["threats"] if r["key"] == key)
     assert (row["changedBy"], row["lastModified"]) == ("CONTOSO\\\\student", "")
+
+
+def test_set_threat_edits_title_category_and_description_as_tmt_allows():
+    """TMT's Threat Properties pane edits the title, category and description too. The edit is
+    kept by later analyses (it is a human edit) and reaches the .tm7."""
+    raw = api.analyze(shop())["model"]
+    key = next(t for t in api.analyze(raw)["threats"] if t["id"] == 1)["key"]
+    api.set_threat(
+        raw, key, "Not Started", "High", "",
+        title="Customer impersonation", category="Elevation Of Privilege",
+        description="Someone could pose as the customer.",
+    )  # fmt: skip
+    row = next(t for t in api.analyze(raw)["threats"] if t["key"] == key)
+    assert (row["title"], row["category"], row["description"]) == (
+        "Customer impersonation",
+        "Elevation Of Privilege",
+        "Someone could pose as the customer.",
+    )
+    tm7 = api.export_tm7(raw)["text"]
+    assert "Customer impersonation" in tm7 and "Someone could pose as the customer." in tm7
+    with pytest.raises(ValueError):
+        api.set_threat(raw, key, "Not Started", "High", "", category="Not a category")
+    assert api.categories()[-2:] == ["Elevation Of Privilege", "Abuse"]  # SDL: STRIDE, then Abuse

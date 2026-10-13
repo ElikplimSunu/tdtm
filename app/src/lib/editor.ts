@@ -16,7 +16,7 @@ import { Transform } from "@antv/x6-plugin-transform";
 import { engine } from "../engine/client";
 import { ELBOW, KIND_OF_TYPE, newCell, registerShapes, type Kind } from "./shapes";
 import { forCanvas, fromCanvas, patchCell } from "./sync";
-import type { AnalyzeResult, Cell, ElementInfo, Model, Palette } from "./types";
+import type { AnalyzeResult, Cell, ElementInfo, Model, Palette, ThreatEdit } from "./types";
 
 const NODE_SHAPES = new Set(["actor", "process", "store", "td-text-block", "trust-boundary-box"]);
 const EDGE_SHAPES = new Set(["flow", "trust-boundary-curve", "trust-broundary-curve"]);
@@ -276,10 +276,10 @@ export class Editor {
     });
   }
 
-  setThreat(key: string, state: string, priority: string, justification: string) {
+  setThreat(key: string, edit: ThreatEdit) {
     return this.run(async () => {
       this.sync();
-      const m = await engine.setThreat(this.model, key, state, priority, justification);
+      const m = await engine.setThreat(this.model, key, edit);
       this.apply(m);
       const r = await engine.analyze(this.model);
       this.apply(r.model);
