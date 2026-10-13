@@ -189,3 +189,22 @@ def test_palette_carries_tmt_stencil_icons_and_where_tmt_draws_them():
     }
     sql = next(s for s in p["store"] if s["name"] == "SQL Database")
     assert sql["icon"] != next(s for s in p["store"] if s["generic"])["icon"]
+
+
+def test_threat_rows_carry_tmt_changed_by_and_last_modified():
+    """TMT's Analysis View columns, as in its CSV: Last Modified reads "Generated" until someone
+    triages the threat; Changed By is who TMT recorded."""
+    rows = api.analyze(shop())["threats"]
+    assert {(r["changedBy"], r["lastModified"]) for r in rows} == {("", "Generated")}
+
+    raw = api.analyze(shop())["model"]
+    key = rows[0]["key"]
+    raw = api.set_threat(raw, key, "Mitigated", "High", "TLS everywhere")
+    row = next(r for r in api.analyze(raw)["threats"] if r["key"] == key)
+    assert row["lastModified"] == ""
+
+    t = next(t for d in raw["detail"]["diagrams"] for c in d["cells"]
+             for t in c["data"].get("threats", []) if t["tdtm"]["key"] == key)  # fmt: skip
+    t["tdtm"]["tm7"] = {"changedBy": "CONTOSO\\\\student", "modifiedAt": "2026-10-09T23:01:17"}
+    row = next(r for r in api.analyze(raw)["threats"] if r["key"] == key)
+    assert (row["changedBy"], row["lastModified"]) == ("CONTOSO\\\\student", "")

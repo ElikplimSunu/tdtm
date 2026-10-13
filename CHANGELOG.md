@@ -8,6 +8,11 @@ One version covers the app and the command-line tool. The format follows
 
 ### Added
 
+- The threat list has TMT's eleven columns in TMT's order (ID, Diagram, Changed By, Last Modified,
+  State, Title, Category, Description, Justification, Interaction, Priority), resizable, each
+  with a filter drop-down of its values, as in TMT. Below it, as in TMT: Export Csv and
+  "N Threats Displayed, M Total". The column filters replace the category and priority menus.
+
 - TMT's menu bar: File, Edit, View, Diagram, Reports and Help, with TMT's items and shortcuts.
   New, Open, Export and Report moved into it (exports under File and Reports, as in TMT). File
   also has Save As, Threat Model Information and Close Model; Help links to TMT's and the SDL's
