@@ -7,7 +7,8 @@ models, using the same rules as Microsoft's Threat Modeling Tool (TMT). Draw on 
 the threat list TMT would give you on Windows.
 
 > **Status: early development.** All commands work and are tested against hand-checked
-> examples, but tdtm's output has not yet been compared with real TMT output. Progress is tracked in [docs/PLAN.md](docs/PLAN.md).
+> examples, but tdtm's output has not yet been compared with real TMT output. Progress is
+> tracked in [docs/PLAN.md](docs/PLAN.md).
 
 ## Why
 
@@ -36,7 +37,7 @@ tdtm analyze model.json
 Threat Dragon: reopen model.json and triage the threats
 ```
 
-tdtm is being built to these rules:
+tdtm follows these rules:
 
 - **Your file loses nothing.** Unknown keys, positions and styling survive a read and write.
 - **Re-running is safe.** Generated threats have stable IDs. A threat you edited is never
@@ -116,7 +117,7 @@ lines intersect. Boxes become TMT border boundaries; curves become line boundari
 uv sync
 uv run pytest -q
 uv run ruff check . && uv run ruff format --check .
-uv sync --extra pytm   # optional OWASP pytm rule pack (not wired in yet)
+uv sync --extra pytm   # optional OWASP pytm rule pack (`--pack pytm`); CI installs it
 ```
 
 Work follows `docs/PLAN.md` from top to bottom, one task per commit. Tests come first, written from
@@ -126,9 +127,9 @@ the task's acceptance criteria. A task that teaches something new about the file
 ## Contributing
 
 Issues and pull requests are welcome. The most valuable help needs a Windows machine: the real
-acceptance test is drawing the same diagrams in TMT 7.3 with the SDL TM Knowledge Base template and
-comparing its threat report with tdtm's output (PLAN task 3.4). If you can run TMT, please open an
-issue.
+acceptance test is drawing the four small diagrams in `tests/fixtures/golden/` in TMT 7.3 with the
+SDL TM Knowledge Base template and comparing its threat report with tdtm's expected output (PLAN
+task 3.4). If you can run TMT, please open an issue.
 
 ## License
 
