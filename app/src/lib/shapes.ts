@@ -65,7 +65,7 @@ export function registerShapes() {
     attrs: {
       topLine: { stroke: INK, strokeWidth: 1.5, refD: "M 0 0 l 200 0" },
       bottomLine: { stroke: INK, strokeWidth: 1.5, refDy: 0, refD: "M 0 0 l 100 0" },
-      body: { fill: "#ffffff", stroke: "none" },
+      body: { fill: "transparent", stroke: "none" }, // TMT draws a data store as two lines only
       halo,
       text,
     },

@@ -28,6 +28,7 @@
   --s-ok-bg: #ecfdf3;
 
   --radius: 8px;
+  --canvas: #f7f8fa;
   color-scheme: light;
 }
 
@@ -56,6 +57,7 @@
     --s-na-bg: #262b36;
     --s-ok: #47cd89;
     --s-ok-bg: #12301f;
+    --canvas: #12151b;
     color-scheme: dark;
   }
 }
@@ -83,6 +85,7 @@
   --s-na-bg: #262b36;
   --s-ok: #47cd89;
   --s-ok-bg: #12301f;
+  --canvas: #12151b;
   color-scheme: dark;
 }
 
@@ -159,7 +162,7 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.45; }
 ::-webkit-scrollbar-track { background: transparent; }
 
 /* --- canvas (AntV X6) -------------------------------------------------------------------- */
-.x6-graph-scroller { background: #f7f8fa; }
+.x6-graph-scroller { background-color: var(--canvas) !important; }
 .x6-graph text { font-family: var(--font); }
 .x6-port { visibility: hidden; transition: opacity 0.1s; }
 .x6-node.ts-hover .x6-port, .x6-node.x6-node-selected .x6-port { visibility: visible; }
@@ -177,3 +180,21 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.45; }
 .x6-widget-snapline-vertical, .x6-widget-snapline-horizontal { border-color: #f04438 !important; }
 .x6-edge:hover path:nth-child(2) { stroke: #4f6bed; }
 .x6-edge-selected path:nth-child(2) { stroke: #4f6bed !important; stroke-width: 2.25 !important; }
+
+/* Dark theme: the diagram is drawn light-on-dark on screen; files, reports and exports keep TMT's
+   black-on-white. The shapes carry TMT's colours as attributes, so they are swapped here. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .x6-graph [stroke="#1f2328"] { stroke: #c9d1de; }
+  :root:not([data-theme="light"]) .x6-graph [fill="#1f2328"] { fill: #e7e9ef; }
+  :root:not([data-theme="light"]) .x6-graph [fill="#ffffff"] { fill: #1b1f27; }
+  :root:not([data-theme="light"]) .x6-graph [fill="#57606a"] { fill: #9aa3b5; }
+  :root:not([data-theme="light"]) .x6-graph [stroke="#d13438"] { stroke: #ff6b6e; }
+  :root:not([data-theme="light"]) .x6-graph [fill="#d13438"] { fill: #ff6b6e; }
+}
+:root[data-theme="dark"] .x6-graph [stroke="#1f2328"] { stroke: #c9d1de; }
+:root[data-theme="dark"] .x6-graph [fill="#1f2328"] { fill: #e7e9ef; }
+:root[data-theme="dark"] .x6-graph [fill="#ffffff"] { fill: #1b1f27; }
+:root[data-theme="dark"] .x6-graph [fill="#57606a"] { fill: #9aa3b5; }
+:root[data-theme="dark"] .x6-graph [stroke="#d13438"] { stroke: #ff6b6e; }
+:root[data-theme="dark"] .x6-graph [fill="#d13438"] { fill: #ff6b6e; }
+.x6-graph .x6-port circle { fill: #4f6bed; stroke: #fff; }

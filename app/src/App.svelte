@@ -429,12 +429,15 @@
         <button class="btn icon" onclick={() => editor?.zoom(0.1)} aria-label="Zoom in" title="Zoom in (⌘ scroll)"><Icon name="zoomin" /></button>
       </div>
     </div>
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="resizer" onpointerdown={resize} title="Drag to resize"></div>
-    <div class="threatpane">
-      <ThreatList threats={analysis?.threats ?? []} selected={selectedThreat} onselect={selectThreat} loading={engineState.status === "loading"} />
-    </div>
   </main>
+
+  {#if model}
+    <section class="threatpane">
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div class="resizer" onpointerdown={resize} title="Drag to resize"></div>
+      <ThreatList threats={analysis?.threats ?? []} selected={selectedThreat} onselect={selectThreat} loading={engineState.status === "loading"} />
+    </section>
+  {/if}
 
   {#if model}
     <Properties
@@ -503,10 +506,12 @@
     height: 100%;
     display: grid;
     grid-template-columns: 248px minmax(0, 1fr) 320px;
-    grid-template-rows: 52px minmax(0, 1fr) 28px;
-    grid-template-areas: "top top top" "pal stage props" "status status status";
+    grid-template-rows: 52px minmax(0, 1fr) var(--threats) 28px;
+    grid-template-areas: "top top top" "pal stage props" "threats threats props" "status status status";
   }
-  .app:not(.has-model) { grid-template-areas: "top top top" "stage stage stage" "status status status"; }
+  .app:not(.has-model) { grid-template-rows: 52px minmax(0, 1fr) 0 28px; grid-template-areas: "top top top" "stage stage stage" "threats threats threats" "status status status"; }
+  .app > :global(.palette) { grid-area: pal; }
+  .app > :global(.props) { grid-area: props; }
   .top { grid-area: top; display: flex; align-items: center; gap: 12px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--border); }
   .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; letter-spacing: -0.01em; padding-right: 12px; border-right: 1px solid var(--border); height: 28px; }
   .mark { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: var(--accent); color: #fff; }
@@ -525,26 +530,25 @@
   .dropdown b { font-weight: 600; }
   .dropdown span { font-size: 12px; color: var(--muted); }
 
-  .stage { grid-area: stage; display: grid; grid-template-rows: 38px minmax(0, 1fr) 6px var(--threats); min-height: 0; min-width: 0; }
+  .stage { grid-area: stage; display: grid; grid-template-rows: 38px minmax(0, 1fr); min-height: 0; min-width: 0; }
   .stage.hidden { visibility: hidden; }
   .tabs { display: flex; align-items: flex-end; gap: 2px; padding: 0 8px; background: var(--panel-2); border-bottom: 1px solid var(--border); overflow-x: auto; }
   .tab { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border: 1px solid transparent; border-bottom: 0; border-radius: 7px 7px 0 0; background: none; color: var(--muted); white-space: nowrap; }
   .tab:hover { color: var(--text); }
-  .tab.on { background: #f7f8fa; border-color: var(--border); color: var(--text); font-weight: 600; margin-bottom: -1px; height: 31px; }
-  :global([data-theme="dark"]) .tab.on { background: var(--panel); }
+  .tab.on { background: var(--canvas); border-color: var(--border); color: var(--text); font-weight: 600; margin-bottom: -1px; height: 31px; }
   .tab.add { padding: 0 8px; }
   .x { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 4px; color: var(--muted); }
   .x:hover { background: var(--hover); color: var(--text); }
   .tabedit { height: 26px; margin-bottom: 2px; padding: 0 8px; border: 1px solid var(--accent); border-radius: 6px; background: var(--panel); outline: none; box-shadow: var(--focus); }
   .canvaswrap { position: relative; min-height: 0; }
   .canvas { position: absolute; inset: 0; }
-  .hint { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); display: grid; gap: 6px; max-width: 380px; padding: 18px 22px; text-align: center; border: 1.5px dashed #c5cbd6; border-radius: 12px; color: #475467; background: rgba(255, 255, 255, 0.85); pointer-events: none; }
-  .hint b { color: #1d2433; font-size: 14px; }
+  .hint { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); display: grid; gap: 6px; max-width: 380px; padding: 18px 22px; text-align: center; border: 1.5px dashed var(--border-strong); border-radius: 12px; color: var(--muted); background: var(--panel); pointer-events: none; }
+  .hint b { color: var(--text); font-size: 14px; }
   .hint i { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); color: #fff; font-style: normal; font-size: 12px; line-height: 1; }
   .zoom { position: absolute; right: 14px; bottom: 14px; display: flex; gap: 2px; padding: 3px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow); }
-  .resizer { cursor: row-resize; background: var(--border); border-top: 1px solid var(--border); }
-  .resizer:hover { background: var(--accent); }
-  .threatpane { min-height: 0; border-top: 1px solid var(--border); }
+  .threatpane { grid-area: threats; position: relative; min-height: 0; border-top: 1px solid var(--border); }
+  .resizer { position: absolute; left: 0; right: 0; top: -4px; height: 8px; z-index: 5; cursor: row-resize; }
+  .resizer:hover { background: linear-gradient(transparent 3px, var(--accent) 3px, var(--accent) 5px, transparent 5px); }
 
   .status { grid-area: status; display: flex; align-items: center; gap: 16px; padding: 0 12px; font-size: 12px; color: var(--muted); background: var(--panel); border-top: 1px solid var(--border); }
   .engine { display: inline-flex; align-items: center; gap: 7px; }
