@@ -30,6 +30,7 @@ def test_snapshot_lists_threats_like_tmt(analyzed):
     assert t == {
         "key": t["key"],
         "id": 1,
+        "cell": "placeorder",
         "diagram": "Online shop",
         "interaction": "Place order",
         "source": "Customer",
