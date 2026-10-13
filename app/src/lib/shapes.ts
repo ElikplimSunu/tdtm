@@ -5,8 +5,8 @@ import { Graph, Shape } from "@antv/x6";
 
 // Drawn the way Microsoft TMT draws its SDL stencils: black outlines on white, red dashed trust
 // boundaries. Threat Dragon's red "open threats" outlines stay in the file but are not drawn here.
-export const INK = "#1f2328";
-export const BOUNDARY = "#d13438";
+export const INK = "#1b2026";
+export const BOUNDARY = "#c0392f";
 
 // Connection points: a "+" on each side, shown on hover. Drag one to draw a flow; click one to link
 // to the nearest element on that side.
@@ -16,8 +16,8 @@ const port = {
     { tagName: "path", selector: "plus" },
   ],
   attrs: {
-    circle: { r: 7, magnet: true, fill: "#4f6bed", stroke: "#fff", strokeWidth: 1.5, cursor: "crosshair" },
-    plus: { d: "M -3.5 0 H 3.5 M 0 -3.5 V 3.5", stroke: "#fff", strokeWidth: 1.6, pointerEvents: "none" },
+    circle: { r: 7, magnet: true, fill: "#2f5d87", stroke: "#fbfcfc", strokeWidth: 1.5, cursor: "crosshair" },
+    plus: { d: "M -3.5 0 H 3.5 M 0 -3.5 V 3.5", stroke: "#fbfcfc", strokeWidth: 1.6, pointerEvents: "none" },
   },
 };
 const GAP = 18; // the "+" sits just outside the shape, clear of the resize handles
@@ -41,7 +41,7 @@ export function registerShapes() {
   Graph.registerNode("actor", {
     inherit: "rect", width: 150, height: 80, zIndex: 0,
     markup: [HALO, ...(Shape.Rect.getMarkup() as any[])],
-    attrs: { halo, body: { fill: "#ffffff", stroke: INK, strokeWidth: 1.5 }, text },
+    attrs: { halo, body: { fill: "#fbfcfc", stroke: INK, strokeWidth: 1.5 }, text },
     ports,
   }, true);
   Graph.registerNode("process", {
@@ -49,7 +49,7 @@ export function registerShapes() {
     markup: [HALO, ...(Shape.Circle.getMarkup() as any[])],
     attrs: {
       halo,
-      body: { fill: "#ffffff", stroke: INK, strokeWidth: 1.5 },
+      body: { fill: "#fbfcfc", stroke: INK, strokeWidth: 1.5 },
       text,
     },
     ports,
@@ -73,7 +73,7 @@ export function registerShapes() {
   }, true);
   Graph.registerNode("td-text-block", {
     inherit: "rect", width: 150, height: 80, zIndex: 0,
-    attrs: { body: { fill: "transparent", stroke: "none" }, text: { ...text, fill: "#57606a" } },
+    attrs: { body: { fill: "transparent", stroke: "none" }, text: { ...text, fill: "#5a6470" } },
   }, true);
   Graph.registerNode("trust-boundary-box", {
     inherit: "rect", width: 500, height: 400, zIndex: -50,
@@ -89,7 +89,7 @@ export function registerShapes() {
     markup: [{ tagName: "rect", selector: "body" }, { tagName: "text", selector: "label" }],
     attrs: {
       label: { fill: INK, fontSize: 12, textAnchor: "middle", textVerticalAnchor: "middle" },
-      body: { ref: "label", fill: "#ffffff", stroke: "none", refWidth: "100%", refWidth2: 8, refHeight: "100%", refHeight2: 4, refX: -4, refY: -2, rx: 3 },
+      body: { ref: "label", fill: "#fbfcfc", stroke: "none", refWidth: "100%", refWidth2: 8, refHeight: "100%", refHeight2: 4, refX: -4, refY: -2, rx: 3 },
     },
     position: { distance: 0.5 },
   };

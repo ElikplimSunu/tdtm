@@ -21,7 +21,7 @@ async function shot(name, scheme, act) {
   console.log(`${out}/${name}.png`);
 }
 const example = async (page) => {
-  await page.getByRole("button", { name: /explore an example/ }).click();
+  await page.getByRole("button", { name: /Open the example/ }).click();
   await page.getByTestId("threat-count").getByText("38 threats").waitFor();
 };
 

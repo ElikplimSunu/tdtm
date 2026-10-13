@@ -56,7 +56,7 @@ export class Editor {
       container,
       autoResize: true,
       background: { color: "transparent" },
-      grid: { size: 10, visible: true, type: "dot", args: { color: "#a9b1bf" } },
+      grid: { size: 10, visible: true, type: "dot", args: { color: "#b6bec6" } },
       mousewheel: { enabled: true, global: false, modifiers: ["ctrl", "meta"], minScale: 0.2, maxScale: 3 },
       scaling: { min: 0.2, max: 3 },
       magnetThreshold: "onleave", // a click on a "+" stays a click; dragging off it draws a flow
@@ -75,8 +75,8 @@ export class Editor {
         },
       },
       highlighting: {
-        magnetAvailable: { name: "stroke", args: { padding: 4, attrs: { stroke: "#4f6bed", strokeWidth: 2 } } },
-        magnetAdsorbed: { name: "stroke", args: { padding: 6, attrs: { stroke: "#4f6bed", strokeWidth: 3 } } },
+        magnetAvailable: { name: "stroke", args: { padding: 4, attrs: { stroke: "#3e6f9b", strokeWidth: 2 } } },
+        magnetAdsorbed: { name: "stroke", args: { padding: 6, attrs: { stroke: "#3e6f9b", strokeWidth: 3 } } },
       },
     });
     this.graph
@@ -391,9 +391,9 @@ export class Editor {
   private edgeTools(c: XCell, on: boolean) {
     if (!c.isEdge()) return;
     if (!on) { if (c.hasTools()) c.removeTools(); return; }
-    const end = { fill: "#4f6bed", stroke: "#ffffff", "stroke-width": 1.5, cursor: "move" };
+    const end = { fill: "#3e6f9b", stroke: "#fbfcfc", "stroke-width": 1.5, cursor: "move" };
     c.addTools([
-      { name: "vertices", args: { attrs: { r: 5, fill: "#ffffff", stroke: "#4f6bed", "stroke-width": 1.5, cursor: "move" } } },
+      { name: "vertices", args: { attrs: { r: 5, fill: "#fbfcfc", stroke: "#3e6f9b", "stroke-width": 1.5, cursor: "move" } } },
       { name: "source-arrowhead", args: { attrs: { ...end, d: "M -6 -6 6 0 -6 6 Z" } } },
       { name: "target-arrowhead", args: { attrs: { ...end, d: "M -6 -6 6 0 -6 6 Z" } } },
     ]);

@@ -18,8 +18,8 @@ export default defineConfig({
         name: "ThreatSketch",
         short_name: "ThreatSketch",
         description: "Draw a data-flow diagram and get Microsoft TMT's STRIDE threats as you draw.",
-        theme_color: "#4f6bed",
-        background_color: "#f4f5f7",
+        theme_color: "#2f5d87",
+        background_color: "#f3f5f6",
         display: "standalone",
         icons: [
           { src: "icon-192.png", sizes: "192x192", type: "image/png" },

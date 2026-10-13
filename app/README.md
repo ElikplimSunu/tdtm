@@ -58,6 +58,16 @@ src-tauri/                the desktop app (file associations, native dialogs)
 - **Offline.** `vite-plugin-pwa` precaches the app and the engine (~14 MB) on the first visit.
   The desktop app does not need it and disables it.
 
+## Design rules
+
+The look is set by the tokens at the top of `src/app.css`; nothing else picks a colour, size,
+radius or space. One brand hue (blueprint blue) on a 50 to 950 ramp, cool-tinted neutrals (never
+pure white or black), desaturated danger/warning/success. Colour is spent on three things only:
+the primary action, threat states someone has set (Not Started stays quiet), and the diagram's
+signature, TMT's red dashed trust boundary. IBM Plex Sans with Plex Mono for IDs and counts, one
+type scale (11 to 22px), a 4px space scale, radii of 3px for controls and 6px for overlays.
+Labels are sentence case. Text contrast is at least 4.5:1 in both themes.
+
 ## Testing notes
 
 - Each e2e test boots its own Python engine, so the suite runs three workers at a time.

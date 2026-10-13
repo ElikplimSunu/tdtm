@@ -90,12 +90,8 @@
   {#if p.threat}
     {@const t = p.threat}
     <header>
-      <div class="eyebrow">Threat {t.id ?? ""}</div>
+      <div class="kind">{["Threat " + (t.id ?? ""), t.category, t.generatedBy].filter(Boolean).join(" · ")}</div>
       <h2>{t.title}</h2>
-      <div class="meta">
-        <span class="chip cat">{t.category}</span>
-        {#if t.generatedBy}<span class="muted small">{t.generatedBy}</span>{/if}
-      </div>
     </header>
     <div class="body">
       <button class="link" onclick={() => p.onshowcell(t.cell)}>
@@ -107,7 +103,7 @@
       <div class="grid2">
         <label class="field">
           <span>State</span>
-          <select class="input {cls(tstate)} statesel" bind:value={tstate} onchange={triage} data-testid="threat-state">
+          <select class="input" bind:value={tstate} onchange={triage} data-testid="threat-state">
             {#each STATES as s}<option>{s}</option>{/each}
           </select>
         </label>
@@ -131,9 +127,8 @@
   {:else if p.cell}
     {@const c = p.cell}
     <header>
-      <div class="eyebrow">{KIND_NAMES[c.kind]}</div>
+      <div class="kind">{[KIND_NAMES[c.kind], p.info?.stencilName].filter(Boolean).join(" · ")}</div>
       <h2>{c.data.name || KIND_NAMES[c.kind]}</h2>
-      {#if p.info}<div class="meta"><span class="chip cat">{p.info.stencilName}</span></div>{/if}
     </header>
     <div class="body">
       <label class="field">
@@ -178,7 +173,7 @@
           <span>{c.kind === "flow" ? "Crosses" : "Inside"}</span>
           <div class="tags">
             {#each c.kind === "flow" ? p.info.crosses : [p.info.zone] as b}
-              <span class="chip boundary">{p.names[b ?? ""] || "Trust boundary"}</span>
+              <span class="boundary">{p.names[b ?? ""] || "Trust boundary"}</span>
             {/each}
           </div>
         </div>
@@ -202,11 +197,11 @@
       {/if}
 
       {#if hasThreats}
-        <div class="section">Threats <span class="muted">{p.cellThreats.length}</span></div>
+        <div class="section">Threats <span class="num muted">{p.cellThreats.length}</span></div>
         {#if p.cellThreats.length}
           <ul class="mini">
             {#each p.cellThreats as t (t.key)}
-              <li><button onclick={() => p.onselectthreat(t.key)}><span class="dot {cls(t.state)}"></span><span class="tt">{t.title}</span></button></li>
+              <li><button onclick={() => p.onselectthreat(t.key)}><span class="state {cls(t.state)}"><span class="dot"></span></span><span class="tt">{t.title}</span></button></li>
             {/each}
           </ul>
         {:else}
@@ -217,7 +212,7 @@
     </div>
   {:else if p.model}
     <header>
-      <div class="eyebrow">Threat model</div>
+      <div class="kind">Threat model</div>
       <h2>{p.model.summary.title || "Untitled"}</h2>
     </header>
     <div class="body">
@@ -241,30 +236,29 @@
 
 <style>
   .props { display: flex; flex-direction: column; min-height: 0; background: var(--panel); border-left: 1px solid var(--border); overflow: auto; }
-  header { padding: 14px 16px 12px; border-bottom: 1px solid var(--border); }
-  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
-  h2 { margin: 3px 0 0; font-size: 15px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
-  .meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-  .chip.cat { background: var(--accent-soft); color: var(--accent-text); }
-  .chip.boundary { background: #fdecec; color: #b42318; }
-  .small { font-size: 12px; }
-  .body { padding: 14px 16px 20px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .link { display: flex; align-items: center; gap: 6px; width: 100%; margin: 0 0 14px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel-2); text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  header { padding: var(--s-4) var(--s-4) var(--s-3); border-bottom: 1px solid var(--border); }
+  .kind { font-size: var(--fs-small); color: var(--muted); }
+  h2 { margin: var(--s-1) 0 0; font-size: var(--fs-h2); font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+  .small { font-size: var(--fs-small); }
+  .body { padding: var(--s-4) var(--s-4) var(--s-6); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+  .link { display: flex; align-items: center; gap: var(--s-2); width: 100%; margin: 0 0 var(--s-4); padding: 6px var(--s-2); border: 1px solid var(--border-strong); border-radius: var(--r-1); background: none; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .link:hover { border-color: var(--accent); color: var(--accent-text); }
-  .statesel { font-weight: 600; }
-  .desc { margin: 0; white-space: pre-wrap; color: var(--text); line-height: 1.55; }
-  .section { margin: 18px 0 8px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
-  .attr { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; align-items: center; margin-bottom: 6px; }
-  .aname { font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
-  .input.compact { min-height: 26px; height: 26px; padding: 2px 6px; font-size: 12px; }
-  .fixed { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
-  .src { grid-column: 2; font-size: 11px; color: var(--faint); margin-top: -2px; }
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-  .mini { list-style: none; margin: 0 0 14px; padding: 0; }
-  .mini button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 6px; border: 0; border-radius: 5px; background: none; text-align: left; }
+  .desc { margin: 0; white-space: pre-wrap; line-height: 1.55; }
+  .section { margin: var(--s-6) 0 var(--s-2); padding-top: var(--s-4); border-top: 1px solid var(--border); font-size: var(--fs-small); font-weight: 600; color: var(--muted); }
+  .attr { display: grid; grid-template-columns: 1fr 1fr; gap: 2px var(--s-3); align-items: center; margin-bottom: var(--s-1); }
+  .aname { font-size: var(--fs-small); overflow: hidden; text-overflow: ellipsis; }
+  .input.compact { min-height: 26px; height: 26px; padding: 0 6px; font-size: var(--fs-small); }
+  .fixed { display: inline-flex; align-items: center; gap: var(--s-1); font-size: var(--fs-small); color: var(--muted); }
+  .src { grid-column: 2; font-size: var(--fs-caption); color: var(--muted); }
+  .tags { display: flex; flex-wrap: wrap; gap: var(--s-1) var(--s-3); }
+  /* trust boundaries are named in TMT's red, underlined dashed like the boundary itself */
+  .boundary { color: var(--danger); font-weight: 500; border-bottom: 1.5px dashed currentColor; }
+  .mini { list-style: none; margin: 0 0 var(--s-3); padding: 0; }
+  .mini button { display: flex; align-items: center; gap: var(--s-2); width: 100%; height: 28px; padding: 0 var(--s-1); border: 0; border-radius: var(--r-1); background: none; text-align: left; }
   .mini button:hover { background: var(--hover); }
   .tt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .danger { margin-top: 8px; color: var(--s-new); }
-  .hint { margin-top: 18px; }
+  .danger { margin-top: var(--s-2); color: var(--danger); }
+  .danger:hover:not(:disabled) { background: var(--danger-bg); }
+  .hint { margin-top: var(--s-5); }
 </style>

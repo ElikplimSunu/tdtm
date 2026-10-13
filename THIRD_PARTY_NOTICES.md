@@ -28,6 +28,8 @@ The app is built from these packages, bundled into its web build (not vendored i
   files (`pyodide.mjs`, `pyodide.asm.*`, `python_stdlib.zip`, `pyodide-lock.json`) are copied
   unmodified into the build; they include CPython (PSF License).
 - **Svelte**, https://github.com/sveltejs/svelte, MIT License.
+- **IBM Plex Sans and IBM Plex Mono** fonts (via `@fontsource`), https://github.com/IBM/plex, SIL
+  Open Font License 1.1.
 - **Tauri** and its plugins (dialog, fs, opener, process, updater), https://github.com/tauri-apps,
   MIT or Apache License 2.0, in the desktop app, with the Rust crates they depend on
   (`app/src-tauri/Cargo.lock` lists them; each is MIT and/or Apache-2.0 or similarly permissive).
