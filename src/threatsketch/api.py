@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from .merge import merge
 from .model import KIND_ROOT, Kind, Model
-from .report import generated_by, render, render_csv, review, tmt_category, tmt_state
+from .report import generated_by, render, render_csv, review, tmt_category, tmt_changed, tmt_state
 from .resolve import resolve
 from .rules.engine import run_sdl
 from .rules.tb7 import load_template
@@ -89,6 +89,8 @@ def threat_rows(model: Model, tpl) -> list[dict]:
                         "description": t.description,
                         "justification": t.mitigation,
                         "priority": t.severity,
+                        "changedBy": tmt_changed(t)[0],
+                        "lastModified": tmt_changed(t)[1],
                         "generatedBy": generated_by(t),
                         "editable": bool(t.tdtm_key),
                     }

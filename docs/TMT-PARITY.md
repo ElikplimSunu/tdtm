@@ -101,8 +101,9 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 - [x] **1.2b Dataflow Order** written back on export (found by the reference model's round trip).
 - [x] **1.3 Geometry.** Checked: positions and sizes come through exactly (shapes TMT placed 4px
   apart are 4px apart). What looked like overlaps is how shapes are drawn: phase 3.
-- [ ] **1.4 Threat fields.** Changed By, Last Modified, edited title/description/category,
-  threats added by hand; round-trip through `.json` and `.tm7`.
+- [ ] **1.4 Threat fields.** Changed By and Last Modified are listed (as TMT's CSV: "Generated"
+  until triaged). **[TMT]** Does TMT show a date in Last Modified for a triaged threat? Edited
+  title/description/category, threats added by hand; round-trip through `.json` and `.tm7`.
 - [x] **1.5 Stencil icons.** `api.palette()` gives each stencil's icon (a data URL; inherited from
   the parent when missing) and where TMT puts it (`iconAt`: center, lower-right, before-label).
 - [ ] **1.6 Notes** (the `.tm7`'s `Notes`: Id, text, date, added by): import, export, keep in
@@ -144,14 +145,14 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 
 ### Phase 4: Threat list and triage
 
-- [ ] **4.1 Columns**: all eleven of TMT's, resizable and reorderable, sorted by clicking the
-  header.
-- [ ] **4.2 Filters**: a drop-down filter on every column header, as TMT.
+- [x] **4.1 Columns**: all eleven of TMT's, resizable, sorted by clicking the header. *Not
+  reorderable yet.*
+- [x] **4.2 Filters**: a drop-down filter on every column header, as TMT.
 - [ ] **4.3 Threat Properties pane** under the list: every field editable as in TMT; Notes tab
   beside it (1.6).
 - [ ] **4.4 Add/remove threats by hand** (if TMT 7.3 allows it **[TMT]**); multi-select rows to
   change state or priority at once.
-- [ ] **4.5 Footer**: Export Csv button; "N Threats Displayed, N Total".
+- [x] **4.5 Footer**: Export Csv button; "N Threats Displayed, N Total".
 - [ ] **4.6 Analysis view links**: selecting a threat highlights its interaction on the canvas;
   selecting an interaction filters the list, as TMT does.
 

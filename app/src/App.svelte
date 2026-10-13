@@ -616,7 +616,7 @@
     <section class="threatpane">
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="resizer" onpointerdown={resize} title="Drag to resize"></div>
-      <ThreatList threats={analysis?.threats ?? []} selected={selectedThreat} onselect={selectThreat} loading={engineState.status === "loading"} />
+      <ThreatList threats={analysis?.threats ?? []} selected={selectedThreat} onselect={selectThreat} onexport={() => exportAs("csv")} loading={engineState.status === "loading"} />
     </section>
   {/if}
 
