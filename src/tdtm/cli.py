@@ -1,4 +1,4 @@
-"""`tdtm` command line. SPEC section 8. Subcommands are wired; their bodies land per PLAN."""
+"""`tdtm` command line. SPEC section 8."""
 
 from __future__ import annotations
 
@@ -13,15 +13,6 @@ from pathlib import Path
 from . import __version__
 from .model import Kind, Model
 from .td_adapter import load, save
-
-
-def _not_yet(task: str):
-    def run(_args: argparse.Namespace) -> int:
-        print(f"not implemented yet (docs/PLAN.md {task})", file=sys.stderr)
-        return 1
-
-    return run
-
 
 GUID = re.compile(r"[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}")
 
@@ -226,6 +217,18 @@ def cmd_coverage(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_report(args: argparse.Namespace) -> int:
+    from .report import render
+
+    try:
+        model, _ = load(args.model)
+    except (OSError, ValueError, KeyError) as e:
+        raise UsageError(f"cannot read model {args.model}: {e}") from e
+    Path(args.out).write_text(render(model), encoding="utf-8")
+    print(f"wrote {args.out}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="tdtm", description="TMT-style threat generation for OWASP Threat Dragon models."
@@ -262,7 +265,7 @@ def build_parser() -> argparse.ArgumentParser:
     r = sub.add_parser("report", help="write a TMT-style HTML report")
     r.add_argument("model")
     r.add_argument("--out", default="report.html")
-    r.set_defaults(func=_not_yet("3.2"))
+    r.set_defaults(func=cmd_report)
 
     c = sub.add_parser("coverage", help="which template rules can fire from TD properties alone")
     c.add_argument("--template")
