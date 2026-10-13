@@ -44,6 +44,43 @@ some import/export fidelity in `src/threatsketch/`.
 | Templates | Template editor; apply a different template to a model | Built-in SDL template only |
 | Font | Segoe UI | IBM Plex |
 
+## TMT 7.3 reference (from screenshots in `temp/reference/`)
+
+TMT 7.3.51110.1. What the window offers, as the target for phase 2:
+
+- **File**: New Model (Ctrl+N), Open (Ctrl+O), Save (Ctrl+S), Save As, Apply Template…, Threat
+  Model Information…, Close Model, Exit.
+- **Edit**: Undo (Ctrl+Z), Redo (Ctrl+Y), Copy (Ctrl+C), Cut (Ctrl+X), Paste (Ctrl+V).
+- **View**: Design View, Analysis View, Zoom In (Ctrl++), Zoom Out (Ctrl+-), then one item per
+  pane: Stencils, Messages, Notes, Threat List, Threat Properties, Element Properties (each
+  "(Pinned)" when docked), Reset Window Layout.
+- **Settings**: Enable / Disable Threat Generation (stored in the `.tm7` as
+  `ThreatGenerationEnabled`), Options.
+- **Diagram**: Add New Diagram, Delete Diagram, then one item per diagram to switch to it.
+- **Reports**: Create Full Report… (a "Custom Threat Properties" step listing extra threat
+  properties to include, then a save dialog for `.htm`), Create Custom Report… (check boxes for
+  Not Started, Needs Investigation, Not Applicable, Mitigated, and Include Migrated Threats).
+- **Help**: Getting Started Guide, Microsoft SDL, Report an Issue…, About.
+- **DiagramReader**: Read Full Diagram (Ctrl+R). A paged text reading of each diagram for screen
+  readers: "Source name *A* type *Stencil* is connected to name *B* type *Stencil* using name
+  *Flow* type *Flow stencil*." for every flow, then each boundary and the elements it contains,
+  then "There is 1 more diagram to read out". PREVIOUS / NEXT / OK.
+- **Toolbar** (left to right): Open, Save; Design View, Analysis View; Add Diagram, Delete
+  Diagram; Copy, Cut, Paste; Undo, Redo; Zoom In, Zoom Out; Notes.
+- **Threat List** pane: the eleven columns, each header with a filter drop-down; "Export Csv"
+  button and "232 Threats Displayed, 232 Total" under it; Last Modified reads "Generated" for
+  untouched threats. **Threat Properties** pane: "No threats are selected" when empty; tabbed
+  with **Notes** ("Add New Note"; columns Id, Note, Date, Added By; tab title "Notes - no
+  entries"). A status line at the very bottom ("Saved threats to Csv file …").
+- **Start page**: Threat Model: Create A Model, Open A Model, Getting Started Guide; Template For
+  New Models (Azure Threat Model Template 1.0.0.33, SDL TM Knowledge Base (Core) 4.1.0.11, Medical
+  Device Model 4.1.0.417, plus Browse…); Recently Opened Models; Threat Modeling Workflow (4
+  steps). Template: Create New Template, Open Template; Template Workflow (5 steps).
+- **Flow labels** are always the green box with the flow stencil's icon, in Design view too, in
+  a fresh sample model: it is TMT's style, not a threat state.
+- **Threat IDs**: a threat stored with Id 0 is listed and exported as the highest Id + 1 (242 in
+  the reference model); the file keeps 0.
+
 ## Phases
 
 Each task lists how we know it's done. **[TMT]** means it needs a check against TMT on Windows.
@@ -51,16 +88,15 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 ### Phase 0: Setup
 
 - [x] **0.1** Fork, set remotes, branch `tmt-parity-0`. Done when: `git remote -v` shows both.
-- [ ] **0.2 [TMT] Reference pack**: screenshots of every menu (each one open), the toolbar with
-  tooltips, every pane, Design view and Analysis view, the stencil pane, element and flow
-  property grids, right-click menus (canvas, element, flow, boundary, threat row), the Generate
-  Report dialog, the template editor, and Options. Done when: they're in `temp/reference/`, named
-  by what they show.
+- [x] **0.2 [TMT] Reference pack**: menus, reports, start page, Notes, DiagramReader; summed up
+  above. Still to capture: Analysis view, the Stencils and Element Properties panes, right-click
+  menus (canvas, element, flow, boundary, threat row), Options, Threat Model Information, the
+  template editor.
 
 ### Phase 1: Engine and import fidelity (Python; small, easy-to-accept PRs)
 
-- [x] **1.1 Threat IDs.** Checked: TMT's own IDs (0, 1…9, 13…, gaps included) already come
-  through import and export.
+- [x] **1.1 Threat IDs.** TMT's IDs come through, gaps included; Id 0 shows as the highest + 1,
+  as TMT does. TMT's own CSV of the reference model now matches row for row.
 - [x] **1.2 Model properties.** Assumptions and External Dependencies edited in the app, in the
   report, kept in `.tm7`. (TMT's model name may be empty; the file name stands in, as before.)
 - [x] **1.2b Dataflow Order** written back on export (found by the reference model's round trip).
@@ -71,18 +107,24 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
   threats added by hand; round-trip through `.json` and `.tm7`.
 - [ ] **1.5 Stencil icons.** Expose the 58 icons in `default.tb7` (`<Image>`, base64 PNG) through
   `api.py`. They're Microsoft's, MIT licensed, already in the repo.
-- [ ] **1.6 Messages.** The validation messages TMT shows in the Messages pane (e.g. flow with no
+- [ ] **1.6 Notes** (the `.tm7`'s `Notes`: Id, text, date, added by): import, export, keep in
+  `.json`.
+- [ ] **1.7 Threat generation on/off** (`ThreatGenerationEnabled`): honoured by analyze, kept.
+- [ ] **1.8 Messages.** The validation messages TMT shows in the Messages pane (e.g. flow with no
   source) **[TMT]**: list them, then generate them in the engine.
 
 ### Phase 2: The TMT window (structure and behaviour, in the current visual style)
 
-- [ ] **2.1 Menu bar** (File, Edit, View, Diagram, Reports, Help) with TMT's items and keyboard
-  shortcuts. On the desktop app, use native menus (Tauri) on macOS; in-window elsewhere.
+- [ ] **2.1 Menu bar** (File, Edit, View, Settings, Diagram, Reports, Help, DiagramReader) with
+  the items and shortcuts listed above. On the desktop app, use native menus (Tauri) on macOS; in-window elsewhere.
 - [ ] **2.2 Icon toolbar** with TMT's buttons and order.
 - [ ] **2.3 Docking panes**: Stencils, Properties, Threat List, Threat Properties, Messages,
   Notes; pin/unpin, close, reopen from View, tabbed at the bottom as in TMT. Layout remembered.
 - [ ] **2.4 Design view / Analysis view** switch, showing the panes TMT shows in each.
 - [ ] **2.5 Start page** like TMT's (Create a model, Open a model, recent files, templates).
+- [ ] **2.6 Threat Model Information** dialog (File menu): the model properties.
+- [ ] **2.7 DiagramReader**: Read Full Diagram (Ctrl+R), the paged text reading above. Built from
+  the engine's resolved stencils, so it also helps screen-reader users.
 
 ### Phase 3: Canvas
 
@@ -92,8 +134,8 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
   boundaries (curved red dashed line with a handle).
 - [ ] **3.3 Flows**: a curve with one draggable handle, as TMT draws them; arrowheads; two-way
   flows; drawing a flow from the stencil's Data Flow item as well as from the + handles.
-- [ ] **3.4 Flow labels**: boxed, with the icon, draggable apart from the line. What the colour
-  means (green in the reference screenshots) **[TMT]**.
+- [ ] **3.4 Flow labels**: TMT's green box with the flow stencil's icon, draggable apart from
+  the line.
 - [ ] **3.5 Interaction**: selection look, multi-select, grid, zoom levels, copy/paste,
   right-click menus, delete, undo/redo; all as TMT.
 - [ ] **3.6 Pixel check**: the reference model in TMT and in ThreatSketch at the same zoom, side
@@ -104,7 +146,8 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 - [ ] **4.1 Columns**: all eleven of TMT's, resizable and reorderable, sorted by clicking the
   header.
 - [ ] **4.2 Filters**: a drop-down filter on every column header, as TMT.
-- [ ] **4.3 Threat Properties pane** under the list: every field editable as in TMT; Notes tab.
+- [ ] **4.3 Threat Properties pane** under the list: every field editable as in TMT; Notes tab
+  beside it (1.6).
 - [ ] **4.4 Add/remove threats by hand** (if TMT 7.3 allows it **[TMT]**); multi-select rows to
   change state or priority at once.
 - [ ] **4.5 Footer**: Export Csv button; "N Threats Displayed, N Total".
@@ -117,7 +160,8 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
   golden file): summary by state, per-diagram summary, threats numbered per interaction,
   "Mitigation Implemented", "Total Migrated". Done when: a text diff against `m.html` shows only
   the creation date.
-- [ ] **5.2 Generate Report dialog** with TMT's options **[TMT]**. Keep PDF export.
+- [ ] **5.2 Create Full Report** (custom threat properties step) and **Create Custom Report**
+  (choose states, include migrated). Keep PDF export.
 - [ ] **5.3 CSV** stays identical (already tested).
 
 ### Phase 6: Templates
@@ -153,7 +197,6 @@ whenever the maintainer wants it. Phases 2–4 rework most of `app/src/` (about 
 ## Open questions
 
 1. Desktop menus: native macOS menu bar, or TMT's in-window menu everywhere?
-2. Is the green flow-label colour about threat state, or just TMT's style? **[TMT]**
-3. Can TMT 7.3 add threats by hand? **[TMT]**
-4. Do we also match TMT's file name (`.tm7`) as the default save format, or keep Threat Dragon
+2. Can TMT 7.3 add threats by hand? **[TMT]**
+3. Do we also match TMT's file name (`.tm7`) as the default save format, or keep Threat Dragon
    `.json` as the native one with `.tm7` as export?
