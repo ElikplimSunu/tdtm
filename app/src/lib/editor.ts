@@ -527,6 +527,14 @@ export class Editor {
     if (cells.length) this.graph.removeCells(cells);
   }
 
+  copy() { this.graph.copy(this.graph.getSelectedCells()); }
+  cut() { this.graph.cut(this.graph.getSelectedCells()); }
+  paste() {
+    const pasted = this.graph.paste({ offset: 30 });
+    this.graph.cleanSelection();
+    this.graph.select(pasted);
+  }
+  selectAll() { this.graph.select(this.graph.getCells()); }
   undo() { this.graph.undo(); }
   redo() { this.graph.redo(); }
   canUndo() { return this.graph.canUndo(); }
@@ -576,14 +584,10 @@ export class Editor {
     g.bindKey(["backspace", "delete"], () => { if (!typing()) this.removeSelected(); return false; });
     g.bindKey(["meta+z", "ctrl+z"], () => { if (!typing()) this.undo(); return false; });
     g.bindKey(["meta+shift+z", "ctrl+y", "ctrl+shift+z"], () => { if (!typing()) this.redo(); return false; });
-    g.bindKey(["meta+a", "ctrl+a"], () => { if (!typing()) g.select(g.getCells()); return false; });
-    g.bindKey(["meta+c", "ctrl+c"], () => { if (!typing()) g.copy(g.getSelectedCells()); return false; });
-    g.bindKey(["meta+v", "ctrl+v"], () => {
-      if (typing()) return;
-      const pasted = g.paste({ offset: 30 });
-      g.cleanSelection(); g.select(pasted);
-      return false;
-    });
+    g.bindKey(["meta+a", "ctrl+a"], () => { if (!typing()) this.selectAll(); return false; });
+    g.bindKey(["meta+c", "ctrl+c"], () => { if (!typing()) this.copy(); return false; });
+    g.bindKey(["meta+x", "ctrl+x"], () => { if (!typing()) this.cut(); return false; });
+    g.bindKey(["meta+v", "ctrl+v"], () => { if (!typing()) this.paste(); return false; });
     g.bindKey("escape", () => g.cleanSelection());
   }
 }

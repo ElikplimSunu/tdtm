@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Icon from "./components/Icon.svelte";
+  import MenuBar, { type Menu } from "./components/MenuBar.svelte";
   import Palette from "./components/Palette.svelte";
   import Properties from "./components/Properties.svelte";
   import ThreatList from "./components/ThreatList.svelte";
@@ -27,7 +28,6 @@
   let dirty = $state(false);
   let focusName = $state(0);
   let notice = $state<{ text: string; tone: "info" | "error" } | null>(null);
-  let exportOpen = $state(false);
   let threatHeight = $state(280);
   let draft = $state.raw(files.loadDraft());
   let dropping = $state(false);
@@ -35,6 +35,21 @@
   let theme = $state<string>(readTheme());
   const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl+";
   let update = $state.raw<updates.Update | null>(null);
+
+  // TMT's two views: Design shows the stencils and element properties, Analysis the threat list
+  // and threat properties. Each pane can also be shown or hidden from the View menu.
+  type View = "design" | "analysis";
+  const LAYOUT: Record<View, { stencils: boolean; threats: boolean; props: boolean }> = {
+    design: { stencils: true, threats: false, props: true },
+    analysis: { stencils: false, threats: true, props: true },
+  };
+  let view = $state<View>("design");
+  let panes = $state({ ...LAYOUT.design });
+  function setView(v: View) {
+    view = v;
+    panes = { ...LAYOUT[v] };
+  }
+  const REPO = "https://github.com/ElikplimSunu/threatsketch";
 
   onMount(() => {
     const off = engine.onState(async (s) => {
@@ -48,6 +63,9 @@
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); if (model) save(e.shiftKey); }
       if (mod && e.key.toLowerCase() === "o") { e.preventDefault(); open(); }
+      if (mod && e.key.toLowerCase() === "n") { e.preventDefault(); newModel(); } // the desktop app; browsers keep Ctrl+N
+      if (mod && model && (e.key === "=" || e.key === "+")) { e.preventDefault(); editor?.zoom(0.1); }
+      if (mod && model && e.key === "-") { e.preventDefault(); editor?.zoom(-0.1); }
     };
     const leave = (e: BeforeUnloadEvent) => { if (dirty) e.preventDefault(); };
     if (files.isDesktop) selftest().then((testing) => { if (!testing) updates.checkDesktop().then((u) => (update = u)); });
@@ -205,6 +223,25 @@
     dirty = true;
   }
 
+  async function closeModel() {
+    if (!(await confirmDiscard())) return;
+    model = analysis = null;
+    fileName = "";
+    handle = undefined;
+    selectedCell = selectedThreat = null;
+    dirty = false;
+    files.clearDraft();
+    draft = null;
+  }
+
+  /** File > Threat Model Information: the model's properties, in the properties pane. */
+  function modelInfo() {
+    editor?.graph.cleanSelection();
+    selectedThreat = null;
+    panes.props = true;
+    focusTitle();
+  }
+
   function focusTitle() {
     setTimeout(() => document.querySelector<HTMLInputElement>("[data-testid=model-title]")?.select(), 50);
   }
@@ -228,7 +265,6 @@
   }
 
   async function exportAs(kind: "json" | "tm7" | "csv" | "html" | "pdf") {
-    exportOpen = false;
     if (!editor) return;
     const m = editor.snapshot();
     try {
@@ -287,6 +323,7 @@
   }
 
   function selectThreat(key: string) {
+    if (!panes.threats) setView("analysis");
     const t = analysis?.threats.find((x) => x.key === key);
     if (t && editor) {
       const d = editor.model.detail.diagrams.findIndex((dg) => dg.cells.some((c) => c.id === t.cell));
@@ -384,6 +421,80 @@
   const open_ = $derived(analysis?.threats.filter((t) => t.state === "Not Started" || t.state === "Needs Investigation").length ?? 0);
   const warnings = $derived(analysis?.warnings ?? []);
 
+  // --- menus (TMT 7.3's, with ThreatSketch's exports where TMT has none) ---------------------
+
+  const menus = $derived.by((): Menu[] => {
+    version;
+    const none = !model;
+    const file: Menu = { label: "File", items: [
+      { label: "New Model", shortcut: `${MOD}N`, action: newModel },
+      { label: "Open…", shortcut: `${MOD}O`, action: open },
+      { label: "Save", shortcut: `${MOD}S`, action: () => save(), disabled: none },
+      { label: "Save As…", shortcut: `${MOD}Shift+S`, action: () => save(true), disabled: none },
+      "-",
+      { label: "Export as TMT Model (.tm7)…", action: () => exportAs("tm7"), disabled: none },
+      { label: "Save a Copy (.json)…", action: () => exportAs("json"), disabled: none },
+      "-",
+      { label: "Threat Model Information…", action: modelInfo, disabled: none },
+      { label: "Close Model", action: closeModel, disabled: none },
+    ] };
+    if (none) return [file, help()];
+    const many = diagrams.length > 1;
+    return [
+      file,
+      { label: "Edit", items: [
+        { label: "Undo", shortcut: `${MOD}Z`, action: () => editor?.undo() },
+        { label: "Redo", shortcut: MOD === "⌘" ? "⌘Shift+Z" : "Ctrl+Y", action: () => editor?.redo() },
+        "-",
+        { label: "Copy", shortcut: `${MOD}C`, action: () => editor?.copy() },
+        { label: "Cut", shortcut: `${MOD}X`, action: () => editor?.cut() },
+        { label: "Paste", shortcut: `${MOD}V`, action: () => editor?.paste() },
+        { label: "Delete", shortcut: "Del", action: () => editor?.removeSelected() },
+        "-",
+        { label: "Select All", shortcut: `${MOD}A`, action: () => editor?.selectAll() },
+      ] },
+      { label: "View", items: [
+        { label: "Design View", action: () => setView("design"), checked: view === "design" },
+        { label: "Analysis View", action: () => setView("analysis"), checked: view === "analysis" },
+        "-",
+        { label: "Zoom In", shortcut: `${MOD}+`, action: () => editor?.zoom(0.1) },
+        { label: "Zoom Out", shortcut: `${MOD}-`, action: () => editor?.zoom(-0.1) },
+        { label: "Fit to Window", action: () => editor?.fit() },
+        "-",
+        { label: "Stencils", action: () => (panes.stencils = !panes.stencils), checked: panes.stencils },
+        { label: "Threat List", action: () => (panes.threats = !panes.threats), checked: panes.threats },
+        { label: "Properties", action: () => (panes.props = !panes.props), checked: panes.props },
+        { label: "Reset Window Layout", action: () => { setView(view); threatHeight = 280; } },
+      ] },
+      { label: "Diagram", items: [
+        { label: "Add New Diagram", action: addDiagram },
+        { label: "Delete Diagram", action: () => deleteDiagram(diagram), disabled: !many },
+        { label: "Rename Diagram…", action: () => (renaming = diagram) },
+        "-",
+        ...diagrams.map((title, i) => ({ label: title, action: () => switchDiagram(i), checked: i === diagram })),
+      ] },
+      { label: "Reports", items: [
+        { label: "Create Full Report…", action: report },
+        { label: "Save Full Report (.html)…", action: () => exportAs("html") },
+        { label: "Save Full Report as PDF…", action: () => exportAs("pdf") },
+        "-",
+        { label: "Export Threat List (.csv)…", action: () => exportAs("csv") },
+      ] },
+      help(),
+    ];
+  });
+
+  function help(): Menu {
+    return { label: "Help", items: [
+      { label: "Coming from Microsoft TMT", action: () => files.openUrl(`${REPO}/blob/main/docs/coming-from-tmt.md`) },
+      { label: "Microsoft Threat Modeling Tool", action: () => files.openUrl("https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool") },
+      { label: "Microsoft Security Development Lifecycle (SDL)", action: () => files.openUrl("https://www.microsoft.com/en-us/securityengineering/sdl") },
+      { label: "Report an Issue…", action: () => files.openUrl(`${REPO}/issues`) },
+      "-",
+      { label: "About ThreatSketch", action: () => say(`ThreatSketch, engine ${engineState.status === "ready" ? engineState.version : "starting"}. Threats from Microsoft TMT's SDL TM Knowledge Base template. MIT licence.`) },
+    ] };
+  }
+
   // --- layout ------------------------------------------------------------------------------
 
   function resize(e: PointerEvent) {
@@ -414,12 +525,14 @@
   ondrop={dropFile}
 />
 
-<div class="app" class:has-model={!!model} style="--threats: {threatHeight}px">
+<div class="app" class:has-model={!!model}
+  style="--threats: {panes.threats ? threatHeight : 0}px; --pal: {panes.stencils ? 240 : 0}px; --props: {panes.props ? 320 : 0}px">
   <header class="top">
     <div class="brand">
       <img class="mark" src="{import.meta.env.BASE_URL}favicon.svg" alt="" width="22" height="22" />
       <span class="name">ThreatSketch</span>
     </div>
+    <MenuBar {menus} />
     {#if model}
       <div class="doc">
         <button class="doctitle" onclick={() => { editor?.graph.cleanSelection(); selectedThreat = null; focusTitle(); }} title="Model properties">
@@ -427,37 +540,40 @@
         </button>
         <span class="file">{fileName || "not saved yet"}{#if dirty}<span class="dirty" title="Unsaved changes">•</span>{/if}</span>
       </div>
-      <div class="tools">
-        <button class="btn icon" onclick={() => editor?.undo()} title={`Undo (${MOD}Z)`} aria-label="Undo"><Icon name="undo" /></button>
-        <button class="btn icon" onclick={() => editor?.redo()} title={`Redo (${MOD}Shift+Z)`} aria-label="Redo"><Icon name="redo" /></button>
-      </div>
     {/if}
     <div class="actions">
       <button class="btn icon" onclick={toggleTheme} title="Light or dark" aria-label="Toggle theme"><Icon name={theme === "dark" ? "sun" : "moon"} /></button>
       {#if model}
-        <button class="btn" onclick={newModel}><Icon name="new" />New</button>
-        <button class="btn" onclick={open}><Icon name="open" />Open</button>
-        <div class="menu">
-          <button class="btn" onclick={() => (exportOpen = !exportOpen)} aria-expanded={exportOpen} aria-haspopup="menu"><Icon name="export" />Export</button>
-          {#if exportOpen}
-            <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-            <div class="scrim" onclick={() => (exportOpen = false)}></div>
-            <div class="dropdown" role="menu">
-              <button role="menuitem" onclick={() => exportAs("tm7")}><b>Microsoft TMT model</b><span>.tm7, opens in TMT 7</span></button>
-              <button role="menuitem" onclick={() => exportAs("pdf")}><b>Threat report (PDF)</b><span>opens the print dialog: choose Save as PDF</span></button>
-              <button role="menuitem" onclick={() => exportAs("html")}><b>Threat report</b><span>.html, TMT's Full Report layout</span></button>
-              <button role="menuitem" onclick={() => exportAs("csv")}><b>Threat list</b><span>.csv, TMT's export columns</span></button>
-              <button role="menuitem" onclick={() => exportAs("json")}><b>Save a copy</b><span>.json, opens in Threat Dragon too</span></button>
-            </div>
-          {/if}
-        </div>
-        <button class="btn outline" onclick={report}><Icon name="report" />Report</button>
         <button class="btn primary" onclick={() => save()} title={`Save (${MOD}S)`}><Icon name="save" />Save</button>
       {/if}
     </div>
   </header>
 
   {#if model}
+    <!-- TMT's toolbar, in its order -->
+    <div class="toolbar" role="toolbar" aria-label="Tools">
+      <button class="btn icon" onclick={open} title={`Open (${MOD}O)`} aria-label="Open"><Icon name="open" /></button>
+      <span class="div"></span>
+      <button class="btn icon" class:on={view === "design"} onclick={() => setView("design")} title="Design View" aria-label="Design View" aria-pressed={view === "design"}><Icon name="design" /></button>
+      <button class="btn icon" class:on={view === "analysis"} onclick={() => setView("analysis")} title="Analysis View" aria-label="Analysis View" aria-pressed={view === "analysis"}><Icon name="analysis" /></button>
+      <span class="div"></span>
+      <button class="btn icon" onclick={addDiagram} title="Add New Diagram" aria-label="Add New Diagram"><Icon name="diagramadd" /></button>
+      <button class="btn icon" onclick={() => deleteDiagram(diagram)} disabled={diagrams.length < 2} title="Delete Diagram" aria-label="Delete Diagram"><Icon name="diagramdel" /></button>
+      <span class="div"></span>
+      <button class="btn icon" onclick={() => editor?.copy()} title={`Copy (${MOD}C)`} aria-label="Copy"><Icon name="copy" /></button>
+      <button class="btn icon" onclick={() => editor?.cut()} title={`Cut (${MOD}X)`} aria-label="Cut"><Icon name="cut" /></button>
+      <button class="btn icon" onclick={() => editor?.paste()} title={`Paste (${MOD}V)`} aria-label="Paste"><Icon name="paste" /></button>
+      <span class="div"></span>
+      <button class="btn icon" onclick={() => editor?.undo()} title={`Undo (${MOD}Z)`} aria-label="Undo"><Icon name="undo" /></button>
+      <button class="btn icon" onclick={() => editor?.redo()} title={`Redo (${MOD}Shift+Z)`} aria-label="Redo"><Icon name="redo" /></button>
+      <span class="div"></span>
+      <button class="btn icon" onclick={() => editor?.zoom(0.1)} aria-label="Zoom in" title={`Zoom In (${MOD}+)`}><Icon name="zoomin" /></button>
+      <button class="btn icon" onclick={() => editor?.zoom(-0.1)} aria-label="Zoom out" title={`Zoom Out (${MOD}-)`}><Icon name="zoomout" /></button>
+      <button class="btn icon" onclick={() => editor?.fit()} aria-label="Fit to screen" title="Fit to Window"><Icon name="fit" /></button>
+    </div>
+  {/if}
+
+  {#if model && panes.stencils}
     <Palette {palette} onadd={(k, s) => add(k, s)} />
   {/if}
 
@@ -492,15 +608,10 @@
           <span>Click or drag a stencil from the left. Hover an element and drag its <i>+</i> to draw a data flow.</span>
         </div>
       {/if}
-      <div class="zoom">
-        <button class="btn icon" onclick={() => editor?.zoom(-0.1)} aria-label="Zoom out" title={`Zoom out (${MOD}scroll)`}><Icon name="zoomout" /></button>
-        <button class="btn icon" onclick={() => editor?.fit()} aria-label="Fit to screen" title="Fit to screen"><Icon name="fit" /></button>
-        <button class="btn icon" onclick={() => editor?.zoom(0.1)} aria-label="Zoom in" title={`Zoom in (${MOD}scroll)`}><Icon name="zoomin" /></button>
-      </div>
     </div>
   </main>
 
-  {#if model}
+  {#if model && panes.threats}
     <section class="threatpane">
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="resizer" onpointerdown={resize} title="Drag to resize"></div>
@@ -508,7 +619,7 @@
     </section>
   {/if}
 
-  {#if model}
+  {#if model && panes.props}
     <Properties
       {model} {cell} {threat} {cellThreats} {palette} {names} {focusName} review={analysis?.review ?? []}
       info={selectedCell ? analysis?.elements[selectedCell] : undefined}
@@ -531,7 +642,7 @@
       {:else}Threat engine failed: {engineState.error}{/if}
     </span>
     {#if analysis}
-      <span data-testid="threat-count">{analysis.threats.length} threats</span>
+      <button class="count" onclick={() => setView("analysis")} title="Analysis View" data-testid="threat-count">{analysis.threats.length} threats</button>
       <span>{open_} open</span>
     {/if}
     {#if warnings.length}
@@ -581,11 +692,16 @@
   .app {
     height: 100%;
     display: grid;
-    grid-template-columns: 240px minmax(0, 1fr) 320px;
-    grid-template-rows: 48px minmax(0, 1fr) var(--threats) 28px;
-    grid-template-areas: "top top top" "pal stage props" "threats threats props" "status status status";
+    grid-template-columns: var(--pal) minmax(0, 1fr) var(--props);
+    grid-template-rows: 44px 36px minmax(0, 1fr) var(--threats) 28px;
+    grid-template-areas: "top top top" "tool tool tool" "pal stage props" "threats threats props" "status status status";
   }
-  .app:not(.has-model) { grid-template-rows: 48px minmax(0, 1fr) 0 28px; grid-template-areas: "top top top" "stage stage stage" "threats threats threats" "status status status"; }
+  .app:not(.has-model) { grid-template-rows: 44px 0 minmax(0, 1fr) 0 28px; grid-template-areas: "top top top" "tool tool tool" "stage stage stage" "threats threats threats" "status status status"; }
+  .toolbar { grid-area: tool; display: flex; align-items: center; gap: 2px; padding: 0 var(--s-2); background: var(--panel); border-bottom: 1px solid var(--border); }
+  .toolbar .div { width: 1px; height: 18px; margin: 0 var(--s-1); background: var(--border); }
+  .toolbar .on { background: var(--hover); color: var(--accent-text); }
+  .count { border: 0; background: none; padding: 0; color: inherit; font: inherit; }
+  .count:hover { color: var(--text); text-decoration: underline; }
   .app > :global(.palette) { grid-area: pal; }
   .app > :global(.props) { grid-area: props; }
 
@@ -598,15 +714,7 @@
   .doctitle:hover { color: var(--accent-text); }
   .file { font-size: var(--fs-caption); color: var(--muted); }
   .dirty { color: var(--accent); margin-left: var(--s-1); }
-  .tools { display: flex; gap: 2px; margin-left: var(--s-2); }
   .actions { margin-left: auto; display: flex; align-items: center; gap: var(--s-1); }
-  .menu { position: relative; }
-  .scrim { position: fixed; inset: 0; z-index: 20; }
-  .dropdown { position: absolute; right: 0; top: 32px; z-index: 21; width: 264px; padding: var(--s-1); background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--r-2); box-shadow: var(--shadow-pop); }
-  .dropdown button { display: grid; width: 100%; padding: 6px var(--s-2); border: 0; border-radius: var(--r-1); background: none; text-align: left; }
-  .dropdown button:hover { background: var(--hover); }
-  .dropdown b { font-weight: 500; }
-  .dropdown span { font-size: var(--fs-small); color: var(--muted); }
 
   .stage { grid-area: stage; display: grid; grid-template-rows: 32px minmax(0, 1fr); min-height: 0; min-width: 0; }
   .stage.hidden { visibility: hidden; }
@@ -623,7 +731,6 @@
   .hint { position: absolute; left: var(--s-6); top: var(--s-5); display: grid; gap: var(--s-1); max-width: 340px; color: var(--muted); pointer-events: none; }
   .hint b { color: var(--text); font-weight: 600; font-size: var(--fs-h3); }
   .hint i { font-style: normal; font-weight: 600; color: var(--accent-text); }
-  .zoom { position: absolute; right: var(--s-3); bottom: var(--s-3); display: flex; gap: 2px; padding: 2px; background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--r-2); }
 
   .threatpane { grid-area: threats; position: relative; min-height: 0; border-top: 1px solid var(--border-strong); }
   .resizer { position: absolute; left: 0; right: 0; top: -4px; height: 8px; z-index: 5; cursor: row-resize; }
@@ -638,7 +745,7 @@
   .warn { display: inline-flex; align-items: center; gap: var(--s-1); color: var(--st-inv); cursor: help; }
   .grow { flex: 1; }
 
-  .welcome { position: fixed; inset: 48px 0 28px; overflow: auto; background: var(--bg); }
+  .welcome { position: fixed; inset: 44px 0 28px; overflow: auto; background: var(--bg); }
   .start { max-width: 520px; margin: 12vh 0 var(--s-8) 14vw; }
   h1 { margin: 0; font-size: var(--fs-h1); font-weight: 600; }
   .lede { margin: var(--s-1) 0 var(--s-8); color: var(--muted); }

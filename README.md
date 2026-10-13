@@ -65,9 +65,9 @@ list; the ones you have decided on stand out.
 
 **Report.** The threat report follows TMT's Full Report: a summary by state and by STRIDE
 category, the diagram, then every interaction, the boundaries it crosses, and its threats. It
-prints to A4 with page numbers; Export > Threat report (PDF) saves it as a PDF
-([example PDF](docs/example-report.pdf)). The Export menu
-also has the HTML report, TMT's CSV and a `.tm7`.
+prints to A4 with page numbers; Reports > Save Full Report as PDF saves it as a PDF
+([example PDF](docs/example-report.pdf)). Reports also saves the HTML report and TMT's CSV;
+File > Export as TMT Model writes a `.tm7`.
 
 ![The threat report: model details and the Threat Model Summary by state and by STRIDE category](docs/img/threatsketch-report.jpg)
 

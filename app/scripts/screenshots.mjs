@@ -24,10 +24,16 @@ const example = async (page) => {
   await page.getByRole("button", { name: /Open the example/ }).click();
   await page.getByTestId("threat-count").getByText("38 threats").waitFor();
 };
+const analysis = (page) => page.getByRole("button", { name: "Analysis View" }).click();
+const fullReport = async (page) => {
+  await page.getByRole("menuitem", { name: "Reports", exact: true }).click();
+  return page.getByRole("menuitem", { name: "Create Full Report…" });
+};
 
 await shot("threatsketch-welcome", "light", async () => {});
 await shot("threatsketch-threat", "light", async (page) => {
   await example(page);
+  await analysis(page);
   await page.getByTestId("threat-row").nth(1).click();
 });
 await shot("threatsketch-element", "light", async (page) => {
@@ -43,6 +49,7 @@ await shot("threatsketch-hover", "light", async (page) => {
 }, { keepPointer: true });
 await shot("threatsketch-triage", "light", async (page) => {
   await example(page);
+  await analysis(page);
   const rows = page.getByTestId("threat-row");
   const triage = async (i, state, priority, text) => {
     await rows.nth(i).click();
@@ -59,20 +66,23 @@ await shot("threatsketch-triage", "light", async (page) => {
 });
 await shot("threatsketch-report", "light", async (page) => {
   await example(page);
-  const [popup] = await Promise.all([page.waitForEvent("popup"), page.getByRole("button", { name: "Report" }).click()]);
+  const item = await fullReport(page);
+  const [popup] = await Promise.all([page.waitForEvent("popup"), item.click()]);
   await popup.setViewportSize({ width: 1100, height: 900 });
   await popup.waitForLoadState();
   return popup;
 });
 await shot("threatsketch-report-full", "light", async (page) => {
   await example(page);
-  const [popup] = await Promise.all([page.waitForEvent("popup"), page.getByRole("button", { name: "Report" }).click()]);
+  const item = await fullReport(page);
+  const [popup] = await Promise.all([page.waitForEvent("popup"), item.click()]);
   await popup.setViewportSize({ width: 1100, height: 900 });
   await popup.waitForLoadState();
   return popup;
 }, { fullPage: true });
 await shot("threatsketch-dark", "dark", async (page) => {
   await example(page);
+  await analysis(page);
   await page.getByTestId("threat-row").nth(0).click();
 });
 await browser.close();
