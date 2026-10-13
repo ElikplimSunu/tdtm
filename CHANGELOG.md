@@ -8,6 +8,16 @@ One version covers the app and the command-line tool. The format follows
 
 ### Added
 
+- TMT's menu bar: File, Edit, View, Diagram, Reports and Help, with TMT's items and shortcuts.
+  New, Open, Export and Report moved into it (exports under File and Reports, as in TMT). File
+  also has Save As, Threat Model Information and Close Model; Help links to TMT's and the SDL's
+  pages.
+- TMT's toolbar, in TMT's order: Open; Design and Analysis view; add and delete diagram; copy,
+  cut, paste; undo, redo; zoom.
+- Design and Analysis views, as in TMT: Design shows the stencils, Analysis the threat list. View
+  shows or hides each pane; selecting a threat, or the threat count, opens the Analysis view.
+- Cut (Ctrl+X), and Ctrl+N, Ctrl+Shift+S and Ctrl+plus/minus for new, save as and zoom.
+
 - TMT's stencil icons, from the template: faded inside processes (centred), interactors and data
   stores (lower right), before each trust boundary's name, and in the stencil list.
 - Flow names in TMT's pale green box with the flow stencil's icon before the name.

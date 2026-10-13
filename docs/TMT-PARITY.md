@@ -113,12 +113,14 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 
 ### Phase 2: The TMT window (structure and behaviour, in the current visual style)
 
-- [ ] **2.1 Menu bar** (File, Edit, View, Settings, Diagram, Reports, Help, DiagramReader) with
-  the items and shortcuts listed above. On the desktop app, use native menus (Tauri) on macOS; in-window elsewhere.
-- [ ] **2.2 Icon toolbar** with TMT's buttons and order.
+- [x] **2.1 Menu bar**: File, Edit, View, Diagram, Reports, Help with TMT's items and shortcuts.
+  Settings and DiagramReader join when 1.7 and 2.7 exist; File > Apply Template with 6.3. On the desktop app, use native menus (Tauri) on macOS; in-window elsewhere.
+- [x] **2.2 Icon toolbar** with TMT's buttons and order (Save stays the primary button; Notes
+  joins with 1.6).
 - [ ] **2.3 Docking panes**: Stencils, Properties, Threat List, Threat Properties, Messages,
   Notes; pin/unpin, close, reopen from View, tabbed at the bottom as in TMT. Layout remembered.
-- [ ] **2.4 Design view / Analysis view** switch, showing the panes TMT shows in each.
+- [x] **2.4 Design view / Analysis view** switch, showing the panes TMT shows in each; View toggles
+  each pane. *Left for 2.3: docking, resizing every pane, remembering the layout.*
 - [ ] **2.5 Start page** like TMT's (Create a model, Open a model, recent files, templates).
 - [ ] **2.6 Threat Model Information** dialog (File menu): the model properties.
 - [ ] **2.7 DiagramReader**: Read Full Diagram (Ctrl+R), the paged text reading above. Built from
@@ -175,7 +177,8 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 
 ### Phase 7: Finish
 
-- [ ] **7.1** README tour and screenshots redone; `app/README.md` design rules rewritten for the
+- [ ] **7.1** README tour and screenshots redone (`scripts/screenshots.mjs` needs the menus and
+  Analysis view); `app/README.md` design rules rewritten for the
   TMT look; `docs/coming-from-tmt.md` updated.
 - [ ] **7.2** E2E tests for each new pane and menu; the private reference model as an e2e test.
 - [ ] **7.3** Desktop builds checked on macOS, Windows and Linux.
