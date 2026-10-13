@@ -41,6 +41,8 @@ def test_snapshot_lists_threats_like_tmt(analyzed):
         "description": t["description"],
         "justification": "",
         "priority": "High",
+        "changedBy": "",
+        "lastModified": "Generated",
         "generatedBy": "SDL rule S3",
         "editable": True,
     }

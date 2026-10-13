@@ -67,6 +67,18 @@ def tmt_state(t: Threat) -> str:
     return TMT_STATE.get(t.status, t.status)
 
 
+def tmt_changed(t: Threat) -> tuple[str, str]:
+    """(Changed By, Last Modified) as TMT's CSV lists them: Last Modified reads "Generated" until
+    the threat is triaged, then nothing; Changed By is who TMT recorded (kept from a `.tm7`).
+    [unverified] whether TMT shows a date for a triaged threat (TMT-PARITY 1.4)."""
+    meta = t.raw.get("tdtm")
+    if not isinstance(meta, dict):
+        return "", ""
+    if meta.get("fingerprint") == fingerprint(t.raw):
+        return "", "Generated"
+    return (meta.get("tm7") or {}).get("changedBy") or "", ""
+
+
 def tmt_category(t: Threat, template) -> str:
     letter = {name.lower(): k for k, name in STRIDE_TYPES.items()}.get(t.type.lower(), "")
     return template.categories.get(letter, t.type)
@@ -332,8 +344,7 @@ def render_csv(model: Model, template) -> str:
     for d in model.diagrams:
         for e in d.elements.values():
             for t in e.threats:
-                meta = t.raw.get("tdtm")
-                untouched = isinstance(meta, dict) and meta.get("fingerprint") == fingerprint(t.raw)
+                changed_by, last_modified = tmt_changed(t)
                 number = t.raw.get("number")
                 w.writerow([
                     "" if number is None else number,
@@ -343,9 +354,9 @@ def render_csv(model: Model, template) -> str:
                     e.label,
                     t.severity,
                     tmt_state(t),
-                    "",
+                    changed_by,
                     t.description,
                     t.mitigation,
-                    "Generated" if untouched else "",
+                    last_modified,
                 ])  # fmt: skip
     return out.getvalue()

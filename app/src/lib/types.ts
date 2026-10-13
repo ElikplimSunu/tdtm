@@ -11,7 +11,8 @@ export type Model = {
 export type ThreatRow = {
   key: string; id: number | null; cell: string; diagram: string; interaction: string;
   source: string; target: string; state: string; title: string; category: string;
-  description: string; justification: string; priority: string; generatedBy: string; editable: boolean;
+  description: string; justification: string; priority: string; changedBy: string; lastModified: string;
+  generatedBy: string; editable: boolean;
 };
 
 export type Attribute = { name: string; label: string; value: string; values: string[]; source: string; static: boolean };
