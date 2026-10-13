@@ -29,7 +29,8 @@ The app is built from these packages, bundled into its web build (not vendored i
   unmodified into the build; they include CPython (PSF License).
 - **Svelte**, https://github.com/sveltejs/svelte, MIT License.
 - **IBM Plex Sans and IBM Plex Mono** fonts (via `@fontsource`), https://github.com/IBM/plex, SIL
-  Open Font License 1.1.
+  Open Font License 1.1. Three Latin font files are also in `src/threatsketch/data/fonts/` (with
+  the licence) and embedded in the threat report.
 - **Tauri** and its plugins (dialog, fs, opener, process, updater), https://github.com/tauri-apps,
   MIT or Apache License 2.0, in the desktop app, with the Rust crates they depend on
   (`app/src-tauri/Cargo.lock` lists them; each is MIT and/or Apache-2.0 or similarly permissive).

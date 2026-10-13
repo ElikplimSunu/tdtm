@@ -16,7 +16,7 @@ def test_svg_draws_every_element():
     assert "<ellipse" in svg  # processes are circles, like TMT and Threat Dragon
 
 
-def test_svg_escapes_names_and_marks_open_threats(tmp_path):
+def test_svg_escapes_names_and_draws_in_tmt_style(tmp_path):
     import json
     import shutil
 
@@ -41,7 +41,8 @@ def test_svg_escapes_names_and_marks_open_threats(tmp_path):
     model, _ = load(path)
     svg = render_svg(model.diagrams[0])
     assert "<b>User" not in svg and "&lt;b&gt;User&lt;/b&gt;" in svg
-    assert 'class="flow open"' in svg  # the Request flow has an open threat
+    assert "open" not in svg  # red is for trust boundaries only, as on the canvas
+    assert 'class="boundary"' in svg and "#c0392f" in svg
     assert "<polyline" in svg  # the boundary curve
 
 

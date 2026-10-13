@@ -1,11 +1,13 @@
 """Self-contained HTML report in the shape of TMT's Full Report. SPEC section 9. PLAN task 3.2.
 
-`render(model, template=None) -> str`: model details, a Threat Model Summary by TMT state, then per
-diagram a drawing of it, its own summary, and each interaction with its threats as TMT lists them
-("1. Title [State: Not Started] [Priority: High]", Category, Description, Justification), then
-threats people attached to other elements. Every threat in the model is reported, generated or
-not. All model text is escaped. [approximate: laid out from memory of TMT 7.3's report, not yet
-compared with a real one]
+`render(model, template=None) -> str`: TMT's sections in TMT's order (model details, the Threat
+Model Summary by TMT state, then per diagram its drawing, its summary and each interaction with its
+threats: title, State, Priority, Category, Description, Justification), on a modern layout built
+from the ThreatSketch design tokens. One file: fonts and the diagram are embedded, nothing is
+fetched. It prints to A4 (page numbers, threats never split across pages), and its "Save as PDF"
+button opens the print dialog; `#print` in the address opens it straight away. Every threat in the
+model is reported, generated or not. All model text is escaped. [layout of the sections from
+memory of TMT 7.3's report, not yet compared with a real one]
 
 `render_csv(model, template) -> str` writes TMT's own CSV export format (same columns, category
 names, state names and CRLF line endings), so a Threat Dragon model hands in like a TMT one.
@@ -13,33 +15,45 @@ names, state names and CRLF line endings), so a Threat Dragon model hands in lik
 
 from __future__ import annotations
 
+import base64
 import csv
 import io
 from datetime import datetime
+from functools import cache
 from html import escape
+from importlib.resources import files
 
+from . import __version__
 from .diagram import render_svg
 from .merge import STRIDE_TYPES, fingerprint
-from .model import Kind, Model, Threat
+from .model import Diagram, Kind, Model, Threat
 
-CSS = """
-body { font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; color: #1b1b1b;
-       background: #ffffff; max-width: 1000px; margin: 24px auto; padding: 0 16px; }
-h1 { font-size: 26px; font-weight: 600; margin: 0 0 4px; }
-h2 { font-size: 18px; font-weight: 600; margin: 28px 0 8px; }
-h3 { font-size: 15px; font-weight: 600; margin: 22px 0 2px; }
-h4 { font-size: 14px; font-weight: 600; margin: 14px 0 4px; }
-p { margin: 3px 0; } .muted { color: #5c5c5c; }
-hr { border: 0; border-top: 1px solid #c8c8c8; margin: 24px 0; }
-table { border-collapse: collapse; margin: 6px 0 4px; }
-td { border: 1px solid #c8c8c8; padding: 3px 14px 3px 8px; }
-td:last-child { text-align: right; }
-.threat { margin: 0 0 12px 18px; } .threat p { white-space: pre-wrap; }
-.diagram { border: 1px solid #c8c8c8; margin: 8px 0; }
-.diagram svg { display: block; width: 100%; height: auto; max-height: 640px; }
-@media print { .diagram svg { max-height: none; } }
-"""
-SUMMARY_ROWS = ["Not Started", "Not Applicable", "Needs Investigation", "Mitigation Implemented"]
+STATES = ["Not Started", "Needs Investigation", "Not Applicable", "Mitigated"]
+OPEN = ("Not Started", "Needs Investigation")
+STATE_CLASS = {s: s.lower().replace(" ", "-") for s in STATES}
+CATEGORY_ORDER = ["Spoofing", "Tampering", "Repudiation", "Information Disclosure",
+                  "Denial Of Service", "Elevation Of Privilege"]  # fmt: skip
+
+
+@cache
+def _fonts() -> str:
+    """IBM Plex (OFL-1.1, data/fonts), embedded so the report needs nothing from the network."""
+    faces = [("IBM Plex Sans", 400, "ibm-plex-sans-latin-400-normal.woff2"),
+             ("IBM Plex Sans", 600, "ibm-plex-sans-latin-600-normal.woff2"),
+             ("IBM Plex Mono", 400, "ibm-plex-mono-latin-400-normal.woff2")]  # fmt: skip
+    out = []
+    for family, weight, name in faces:
+        data = base64.b64encode((files("threatsketch") / "data" / "fonts" / name).read_bytes())
+        out.append(
+            f"@font-face{{font-family:'{family}';font-weight:{weight};font-display:swap;"
+            f"src:url(data:font/woff2;base64,{data.decode()}) format('woff2')}}"
+        )
+    return "\n".join(out)
+
+
+CSS = (files("threatsketch") / "data" / "report.css").read_text(encoding="utf-8")
+MARK = (files("threatsketch") / "data" / "mark.svg").read_text(encoding="utf-8")  # the app icon
+PRINT_ON_OPEN = "if(location.hash==='#print')addEventListener('load',()=>setTimeout(print,300))"
 TMT_STATE = {"Open": "Not Started", "NotApplicable": "Not Applicable"}  # others are the same
 
 
@@ -65,29 +79,129 @@ def generated_by(t: Threat) -> str:
     return f"{pack.upper()} rule {rule}"
 
 
+def _state(state: str) -> str:
+    cls = STATE_CLASS.get(state, "not-started")
+    return f'<span class="state {cls}"><span class="dot"></span>{escape(state)}</span>'
+
+
 def _threat(t: Threat, template) -> str:
+    state = tmt_state(t)
     number = t.raw.get("number")
-    title = f"{number}. {t.title}" if number is not None else t.title
-    heading = f"{title} [State: {tmt_state(t)}] [Priority: {t.severity}]"
-    rows = [
-        ("Category", tmt_category(t, template)),
-        ("Description", t.description),
-        ("Justification", t.mitigation or "<no mitigation provided>"),
-    ]
+    facts = [("Category", tmt_category(t, template)), ("Priority", t.severity or "TBD")]
     if generated_by(t):
-        rows.append(("Generated by", generated_by(t)))
-    body = "".join(f"<p><b>{k}:</b> {escape(str(v))}</p>" for k, v in rows)
-    return f'<h4>{escape(heading)}</h4><div class="threat">{body}</div>'
+        facts.append(("Generated by", generated_by(t)))
+    just = (
+        f'<p class="just"><span class="k">Justification</span>{escape(t.mitigation)}</p>'
+        if t.mitigation
+        else '<p class="just none"><span class="k">Justification</span>'
+        "&lt;no mitigation provided&gt;</p>"
+    )
+    return (
+        f'<article class="threat {STATE_CLASS.get(state, "")}">'
+        f'<div class="th"><span class="id num">{"" if number is None else number}</span>'
+        f"<h4>{escape(t.title)}</h4>{_state(state)}</div>"
+        '<div class="facts">'
+        + "".join(f"<span>{k} <b>{escape(str(v))}</b></span>" for k, v in facts)
+        + f'</div><p class="desc">{escape(t.description)}</p>{just}</article>'
+    )
 
 
-def _summary(threats: list[Threat]) -> str:
+def _counts(threats: list[Threat]) -> dict[str, int]:
     states = [tmt_state(t) for t in threats]
-    counts = {row: states.count(row) for row in SUMMARY_ROWS}
-    counts["Mitigation Implemented"] = states.count("Mitigated")
-    other = len(states) - sum(counts.values())
-    rows = list(counts.items()) + ([("Other", other)] if other else [])
-    rows += [("Total", len(threats)), ("Total Migrated", 0)]
-    return "<table>" + "".join(f"<tr><td>{k}</td><td>{n}</td></tr>" for k, n in rows) + "</table>"
+    return {s: states.count(s) for s in STATES}
+
+
+def _summary(threats: list[Threat], template) -> str:
+    """TMT's Threat Model Summary: counts by state, a bar of the same, and counts by category."""
+    c = _counts(threats)
+    total = len(threats)
+    stats = [
+        ("Total", total),
+        *((s, c[s]) for s in STATES[:3]),
+        ("Mitigation Implemented", c["Mitigated"]),
+    ]
+    bar = "".join(
+        f'<i class="{STATE_CLASS[s]}-bg" style="width:{100 * n / total:.2f}%"></i>'
+        for s, n in c.items()
+        if n and total
+    )
+    legend = "".join(
+        f'<span><i class="sw {STATE_CLASS[s]}-bg"></i>{escape(s)} <b class="num">{n}</b></span>'
+        for s, n in c.items()
+    )
+    by_cat: dict[str, list[Threat]] = {}
+    for t in threats:
+        by_cat.setdefault(tmt_category(t, template), []).append(t)
+    order = sorted(
+        by_cat, key=lambda k: (CATEGORY_ORDER.index(k) if k in CATEGORY_ORDER else 99, k)
+    )
+    rows = "".join(
+        f'<tr><td>{escape(k)}</td><td class="n num">{len(by_cat[k])}</td>'
+        f'<td class="n num">{sum(tmt_state(t) in OPEN for t in by_cat[k])}</td></tr>'
+        for k in order
+    )
+    table = (
+        '<table><thead><tr><th>Category</th><th class="n">Threats</th><th class="n">Open</th></tr>'
+        f"</thead><tbody>{rows}</tbody></table>"
+        if rows
+        else ""
+    )
+    return (
+        '<div class="stats">'
+        + "".join(f'<div class="stat"><b>{n}</b><span>{escape(k)}</span></div>' for k, n in stats)
+        + f'</div><div class="bar">{bar}</div><div class="legend">{legend}</div>{table}'
+    )
+
+
+BOUNDARIES = "trust boundaries"
+
+
+def _n(n: int, one: str, many: str = "") -> str:
+    return f"{n} {one if n == 1 else many or one + 's'}"
+
+
+def _diagram(d: Diagram, template) -> list[str]:
+    threats = [t for e in d.elements.values() for t in e.threats]
+    c = _counts(threats)
+    names = {e.cell_id: e.label for e in d.elements.values()}
+    boxes = len(d.of_kind(Kind.BOUNDARY_BOX, Kind.BOUNDARY_CURVE))
+    parts = [
+        '<section class="diagram">',
+        f"<h2>Diagram: {escape(d.title)}</h2>",
+        f"<figure>{render_svg(d)}<figcaption>{escape(d.title)}: "
+        f"{_n(len(d.of_kind(Kind.ACTOR, Kind.PROCESS, Kind.STORE)), 'element')}, "
+        f"{_n(len(d.of_kind(Kind.FLOW)), 'data flow')}, {_n(boxes, 'trust boundary', BOUNDARIES)}"
+        "</figcaption></figure>",
+        '<div class="mini">'
+        f"<span>Threats <b>{len(threats)}</b></span>"
+        + "".join(f"<span>{escape(s)} <b>{n}</b></span>" for s, n in c.items())
+        + "</div>",
+    ]
+    for f in d.of_kind(Kind.FLOW):
+        if not f.threats:
+            continue
+        src, tgt = d.elements[f.source_id].label, d.elements[f.target_id].label
+        crosses = ", ".join(names.get(b, "") for b in f.crosses)
+        route = f"{escape(src)} → {escape(tgt)}"
+        if crosses:
+            route += f' · crosses <span class="crosses">{escape(crosses)}</span>'
+        if f.out_of_scope:
+            route += " · out of scope"
+        parts.append(
+            f'<section class="interaction"><header><h3>Interaction: {escape(f.label)}</h3>'
+            f'<span class="route">{route}</span></header>'
+            + "".join(_threat(t, template) for t in f.threats)
+            + "</section>"
+        )
+    for e in d.elements.values():
+        if e.kind is not Kind.FLOW and e.threats:
+            parts.append(
+                f'<section class="interaction"><header><h3>Element: {escape(e.label)}</h3></header>'
+                + "".join(_threat(t, template) for t in e.threats)
+                + "</section>"
+            )
+    parts.append("</section>")
+    return parts
 
 
 def render(model: Model, template=None) -> str:
@@ -96,48 +210,45 @@ def render(model: Model, template=None) -> str:
 
         template = load_template()
     threats = [t for d in model.diagrams for e in d.elements.values() for t in e.threats]
-    details = [
-        ("Threat Model Name", model.title),
+    created = datetime.now()
+    meta = [
         ("Owner", model.owner),
         ("Reviewer", model.reviewer),
         ("Contributors", ", ".join(model.contributors)),
-        ("Description", model.description),
+        ("Created", f"{created:%d %B %Y, %H:%M}"),
+        ("Template", template.name or "SDL TM Knowledge Base"),
+        ("Diagrams", str(len(model.diagrams))),
     ]
+    title = escape(model.title or "Untitled threat model")
+    # the title in the printed page footer: a CSS string, so no quotes, backslashes or markup
+    footer = "".join(ch for ch in (model.title or "Threat model") if ch not in '"\\<>\n\r')
     parts = [
         "<!doctype html>",
         '<html lang="en"><head><meta charset="utf-8">',
         '<meta name="viewport" content="width=device-width, initial-scale=1">',
-        f"<title>{escape(model.title)}: Threat Modeling Report</title>",
-        f"<style>{CSS}</style></head><body>",
-        "<h1>Threat Modeling Report</h1>",
-        f'<p class="muted">Created on {datetime.now():%d/%m/%Y %H:%M} by ThreatSketch</p>',
-        *(f"<p><b>{k}:</b> {escape(v)}</p>" for k, v in details),
-        "<h2>Threat Model Summary:</h2>",
-        _summary(threats),
+        f"<title>{title}: Threat Modeling Report</title>",
+        f'<style>{_fonts()}{CSS}@page{{@bottom-left{{content:"{footer}"}}}}</style>',
+        f"<script>{PRINT_ON_OPEN}</script></head><body>",
+        '<div class="toolbar"><button type="button" onclick="print()">Save as PDF</button></div>',
+        '<main class="page">',
+        '<header class="cover">',
+        f'<div class="brandline">{MARK}<span>Threat Modeling Report</span></div>',
+        f"<h1>{title}</h1>",
+        f'<p class="lede">{escape(model.description)}</p>' if model.description else "",
+        '<dl class="meta">'
+        + "".join(f"<div><dt>{k}</dt><dd>{escape(v)}</dd></div>" for k, v in meta if v)
+        + "</dl></header>",
+        "<h2>Threat Model Summary</h2>",
+        _summary(threats, template),
     ]
     for d in model.diagrams:
-        diagram_threats = [t for e in d.elements.values() for t in e.threats]
-        parts += [
-            "<hr>",
-            f"<h2>Diagram: {escape(d.title)}</h2>",
-            f'<div class="diagram">{render_svg(d)}</div>',
-            f"<h2>{escape(d.title)} Diagram Summary:</h2>",
-            _summary(diagram_threats),
-        ]
-        for f in d.of_kind(Kind.FLOW):
-            if not f.threats:
-                continue
-            src, tgt = d.elements[f.source_id].label, d.elements[f.target_id].label
-            scope = " (out of scope)" if f.out_of_scope else ""
-            parts.append(f"<h3>Interaction: {escape(f.label)}</h3>")
-            parts.append(f'<p class="muted">{escape(src)} → {escape(tgt)}{scope}</p>')
-            parts.extend(_threat(t, template) for t in f.threats)
-        for e in d.elements.values():
-            if e.kind is not Kind.FLOW and e.threats:
-                parts.append(f"<h3>Element: {escape(e.label)}</h3>")
-                parts.extend(_threat(t, template) for t in e.threats)
-    parts.append("</body></html>")
-    return "\n".join(parts) + "\n"
+        parts += _diagram(d, template)
+    parts.append(
+        f"<footer>Created on {created:%d/%m/%Y %H:%M} by ThreatSketch {__version__} from TMT's "
+        f"{escape(template.name or 'SDL TM Knowledge Base')} template.</footer>"
+        "</main></body></html>"
+    )
+    return "\n".join(p for p in parts if p) + "\n"
 
 
 CSV_COLUMNS = [
