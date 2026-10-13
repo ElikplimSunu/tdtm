@@ -31,7 +31,7 @@ function cliAnalyze(model: string) {
 }
 
 async function openExample(page: Page) {
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: /explore an example/ }).click();
   await expect(page.getByTestId("threat-count")).toHaveText("38 threats");
 }
@@ -45,7 +45,7 @@ async function download(page: Page, click: () => Promise<void>) {
 }
 
 async function newModel(page: Page) {
-  await page.goto("/");
+  await page.goto("./");
   await expect(page.getByTestId("engine-status")).toContainText("tdtm", { timeout: 30_000 });
   await page.getByRole("button", { name: "New threat model" }).click();
   await expect(page.locator(".canvas svg").first()).toBeVisible();
@@ -172,7 +172,7 @@ test("delete and undo", async ({ page }) => {
 });
 
 test("import a TMT .tm7, then export .tm7, report and CSV", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("./");
   await expect(page.getByTestId("engine-status")).toContainText("tdtm", { timeout: 30_000 });
   const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.getByRole("button", { name: /Open a file/ }).click()]);
   await chooser.setFiles(SMALL_TM7);
@@ -221,7 +221,7 @@ test("multiple diagrams: add, rename, switch", async ({ page }) => {
 
 test("private: the Mobile Banking model from real TMT gives TMT's 54 threats", async ({ page }) => {
   test.skip(!existsSync(PRIVATE_TM7), "coursework model not on this machine");
-  await page.goto("/");
+  await page.goto("./");
   await expect(page.getByTestId("engine-status")).toContainText("tdtm", { timeout: 30_000 });
   const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.getByRole("button", { name: /Open a file/ }).click()]);
   await chooser.setFiles(PRIVATE_TM7);
@@ -229,7 +229,7 @@ test("private: the Mobile Banking model from real TMT gives TMT's 54 threats", a
 });
 
 test("works offline after the first visit", async ({ page, context }) => {
-  await page.goto("/");
+  await page.goto("./");
   await expect(page.getByTestId("engine-status")).toContainText("tdtm");
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 30_000 }).catch(() => page.reload());
