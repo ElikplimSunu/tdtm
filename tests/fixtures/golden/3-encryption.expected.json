@@ -1,0 +1,142 @@
+[
+  {
+    "flow": "encrypted",
+    "direction": null,
+    "rule": "8404dcf5-bdd8-4902-abc2-3b6c967b0261"
+  },
+  {
+    "flow": "encrypted",
+    "direction": null,
+    "rule": "D3"
+  },
+  {
+    "flow": "encrypted",
+    "direction": null,
+    "rule": "D4"
+  },
+  {
+    "flow": "encrypted",
+    "direction": null,
+    "rule": "E5"
+  },
+  {
+    "flow": "encrypted",
+    "direction": null,
+    "rule": "E6"
+  },
+  {
+    "flow": "encrypted",
+    "direction": null,
+    "rule": "E7"
+  },
+  {
+    "flow": "encrypted",
+    "direction": null,
+    "rule": "R6"
+  },
+  {
+    "flow": "encrypted",
+    "direction": null,
+    "rule": "S1"
+  },
+  {
+    "flow": "encrypted",
+    "direction": null,
+    "rule": "S2"
+  },
+  {
+    "flow": "https",
+    "direction": null,
+    "rule": "8404dcf5-bdd8-4902-abc2-3b6c967b0261"
+  },
+  {
+    "flow": "https",
+    "direction": null,
+    "rule": "D3"
+  },
+  {
+    "flow": "https",
+    "direction": null,
+    "rule": "D4"
+  },
+  {
+    "flow": "https",
+    "direction": null,
+    "rule": "E5"
+  },
+  {
+    "flow": "https",
+    "direction": null,
+    "rule": "E6"
+  },
+  {
+    "flow": "https",
+    "direction": null,
+    "rule": "E7"
+  },
+  {
+    "flow": "https",
+    "direction": null,
+    "rule": "R6"
+  },
+  {
+    "flow": "https",
+    "direction": null,
+    "rule": "S1"
+  },
+  {
+    "flow": "plain",
+    "direction": null,
+    "rule": "8404dcf5-bdd8-4902-abc2-3b6c967b0261"
+  },
+  {
+    "flow": "plain",
+    "direction": null,
+    "rule": "D3"
+  },
+  {
+    "flow": "plain",
+    "direction": null,
+    "rule": "D4"
+  },
+  {
+    "flow": "plain",
+    "direction": null,
+    "rule": "E5"
+  },
+  {
+    "flow": "plain",
+    "direction": null,
+    "rule": "E6"
+  },
+  {
+    "flow": "plain",
+    "direction": null,
+    "rule": "E7"
+  },
+  {
+    "flow": "plain",
+    "direction": null,
+    "rule": "I6"
+  },
+  {
+    "flow": "plain",
+    "direction": null,
+    "rule": "R6"
+  },
+  {
+    "flow": "plain",
+    "direction": null,
+    "rule": "S1"
+  },
+  {
+    "flow": "plain",
+    "direction": null,
+    "rule": "S2"
+  },
+  {
+    "flow": "plain",
+    "direction": null,
+    "rule": "T1"
+  }
+]

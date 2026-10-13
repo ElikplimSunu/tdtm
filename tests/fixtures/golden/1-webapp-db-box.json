@@ -1,0 +1,242 @@
+{
+  "version": "2.6.2",
+  "summary": {
+    "title": "Golden 1: web app and database across a box",
+    "owner": "tdtm",
+    "description": "A web application outside a boundary box queries a generic database inside it.",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [],
+    "diagramTop": 1,
+    "reviewer": "",
+    "threatTop": 0,
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "Golden 1: web app and database across a box",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram description",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "version": "2.6.2",
+        "cells": [
+          {
+            "position": {
+              "x": 350,
+              "y": 150
+            },
+            "size": {
+              "width": 300,
+              "height": 250
+            },
+            "attrs": {
+              "label": {
+                "text": "Database zone"
+              }
+            },
+            "shape": "trust-boundary-box",
+            "zIndex": -1,
+            "id": "dbzone",
+            "data": {
+              "type": "tm.BoundaryBox",
+              "name": "Database zone",
+              "description": "",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            }
+          },
+          {
+            "position": {
+              "x": 100,
+              "y": 200
+            },
+            "size": {
+              "width": 100,
+              "height": 100
+            },
+            "attrs": {
+              "text": {
+                "text": "Web App"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": ""
+              }
+            },
+            "visible": true,
+            "shape": "process",
+            "zIndex": 1,
+            "id": "webapp",
+            "data": {
+              "type": "tm.Process",
+              "name": "Web App",
+              "description": "",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "privilegeLevel": "",
+              "isWebApplication": true,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 420,
+              "y": 230
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "attrs": {
+              "text": {
+                "text": "Database"
+              },
+              "topLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": ""
+              },
+              "bottomLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": ""
+              }
+            },
+            "visible": true,
+            "shape": "store",
+            "zIndex": 2,
+            "id": "db",
+            "data": {
+              "type": "tm.Store",
+              "name": "Database",
+              "description": "",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "isALog": false,
+              "storesCredentials": false,
+              "isEncrypted": false,
+              "isSigned": false,
+              "storesInventory": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                }
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 3,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Query",
+              "description": "",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "protocol": "",
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "isBidirectional": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "query",
+            "source": {
+              "cell": "webapp"
+            },
+            "target": {
+              "cell": "db"
+            },
+            "labels": [
+              {
+                "position": 0.5,
+                "attrs": {
+                  "label": {
+                    "text": "Query"
+                  }
+                }
+              }
+            ],
+            "vertices": [
+              {
+                "x": 300,
+                "y": 230
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                }
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 4,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Results",
+              "description": "",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "protocol": "",
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "isBidirectional": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "results",
+            "source": {
+              "cell": "db"
+            },
+            "target": {
+              "cell": "webapp"
+            },
+            "labels": [
+              {
+                "position": 0.5,
+                "attrs": {
+                  "label": {
+                    "text": "Results"
+                  }
+                }
+              }
+            ],
+            "vertices": [
+              {
+                "x": 300,
+                "y": 320
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

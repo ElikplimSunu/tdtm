@@ -1,0 +1,298 @@
+{
+  "version": "2.6.2",
+  "summary": {
+    "title": "Golden 3: plain, encrypted and HTTPS flows",
+    "owner": "tdtm",
+    "description": "Three flows between the same two processes across a line boundary.",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [],
+    "diagramTop": 1,
+    "reviewer": "",
+    "threatTop": 0,
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "Golden 3: plain, encrypted and HTTPS flows",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram description",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "version": "2.6.2",
+        "cells": [
+          {
+            "shape": "trust-boundary-curve",
+            "attrs": {
+              "line": {
+                "targetMarker": "",
+                "sourceMarker": ""
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 12,
+            "connector": "smooth",
+            "labels": [
+              {
+                "attrs": {
+                  "text": {
+                    "text": "Boundary"
+                  }
+                }
+              }
+            ],
+            "data": {
+              "type": "tm.Boundary",
+              "name": "Boundary",
+              "description": "",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            },
+            "id": "wall",
+            "source": {
+              "x": 350,
+              "y": 50
+            },
+            "target": {
+              "x": 350,
+              "y": 450
+            }
+          },
+          {
+            "position": {
+              "x": 100,
+              "y": 200
+            },
+            "size": {
+              "width": 100,
+              "height": 100
+            },
+            "attrs": {
+              "text": {
+                "text": "Client Service"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": ""
+              }
+            },
+            "visible": true,
+            "shape": "process",
+            "zIndex": 13,
+            "id": "client",
+            "data": {
+              "type": "tm.Process",
+              "name": "Client Service",
+              "description": "",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "privilegeLevel": "",
+              "isWebApplication": false,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 500,
+              "y": 200
+            },
+            "size": {
+              "width": 100,
+              "height": 100
+            },
+            "attrs": {
+              "text": {
+                "text": "Server Service"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": ""
+              }
+            },
+            "visible": true,
+            "shape": "process",
+            "zIndex": 14,
+            "id": "server",
+            "data": {
+              "type": "tm.Process",
+              "name": "Server Service",
+              "description": "",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "privilegeLevel": "",
+              "isWebApplication": false,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                }
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 15,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Plain",
+              "description": "",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "protocol": "",
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "isBidirectional": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "plain",
+            "source": {
+              "cell": "client"
+            },
+            "target": {
+              "cell": "server"
+            },
+            "labels": [
+              {
+                "position": 0.5,
+                "attrs": {
+                  "label": {
+                    "text": "Plain"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                }
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 16,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Encrypted",
+              "description": "",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "protocol": "",
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "isBidirectional": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "encrypted",
+            "source": {
+              "cell": "client"
+            },
+            "target": {
+              "cell": "server"
+            },
+            "labels": [
+              {
+                "position": 0.5,
+                "attrs": {
+                  "label": {
+                    "text": "Encrypted"
+                  }
+                }
+              }
+            ],
+            "vertices": [
+              {
+                "x": 340,
+                "y": 140
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                }
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 17,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Over HTTPS",
+              "description": "",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "protocol": "HTTPS",
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "isBidirectional": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "https",
+            "source": {
+              "cell": "client"
+            },
+            "target": {
+              "cell": "server"
+            },
+            "labels": [
+              {
+                "position": 0.5,
+                "attrs": {
+                  "label": {
+                    "text": "Over HTTPS"
+                  }
+                }
+              }
+            ],
+            "vertices": [
+              {
+                "x": 340,
+                "y": 360
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -48,7 +48,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
   tests for `is`, descendant `is`, `crosses`, attributes, `ROOT`, precedence of and/or.
 - [x] **2.2 `rules/engine`: run a template over a model.** Per flow (both directions if
   bidirectional), title/description placeholder substitution, skip legacy ROOT rules by default.
-- [ ] **2.3 Golden models.** In `tests/fixtures/golden/`, hand-build 4 small TD models
+- [x] **2.3 Golden models.** In `tests/fixtures/golden/`, hand-build 4 small TD models
   (web app + DB across a box; actor → process across a curve; unencrypted vs encrypted flow;
   `@tmt` tags changing the outcome). Expected firings are worked out by reading the filters by
   hand and written into `*.expected.json`. Engine output must match exactly.

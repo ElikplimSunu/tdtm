@@ -1,0 +1,372 @@
+{
+  "version": "2.6.2",
+  "summary": {
+    "title": "Golden 4: @tmt tags change the outcome",
+    "owner": "tdtm",
+    "description": "Tags pick stencils and attributes that Threat Dragon cannot express.",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [],
+    "diagramTop": 1,
+    "reviewer": "",
+    "threatTop": 0,
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "Golden 4: @tmt tags change the outcome",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram description",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "version": "2.6.2",
+        "cells": [
+          {
+            "shape": "trust-boundary-curve",
+            "attrs": {
+              "line": {
+                "targetMarker": "",
+                "sourceMarker": ""
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 18,
+            "connector": "smooth",
+            "labels": [
+              {
+                "attrs": {
+                  "text": {
+                    "text": "Machine boundary"
+                  }
+                }
+              }
+            ],
+            "data": {
+              "type": "tm.Boundary",
+              "name": "Machine boundary",
+              "description": "@tmt: Machine Trust Boundary",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            },
+            "id": "machine",
+            "source": {
+              "x": 350,
+              "y": 100
+            },
+            "target": {
+              "x": 350,
+              "y": 320
+            }
+          },
+          {
+            "position": {
+              "x": 100,
+              "y": 200
+            },
+            "size": {
+              "width": 100,
+              "height": 100
+            },
+            "attrs": {
+              "text": {
+                "text": "Auth Service"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": ""
+              }
+            },
+            "visible": true,
+            "shape": "process",
+            "zIndex": 19,
+            "id": "auth",
+            "data": {
+              "type": "tm.Process",
+              "name": "Auth Service",
+              "description": "@tmt: implementsAuthenticationScheme=Yes; implementsCommunicationProtocol=Yes",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "privilegeLevel": "",
+              "isWebApplication": false,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 500,
+              "y": 200
+            },
+            "size": {
+              "width": 100,
+              "height": 100
+            },
+            "attrs": {
+              "text": {
+                "text": "Native Worker"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": ""
+              }
+            },
+            "visible": true,
+            "shape": "process",
+            "zIndex": 20,
+            "id": "worker",
+            "data": {
+              "type": "tm.Process",
+              "name": "Native Worker",
+              "description": "@tmt: codeType=Unmanaged",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "privilegeLevel": "",
+              "isWebApplication": false,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 60,
+              "y": 420
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "attrs": {
+              "text": {
+                "text": "Users DB"
+              },
+              "topLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": ""
+              },
+              "bottomLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": ""
+              }
+            },
+            "visible": true,
+            "shape": "store",
+            "zIndex": 21,
+            "id": "users",
+            "data": {
+              "type": "tm.Store",
+              "name": "Users DB",
+              "description": "@tmt: SQL Database; storesCredentials=Yes",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "isALog": false,
+              "storesCredentials": false,
+              "isEncrypted": false,
+              "isSigned": false,
+              "storesInventory": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 260,
+              "y": 420
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "attrs": {
+              "text": {
+                "text": "Audit Log"
+              },
+              "topLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": ""
+              },
+              "bottomLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": ""
+              }
+            },
+            "visible": true,
+            "shape": "store",
+            "zIndex": 22,
+            "id": "audit",
+            "data": {
+              "type": "tm.Store",
+              "name": "Audit Log",
+              "description": "",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "isALog": true,
+              "storesCredentials": false,
+              "isEncrypted": false,
+              "isSigned": false,
+              "storesInventory": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                }
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 23,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Job",
+              "description": "@tmt: HTTP; JSON=Yes",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "protocol": "",
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "isBidirectional": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "job",
+            "source": {
+              "cell": "auth"
+            },
+            "target": {
+              "cell": "worker"
+            },
+            "labels": [
+              {
+                "position": 0.5,
+                "attrs": {
+                  "label": {
+                    "text": "Job"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                }
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 24,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Lookup",
+              "description": "",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "protocol": "",
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "isBidirectional": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "lookup",
+            "source": {
+              "cell": "auth"
+            },
+            "target": {
+              "cell": "users"
+            },
+            "labels": [
+              {
+                "position": 0.5,
+                "attrs": {
+                  "label": {
+                    "text": "Lookup"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                }
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 25,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Audit write",
+              "description": "",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "protocol": "",
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "isBidirectional": false,
+              "hasOpenThreats": false,
+              "threats": []
+            },
+            "id": "auditwrite",
+            "source": {
+              "cell": "auth"
+            },
+            "target": {
+              "cell": "audit"
+            },
+            "labels": [
+              {
+                "position": 0.5,
+                "attrs": {
+                  "label": {
+                    "text": "Audit write"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

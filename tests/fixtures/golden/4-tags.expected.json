@@ -1,0 +1,132 @@
+[
+  {
+    "flow": "auditwrite",
+    "direction": null,
+    "rule": "D2"
+  },
+  {
+    "flow": "auditwrite",
+    "direction": null,
+    "rule": "R1"
+  },
+  {
+    "flow": "auditwrite",
+    "direction": null,
+    "rule": "R2"
+  },
+  {
+    "flow": "auditwrite",
+    "direction": null,
+    "rule": "R3"
+  },
+  {
+    "flow": "auditwrite",
+    "direction": null,
+    "rule": "R4"
+  },
+  {
+    "flow": "auditwrite",
+    "direction": null,
+    "rule": "S7.1"
+  },
+  {
+    "flow": "auditwrite",
+    "direction": null,
+    "rule": "T5"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "D3"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "D4"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "E5"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "E6"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "E7"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "I25"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "I26"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "I6"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "R6"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "S2"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "T1"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "T12"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "T2"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "T3"
+  },
+  {
+    "flow": "job",
+    "direction": null,
+    "rule": "T4"
+  },
+  {
+    "flow": "lookup",
+    "direction": null,
+    "rule": "D2"
+  },
+  {
+    "flow": "lookup",
+    "direction": null,
+    "rule": "I24"
+  },
+  {
+    "flow": "lookup",
+    "direction": null,
+    "rule": "S7.1"
+  },
+  {
+    "flow": "lookup",
+    "direction": null,
+    "rule": "T7"
+  }
+]

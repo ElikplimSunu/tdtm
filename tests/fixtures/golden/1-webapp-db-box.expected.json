@@ -1,0 +1,97 @@
+[
+  {
+    "flow": "query",
+    "direction": null,
+    "rule": "D2"
+  },
+  {
+    "flow": "query",
+    "direction": null,
+    "rule": "D4"
+  },
+  {
+    "flow": "query",
+    "direction": null,
+    "rule": "D5"
+  },
+  {
+    "flow": "query",
+    "direction": null,
+    "rule": "I6"
+  },
+  {
+    "flow": "query",
+    "direction": null,
+    "rule": "R8"
+  },
+  {
+    "flow": "query",
+    "direction": null,
+    "rule": "S1"
+  },
+  {
+    "flow": "query",
+    "direction": null,
+    "rule": "S7.1"
+  },
+  {
+    "flow": "query",
+    "direction": null,
+    "rule": "T18"
+  },
+  {
+    "flow": "results",
+    "direction": null,
+    "rule": "D3"
+  },
+  {
+    "flow": "results",
+    "direction": null,
+    "rule": "D4"
+  },
+  {
+    "flow": "results",
+    "direction": null,
+    "rule": "D5"
+  },
+  {
+    "flow": "results",
+    "direction": null,
+    "rule": "E6"
+  },
+  {
+    "flow": "results",
+    "direction": null,
+    "rule": "E7"
+  },
+  {
+    "flow": "results",
+    "direction": null,
+    "rule": "I23"
+  },
+  {
+    "flow": "results",
+    "direction": null,
+    "rule": "R6"
+  },
+  {
+    "flow": "results",
+    "direction": null,
+    "rule": "S2"
+  },
+  {
+    "flow": "results",
+    "direction": null,
+    "rule": "S7"
+  },
+  {
+    "flow": "results",
+    "direction": null,
+    "rule": "T13.1"
+  },
+  {
+    "flow": "results",
+    "direction": null,
+    "rule": "T13.2"
+  }
+]

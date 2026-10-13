@@ -1,0 +1,122 @@
+[
+  {
+    "flow": "partnercall",
+    "direction": null,
+    "rule": "8404dcf5-bdd8-4902-abc2-3b6c967b0261"
+  },
+  {
+    "flow": "partnercall",
+    "direction": null,
+    "rule": "D3"
+  },
+  {
+    "flow": "partnercall",
+    "direction": null,
+    "rule": "D4"
+  },
+  {
+    "flow": "partnercall",
+    "direction": null,
+    "rule": "E5"
+  },
+  {
+    "flow": "partnercall",
+    "direction": null,
+    "rule": "E6"
+  },
+  {
+    "flow": "partnercall",
+    "direction": null,
+    "rule": "E7"
+  },
+  {
+    "flow": "partnercall",
+    "direction": null,
+    "rule": "I6"
+  },
+  {
+    "flow": "partnercall",
+    "direction": null,
+    "rule": "R6"
+  },
+  {
+    "flow": "partnercall",
+    "direction": null,
+    "rule": "S2"
+  },
+  {
+    "flow": "partnercall",
+    "direction": null,
+    "rule": "T1"
+  },
+  {
+    "flow": "request",
+    "direction": null,
+    "rule": "8404dcf5-bdd8-4902-abc2-3b6c967b0261"
+  },
+  {
+    "flow": "request",
+    "direction": null,
+    "rule": "D3"
+  },
+  {
+    "flow": "request",
+    "direction": null,
+    "rule": "D4"
+  },
+  {
+    "flow": "request",
+    "direction": null,
+    "rule": "E5"
+  },
+  {
+    "flow": "request",
+    "direction": null,
+    "rule": "E6"
+  },
+  {
+    "flow": "request",
+    "direction": null,
+    "rule": "E7"
+  },
+  {
+    "flow": "request",
+    "direction": null,
+    "rule": "I6"
+  },
+  {
+    "flow": "request",
+    "direction": null,
+    "rule": "R6"
+  },
+  {
+    "flow": "request",
+    "direction": null,
+    "rule": "S2"
+  },
+  {
+    "flow": "request",
+    "direction": null,
+    "rule": "S3"
+  },
+  {
+    "flow": "request",
+    "direction": null,
+    "rule": "T1"
+  },
+  {
+    "flow": "response",
+    "direction": null,
+    "rule": "D4"
+  },
+  {
+    "flow": "response",
+    "direction": null,
+    "rule": "R7"
+  },
+  {
+    "flow": "response",
+    "direction": null,
+    "rule": "S8"
+  }
+]
