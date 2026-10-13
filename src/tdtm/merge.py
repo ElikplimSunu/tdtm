@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from . import __version__
 from .model import GeneratedThreat
 
-NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "https://github.com/ElikplimSunu/tdtm")
+NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "https://github.com/ElikplimSunu/tdtm")  # frozen: IDs
 STRIDE_TYPES = {
     "S": "Spoofing",
     "T": "Tampering",

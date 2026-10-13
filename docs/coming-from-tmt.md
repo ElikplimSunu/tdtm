@@ -66,7 +66,7 @@ If you prefer to draw in [OWASP Threat Dragon](https://owasp.org/www-project-thr
 
 ```bash
 brew install --cask threat-dragon
-uv tool install git+https://github.com/ElikplimSunu/tdtm
+uv tool install git+https://github.com/ElikplimSunu/threatsketch
 ```
 
 Then, for every model:

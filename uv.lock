@@ -443,7 +443,7 @@ wheels = [
 ]
 
 [[package]]
-name = "tdtm"
+name = "threatsketch"
 source = { editable = "." }
 
 [package.optional-dependencies]
