@@ -21,19 +21,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from . import journal
+from .api import PRIORITIES, STATES, threat_rows
 from .diagram import render_svg
 from .merge import merge
-from .model import Kind
-from .report import generated_by, tmt_category, tmt_state
 from .td_adapter import load, save
 
-STATES = {  # TMT state -> (Threat Dragon status, tmtState kept under the tdtm key)
-    "Not Started": ("Open", ""),
-    "Needs Investigation": ("Open", "Needs Investigation"),
-    "Not Applicable": ("NotApplicable", ""),
-    "Mitigated": ("Mitigated", ""),
-}
-PRIORITIES = ("High", "Medium", "Low", "Critical", "TBD")
 MAX_BODY = 100_000
 
 
@@ -41,30 +33,7 @@ def snapshot(path: str | Path, template) -> dict:
     path = Path(path)
     st = path.stat()
     model, _ = load(path)
-    threats = []
-    for d in model.diagrams:
-        for e in d.elements.values():
-            src = d.elements[e.source_id].label if e.kind is Kind.FLOW else ""
-            tgt = d.elements[e.target_id].label if e.kind is Kind.FLOW else ""
-            for i, t in enumerate(e.threats):
-                threats.append(
-                    {
-                        "key": t.tdtm_key or t.id or f"{e.cell_id}:{i}",
-                        "id": t.raw.get("number"),
-                        "diagram": d.title,
-                        "interaction": e.label,
-                        "source": src,
-                        "target": tgt,
-                        "state": tmt_state(t),
-                        "title": t.title,
-                        "category": tmt_category(t, template),
-                        "description": t.description,
-                        "justification": t.mitigation,
-                        "priority": t.severity,
-                        "generatedBy": generated_by(t),
-                        "editable": bool(t.tdtm_key),
-                    }
-                )
+    threats = threat_rows(model, template)
     return {
         "title": model.title,
         "stamp": f"{st.st_mtime_ns}-{st.st_size}",

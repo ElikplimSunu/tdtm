@@ -292,7 +292,11 @@ def _threat(v: ET.Element, position: int) -> tuple[str, dict]:
 
 
 def import_tm7(path: str | Path) -> tuple[dict, list[str]]:
-    data = Path(path).read_bytes()
+    return parse_tm7(Path(path).read_bytes(), Path(path).stem, str(path))
+
+
+def parse_tm7(data: bytes, title: str = "", path: str = "model") -> tuple[dict, list[str]]:
+    """Like `import_tm7`, for bytes in memory. `title` names a model whose file holds none."""
     if b"<!DOCTYPE" in data[:4096] or b"<!ENTITY" in data:
         raise Tm7Error(f"{path}: refusing a .tm7 with a DOCTYPE or entities (not written by TMT)")
     try:
@@ -340,7 +344,7 @@ def import_tm7(path: str | Path) -> tuple[dict, list[str]]:
     raw = {
         "version": "2.6.2",
         "summary": {
-            "title": _text(meta, "ThreatModelName") or Path(path).stem,
+            "title": _text(meta, "ThreatModelName") or title,
             "owner": _text(meta, "Owner"),
             "description": _text(meta, "HighLevelSystemDescription"),
             "id": 0,

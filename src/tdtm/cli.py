@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from . import __version__
+from .api import new_model
 from .model import Kind, Model
 from .td_adapter import load, save
 
@@ -312,29 +313,6 @@ def cmd_import(args: argparse.Namespace) -> int:
     return 0
 
 
-def _blank_model(title: str) -> dict:
-    diagram = {
-        "id": 0,
-        "title": "Main diagram",
-        "diagramType": "STRIDE",
-        "placeholder": "New STRIDE diagram description",
-        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
-        "version": "2.6.2",
-        "cells": [],
-    }
-    return {
-        "version": "2.6.2",
-        "summary": {"title": title, "owner": "", "description": "", "id": 0},
-        "detail": {
-            "contributors": [],
-            "diagramTop": 1,
-            "reviewer": "",
-            "threatTop": 0,
-            "diagrams": [diagram],
-        },
-    }
-
-
 def _write_reports(model_path: Path, args: argparse.Namespace) -> None:
     from .report import render, render_csv
 
@@ -385,7 +363,7 @@ def cmd_open(args: argparse.Namespace) -> int:
             cmd_import(argparse.Namespace(model=str(model), out=str(target), force=False))
         model = target
     elif not model.exists():
-        model.write_text(json.dumps(_blank_model(model.stem), indent=2), encoding="utf-8")
+        model.write_text(json.dumps(new_model(model.stem), indent=2), encoding="utf-8")
         print(f"created {model}: an empty STRIDE model to draw in")
 
     analyze = argparse.Namespace(
