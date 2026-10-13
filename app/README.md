@@ -1,7 +1,7 @@
 # ThreatSketch
 
 A TMT-style threat-modelling app: draw a data-flow diagram, get Microsoft TMT's STRIDE threats as
-you draw. Svelte 5 + TypeScript + Vite, AntV X6 for the canvas, and tdtm's Python engine running
+you draw. Svelte 5 + TypeScript + Vite, AntV X6 for the canvas, and ThreatSketch's Python engine running
 unchanged in the browser through Pyodide. The same build runs as a website (installable, works
 offline) and inside a Tauri 2 desktop app.
 
@@ -18,11 +18,11 @@ npm run tauri build -- --bundles app,dmg   # macOS desktop app and installer
 node scripts/screenshots.mjs ../docs/img   # screenshots of a running dev server
 ```
 
-`npm run dev` and `npm run build` run `scripts/prepare-engine.mjs` first. It builds tdtm's wheel
-from this repository with `uv` into `public/engine/tdtm.whl`, and copies the Pyodide runtime into
+`npm run dev` and `npm run build` run `scripts/prepare-engine.mjs` first. It builds ThreatSketch's wheel
+from this repository with `uv` into `public/engine/threatsketch.whl`, and copies the Pyodide runtime into
 `public/pyodide/`. Both folders are generated and ignored by git.
 
-`BASE=/tdtm/ npm run build` builds for a sub-path (GitHub Pages serves the repo at `/tdtm/`).
+`BASE=/threatsketch/ npm run build` builds for a sub-path (GitHub Pages serves the repo at `/threatsketch/`).
 
 ## How it fits together
 
@@ -30,7 +30,7 @@ from this repository with `uv` into `public/engine/tdtm.whl`, and copies the Pyo
 src/
   App.svelte              layout, files, menus; owns the editor
   components/             Palette (TMT stencils), Properties, ThreatList, Icon
-  engine/worker.ts        Pyodide + tdtm in a Web Worker; calls tdtm.api functions by name
+  engine/worker.ts        Pyodide + ThreatSketch in a Web Worker; calls threatsketch.api functions by name
   engine/client.ts        promise wrapper around the worker
   lib/editor.ts           the X6 canvas, and keeping it in step with the model
   lib/sync.ts             canvas <-> Threat Dragon JSON, without losing anything
@@ -40,13 +40,13 @@ src-tauri/                the desktop app (file associations, native dialogs)
 ```
 
 - **The model is the source of truth.** It is a Threat Dragon v2 JSON document, the same file
-  tdtm and Threat Dragon read. The canvas holds a copy of each cell without its threats and
+  the threatsketch command and Threat Dragon read. The canvas holds a copy of each cell without its threats and
   without Threat Dragon's red outline styles. When the canvas changes, only the values that
   changed are written back (`sync.ts`), so unknown keys and everything the canvas never showed
-  survive. A model opened and saved without edits is identical to what `tdtm analyze` writes;
+  survive. A model opened and saved without edits is identical to what `threatsketch analyze` writes;
   an end-to-end test checks this.
 - **The engine does all threat work.** After every change (debounced), the editor sends the model
-  to the worker, which runs `tdtm.api.analyze`: tdtm's own resolve, rule engine and merge. The
+  to the worker, which runs `threatsketch.api.analyze`: ThreatSketch's own resolve, rule engine and merge. The
   answer comes back with the threat rows and each element's resolved TMT stencil and attributes.
   Edits made while the engine was busy are kept and trigger another run.
 - **TMT stencils and attributes** are stored as a hidden `@tmt:` line in the element's description

@@ -1,8 +1,8 @@
 import pytest
 
-from tdtm.model import Kind
-from tdtm.rules.tb7 import load_template
-from tdtm.tags import parse_tags
+from threatsketch.model import Kind
+from threatsketch.rules.tb7 import load_template
+from threatsketch.tags import parse_tags
 
 
 @pytest.fixture(scope="module")

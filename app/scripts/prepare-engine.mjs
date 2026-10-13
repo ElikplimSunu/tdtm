@@ -1,4 +1,4 @@
-// Puts the threat engine where the app serves it from: tdtm's wheel, built from this repo, in
+// Puts the threat engine where the app serves it from: the threatsketch wheel, built from this repo, in
 // public/engine/, and the Pyodide runtime in public/pyodide/. Both folders are generated.
 import { execFileSync } from "node:child_process";
 import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
@@ -7,11 +7,11 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const app = join(dirname(fileURLToPath(import.meta.url)), "..");
-const out = mkdtempSync(join(tmpdir(), "tdtm-wheel-"));
+const out = mkdtempSync(join(tmpdir(), "threatsketch-wheel-"));
 execFileSync("uv", ["build", "--wheel", "--out-dir", out, ".."], { cwd: app, stdio: "inherit" });
 const wheel = readdirSync(out).find((f) => f.endsWith(".whl"));
 mkdirSync(join(app, "public/engine"), { recursive: true });
-copyFileSync(join(out, wheel), join(app, "public/engine/tdtm.whl"));
+copyFileSync(join(out, wheel), join(app, "public/engine/threatsketch.whl"));
 rmSync(out, { recursive: true });
 
 const pyodide = join(app, "node_modules/pyodide");

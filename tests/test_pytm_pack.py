@@ -4,11 +4,11 @@ import sys
 
 import pytest
 
-from tdtm.cli import main
-from tdtm.resolve import resolve
-from tdtm.rules.pytm_pack import PytmMissing, run_pytm
-from tdtm.rules.tb7 import load_template
-from tdtm.td_adapter import load
+from threatsketch.cli import main
+from threatsketch.resolve import resolve
+from threatsketch.rules.pytm_pack import PytmMissing, run_pytm
+from threatsketch.rules.tb7 import load_template
+from threatsketch.td_adapter import load
 
 
 def resolved(path):

@@ -7,7 +7,7 @@
 
 const ENGINE_DATA = ["threats", "hasOpenThreats"] as const;
 const TAG_LINE = /^[ \t]*@tmt:.*$/gim;
-// Outline styles Threat Dragon writes (and tdtm keeps for it); the canvas draws TMT's style instead.
+// Outline styles Threat Dragon writes (and threatsketch keeps for it); the canvas draws TMT's style instead.
 const STYLE_PARTS = ["body", "line", "topLine", "bottomLine"];
 const STYLE_PROPS = ["stroke", "strokeWidth", "strokeDasharray"];
 

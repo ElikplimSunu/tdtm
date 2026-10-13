@@ -3,7 +3,7 @@
 Threat Dragon keeps its own copy of the model in memory, so saving there can overwrite edits made
 in the analysis view. Each analyze run re-applies the journal (SPEC 13):
 
-- a threat back in the state tdtm generated it (fingerprint intact) gets the journal's values;
+- a threat back in the state it was generated in (fingerprint intact) gets the journal's values;
 - a threat that differs from both was changed in Threat Dragon: that change wins and is written
   into the journal.
 

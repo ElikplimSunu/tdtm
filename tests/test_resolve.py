@@ -1,8 +1,8 @@
 import pytest
 
-from tdtm.model import Diagram, Element, Kind, Model, Rect
-from tdtm.resolve import resolve
-from tdtm.rules.tb7 import load_template
+from threatsketch.model import Diagram, Element, Kind, Model, Rect
+from threatsketch.resolve import resolve
+from threatsketch.rules.tb7 import load_template
 
 
 @pytest.fixture(scope="module")
@@ -90,7 +90,7 @@ def test_tag_errors_name_the_element(t):
 
 
 def test_boundaries_get_stencils_and_demo_model_resolves(t, fixtures):
-    from tdtm.td_adapter import load
+    from threatsketch.td_adapter import load
 
     model, _ = load(fixtures / "td" / "v2-threat-model.json")
     assert resolve(model, t) == []

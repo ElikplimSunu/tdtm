@@ -44,8 +44,8 @@ TMT_STATE = {"Open": "Not Started", "NotApplicable": "Not Applicable"}  # others
 
 
 def tmt_state(t: Threat) -> str:
-    """The state TMT would show. `Needs Investigation` has no Threat Dragon status, so tdtm keeps
-    it in the threat's `tdtm` key (SPEC 13); everything else maps from the status."""
+    """The state TMT would show. `Needs Investigation` has no Threat Dragon status, so it is kept
+    in the threat's `tdtm` key (SPEC 13); everything else maps from the status."""
     meta = t.raw.get("tdtm")
     if isinstance(meta, dict) and meta.get("tmtState"):
         return meta["tmtState"]
@@ -58,7 +58,7 @@ def tmt_category(t: Threat, template) -> str:
 
 
 def generated_by(t: Threat) -> str:
-    """'SDL rule S3' for threats tdtm generated, else ''."""
+    """'SDL rule S3' for threats threatsketch generated, else ''."""
     if not t.tdtm_key:
         return ""
     pack, rule = t.tdtm_key.split(":")[:2]
@@ -110,7 +110,7 @@ def render(model: Model, template=None) -> str:
         f"<title>{escape(model.title)}: Threat Modeling Report</title>",
         f"<style>{CSS}</style></head><body>",
         "<h1>Threat Modeling Report</h1>",
-        f'<p class="muted">Created on {datetime.now():%d/%m/%Y %H:%M} by tdtm</p>',
+        f'<p class="muted">Created on {datetime.now():%d/%m/%Y %H:%M} by threatsketch</p>',
         *(f"<p><b>{k}:</b> {escape(v)}</p>" for k, v in details),
         "<h2>Threat Model Summary:</h2>",
         _summary(threats),

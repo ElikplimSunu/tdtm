@@ -1,7 +1,7 @@
 import pytest
 
-from tdtm import __version__
-from tdtm.cli import main
+from threatsketch import __version__
+from threatsketch.cli import main
 
 
 def test_version(capsys):
@@ -148,7 +148,7 @@ def test_coverage(capsys):
 
 
 def test_watch_reruns_on_change_but_not_on_its_own_write(tmp_path):
-    from tdtm.cli import watch
+    from threatsketch.cli import watch
 
     path = tmp_path / "m.json"
     path.write_text("{}")
@@ -169,7 +169,7 @@ def test_watch_reruns_on_change_but_not_on_its_own_write(tmp_path):
 
 
 def test_watch_flag_runs_analyze_until_interrupted(model_copy, monkeypatch, capsys):
-    import tdtm.cli as cli
+    import threatsketch.cli as cli
 
     def stop(*_a, **_k):
         raise KeyboardInterrupt

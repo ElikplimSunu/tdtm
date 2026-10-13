@@ -1,6 +1,6 @@
 import pytest
 
-from tdtm.rules.tb7 import load_template
+from threatsketch.rules.tb7 import load_template
 
 
 @pytest.fixture(scope="module")

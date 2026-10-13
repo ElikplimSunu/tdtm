@@ -5,7 +5,7 @@
 TMT reads `.tm7` with .NET's DataContractSerializer, which is strict about element names, order
 and namespaces, so this writes the exact shape of a real TMT 7.3 file. The embedded KnowledgeBase
 is transcribed from the `.tb7` template. TMT-only details Threat Dragon cannot hold (flow anchor
-points and ports, diagram ids, threat timestamps) come from what `tdtm import` kept under `tdtm`
+points and ports, diagram ids, threat timestamps) come from what `import` kept under `tdtm`
 keys, or are derived from the geometry. An imported model exports back to the same file
 (`tests/test_tm7.py`); a model drawn in Threat Dragon needs TMT itself to confirm.
 """

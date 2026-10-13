@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from tdtm.diagram import render_svg
-from tdtm.td_adapter import load
+from threatsketch.diagram import render_svg
+from threatsketch.td_adapter import load
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -46,6 +46,6 @@ def test_svg_escapes_names_and_marks_open_threats(tmp_path):
 
 
 def test_svg_of_an_empty_diagram_is_valid():
-    from tdtm.model import Diagram
+    from threatsketch.model import Diagram
 
     assert render_svg(Diagram(0, "empty")).startswith("<svg")

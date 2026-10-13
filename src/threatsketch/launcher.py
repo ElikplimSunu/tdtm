@@ -1,4 +1,4 @@
-"""Open a model in the Threat Dragon desktop app (macOS). Used by `tdtm open`.
+"""Open a model in the Threat Dragon desktop app (macOS). Used by `threatsketch open`.
 
 Threat Dragon 2.6.2 crashes with a main-process error dialog when macOS hands it a file before its
 window has loaded (`menu.js openModelRequest` uses a window set only on `did-finish-load`), which
@@ -60,7 +60,7 @@ def open_in_threat_dragon(path: Path) -> bool:
     target = str(Path(path).absolute())
     manual = f"open {target} in Threat Dragon yourself (File > Open Model)"
     if sys.platform != "darwin":
-        print(f"tdtm only drives Threat Dragon on macOS: {manual}")
+        print(f"threatsketch only drives Threat Dragon on macOS: {manual}")
         return False
     if not installed():
         print(f"Threat Dragon is not installed: brew install --cask threat-dragon, then {manual}")

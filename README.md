@@ -1,4 +1,4 @@
-# ThreatSketch and tdtm
+# ThreatSketch
 
 [![CI](https://github.com/ElikplimSunu/threatsketch/actions/workflows/ci.yml/badge.svg)](https://github.com/ElikplimSunu/threatsketch/actions/workflows/ci.yml)
 
@@ -7,18 +7,19 @@ runs on Windows. This repository brings the same threat generation to macOS and 
 the same rules (TMT's **SDL TM Knowledge Base** template) and the same threat titles, categories
 and priorities.
 
-- **ThreatSketch** (`app/`) is a threat-modelling app in the style of TMT: draw a diagram, see the
+- **The app** (`app/`): a threat-modelling app in the style of TMT. Draw a diagram, see the
   threats appear as you draw, triage them, export a report, a CSV or a TMT `.tm7`. It runs in the
   browser and as a desktop app, and works offline.
-- **tdtm** (`src/tdtm/`) is the engine behind it, and a command-line tool that adds TMT's threats
-  to [OWASP Threat Dragon](https://owasp.org/www-project-threat-dragon/) models.
+- **The `threatsketch` command** (`src/threatsketch/`): the engine behind the app, also usable on
+  its own to add TMT's threats to [OWASP Threat Dragon](https://owasp.org/www-project-threat-dragon/)
+  models.
 
-> **Status: early development.** On a real model built in TMT 7.3, tdtm produces exactly the same
+> **Status: early development.** On a real model built in TMT 7.3, ThreatSketch produces exactly the same
 > 54 threats as TMT, and its CSV export matches TMT's row for row. Diagrams with curves, tags or
 > encryption are checked against hand-worked examples only so far. Progress is tracked in
 > [docs/PLAN.md](docs/PLAN.md).
 
-## ThreatSketch
+## The app
 
 ![ThreatSketch with the example model: stencils on the left, the diagram drawn in TMT's style, the threat list below and the selected threat's state, priority and justification on the right](docs/img/threatsketch-threat.jpg)
 
@@ -64,18 +65,18 @@ http://localhost:5173. `app/README.md` has the rest.
 Already know TMT? [Coming from Microsoft TMT](docs/coming-from-tmt.md) maps every TMT step and
 term to ThreatSketch.
 
-## tdtm, the command-line tool
+## The `threatsketch` command
 
-`tdtm open examples/online-shop.json` adds 38 threats to the example model and opens it in
+`threatsketch open examples/online-shop.json` adds 38 threats to the example model and opens it in
 Threat Dragon. Flows that carry open threats are outlined in red:
 
-![The example model in Threat Dragon after tdtm: every data flow carries generated threats and is outlined in red](docs/img/threat-dragon-diagram.jpg)
+![The example model in Threat Dragon after `threatsketch open`: every data flow carries generated threats and is outlined in red](docs/img/threat-dragon-diagram.jpg)
 
 Select a flow to see its threats, with the same titles and categories TMT would give them:
 
 ![Threat Dragon showing the generated threats on the Place order flow: Spoofing the Customer External Entity, Cross Site Scripting, Potential Data Repudiation](docs/img/threat-dragon-threats.jpg)
 
-`tdtm open` also serves an analysis view in your browser, like TMT's Analysis View, and keeps a
+`threatsketch open` also serves an analysis view in your browser, like TMT's Analysis View, and keeps a
 TMT-style report next to the model.
 
 ### Why a separate tool
@@ -87,7 +88,7 @@ on Windows.
 Threat Dragon runs everywhere and draws the same kind of diagram. It suggests threats one element
 at a time and does not look at trust-boundary crossings.
 
-tdtm bridges the two without modifying either. You draw in Threat Dragon. tdtm applies TMT's
+threatsketch bridges the two without modifying either. You draw in Threat Dragon. ThreatSketch applies TMT's
 **SDL TM Knowledge Base** template and writes the threats back into your model file.
 
 ### How it works
@@ -95,7 +96,7 @@ tdtm bridges the two without modifying either. You draw in Threat Dragon. tdtm a
 ```
 Threat Dragon: draw the diagram, save model.json
       |
-tdtm analyze model.json
+threatsketch analyze model.json
   1. read the Threat Dragon v2 JSON
   2. find the trust boundary each element sits in, and the boundaries each flow crosses
   3. read optional @tmt tags from element descriptions (TMT stencils and attributes)
@@ -105,13 +106,13 @@ tdtm analyze model.json
 Threat Dragon: reopen model.json and triage the threats
 ```
 
-tdtm follows these rules:
+threatsketch follows these rules:
 
 - **Your file loses nothing.** Unknown keys, positions and styling survive a read and write.
 - **Re-running is safe.** Generated threats have stable IDs. A threat you edited is never
   overwritten. A threat whose rule stops firing is marked `[stale]`, not deleted. A `.bak` copy is
   written before the model is overwritten.
-- **No `eval`.** Template filters go through tdtm's own parser. Nothing from a template or model
+- **No `eval`.** Template filters go through ThreatSketch's own parser. Nothing from a template or model
   is ever executed.
 - **No runtime dependencies.** The core uses only the Python standard library.
 
@@ -127,7 +128,7 @@ uv tool install threatsketch                   # or: pipx install threatsketch
 Then one command per model:
 
 ```bash
-tdtm open model.json      # or model.tm7 to start from a TMT model
+threatsketch open model.json      # or model.tm7 to start from a TMT model
 ```
 
 It creates `model.json` if it does not exist (or converts the `.tm7`, keeping TMT's threats and
@@ -137,10 +138,10 @@ analysis view in your browser, and keeps watching. Draw and save in Threat Drago
 threats arrive, reopen the model in Threat Dragon (File > Open Recent) to see them, or start with
 `--reload` to have that done for you. Ctrl-C stops watching.
 
-The same steps one at a time: `tdtm import`, `tdtm analyze`, `tdtm report` (see Usage).
+The same steps one at a time: `threatsketch import`, `threatsketch analyze`, `threatsketch report` (see Usage).
 
-To try it on the example: `tdtm open examples/online-shop.json` from a clone of this repo.
-To update tdtm later: `uv tool upgrade threatsketch`.
+To try it on the example: `threatsketch open examples/online-shop.json` from a clone of this repo.
+To update ThreatSketch later: `uv tool upgrade threatsketch`.
 
 ### Install for development
 
@@ -148,27 +149,27 @@ Requires Python 3.11 or newer and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 git clone https://github.com/ElikplimSunu/threatsketch.git
-cd tdtm
+cd ThreatSketch
 uv sync
-uv run tdtm --help
+uv run threatsketch --help
 ```
 
 ### Usage
 
 ```bash
-uv run tdtm analyze model.json            # add threats to the model, keeping a .bak copy
-uv run tdtm analyze model.json --dry-run  # show what would change
-uv run tdtm analyze model.json --prune    # also remove generated threats whose rule stopped firing
-uv run tdtm analyze model.json --pack all # also OWASP pytm's threats (needs `uv sync --extra pytm`)
-uv run tdtm inspect model.json            # how each element was read: stencil, attributes, zone
-uv run tdtm stencils --kind process       # valid @tmt stencils and attributes
-uv run tdtm report model.json             # TMT-style HTML report
-uv run tdtm report model.json --out threats.csv  # TMT's own CSV export format
-uv run tdtm coverage                      # which rules need @tmt tags to fire
-uv run tdtm import model.tm7              # convert a TMT model, keeping TMT's threats and triage
-uv run tdtm export model.json             # write a TMT .tm7 you can open in TMT or hand in
-uv run tdtm open model.json               # all of the above, opened in Threat Dragon and kept updated
-uv run tdtm view model.json               # just the analysis view (TMT's threat grid) in the browser
+uv run threatsketch analyze model.json            # add threats to the model, keeping a .bak copy
+uv run threatsketch analyze model.json --dry-run  # show what would change
+uv run threatsketch analyze model.json --prune    # also remove generated threats whose rule stopped firing
+uv run threatsketch analyze model.json --pack all # also OWASP pytm's threats (needs `uv sync --extra pytm`)
+uv run threatsketch inspect model.json            # how each element was read: stencil, attributes, zone
+uv run threatsketch stencils --kind process       # valid @tmt stencils and attributes
+uv run threatsketch report model.json             # TMT-style HTML report
+uv run threatsketch report model.json --out threats.csv  # TMT's own CSV export format
+uv run threatsketch coverage                      # which rules need @tmt tags to fire
+uv run threatsketch import model.tm7              # convert a TMT model, keeping TMT's threats and triage
+uv run threatsketch export model.json             # write a TMT .tm7 you can open in TMT or hand in
+uv run threatsketch open model.json               # all of the above, opened in Threat Dragon and kept updated
+uv run threatsketch view model.json               # just the analysis view (TMT's threat grid) in the browser
 ```
 
 Re-running is safe: threats you edited in Threat Dragon keep your changes, and threats whose rule no
@@ -176,15 +177,15 @@ longer fires are marked `[stale]` rather than deleted. Only STRIDE diagrams get 
 
 #### Working alongside Threat Dragon
 
-Threat Dragon does not notice when a file changes on disk. After tdtm writes the model, close and
+Threat Dragon does not notice when a file changes on disk. After ThreatSketch writes the model, close and
 reopen it in Threat Dragon before you triage, otherwise Threat Dragon's next save overwrites the
-new threats with its older copy. `tdtm analyze model.json --watch` re-runs every time you save, so
+new threats with its older copy. `threatsketch analyze model.json --watch` re-runs every time you save, so
 the loop is: draw, save, reopen, triage.
 
-#### Telling tdtm what an element really is
+#### Telling ThreatSketch what an element really is
 
 Threat Dragon has five generic shapes. TMT has 52 specific stencils, each with attributes the rules
-test. tdtm maps Threat Dragon's own properties where it can: an encrypted flow provides
+test. ThreatSketch maps Threat Dragon's own properties where it can: an encrypted flow provides
 confidentiality and integrity, and a process marked as a web application becomes TMT's Web
 Application.
 
@@ -197,7 +198,7 @@ For everything else, add a line starting with `@tmt:` to the element's descripti
 ```
 
 A bare word names a stencil, by ID, short ID or name, in any case. `key=value` sets an attribute.
-A typo is reported as an error with a suggestion, never silently ignored. `tdtm stencils` lists
+A typo is reported as an error with a suggestion, never silently ignored. `threatsketch stencils` lists
 every valid value. Tags live in the description because Threat Dragon always keeps that field.
 
 #### Trust boundaries
@@ -208,7 +209,7 @@ lines intersect. Boxes become TMT border boundaries; curves become line boundari
 
 ## Documentation
 
-- [docs/coming-from-tmt.md](docs/coming-from-tmt.md): TMT steps and terms, mapped to tdtm.
+- [docs/coming-from-tmt.md](docs/coming-from-tmt.md): TMT steps and terms, mapped to ThreatSketch.
 - [docs/SPEC.md](docs/SPEC.md): design, file format facts, rule semantics, merge behaviour.
 - [docs/PLAN.md](docs/PLAN.md): roadmap and task list with acceptance criteria.
 
@@ -226,8 +227,8 @@ npx vitest run         # unit tests
 npx playwright test    # end-to-end tests against the production build, in Chrome
 ```
 
-The app runs tdtm's Python engine unchanged, in the browser, through
-[Pyodide](https://pyodide.org); `src/tdtm/api.py` is everything it calls. `app/README.md`
+The app runs ThreatSketch's Python engine unchanged, in the browser, through
+[Pyodide](https://pyodide.org); `src/threatsketch/api.py` is everything it calls. `app/README.md`
 explains how the app is put together.
 
 Work follows `docs/PLAN.md` from top to bottom, one task per commit. Tests come first, written from
@@ -236,7 +237,7 @@ the task's acceptance criteria. A task that teaches something new about the file
 
 ## Releasing
 
-One version number covers tdtm and ThreatSketch ([semantic versioning](https://semver.org)).
+One version number covers the app and the command ([semantic versioning](https://semver.org)).
 Note changes under *Unreleased* in [CHANGELOG.md](CHANGELOG.md) as you go. To release:
 
 ```bash
@@ -253,19 +254,19 @@ workflow") builds and self-tests everything without releasing.
 
 Issues and pull requests are welcome. The most valuable help needs a Windows machine: the real
 acceptance test is drawing the four small diagrams in `tests/fixtures/golden/` in TMT 7.3 with the
-SDL TM Knowledge Base template and comparing its threat report with tdtm's expected output (PLAN
+SDL TM Knowledge Base template and comparing its threat report with ThreatSketch's expected output (PLAN
 task 3.4). If you can run TMT, please open an issue.
 
 ## License
 
 MIT, see [LICENSE](LICENSE). Bundled third-party material:
 
-- `src/tdtm/data/templates/default.tb7`: Microsoft
+- `src/threatsketch/data/templates/default.tb7`: Microsoft
   [threat-modeling-templates](https://github.com/microsoft/threat-modeling-templates), MIT.
 - `tests/fixtures/td/` and `tests/fixtures/schema/`: sample models and the v2 JSON schema from
   [OWASP Threat Dragon](https://github.com/OWASP/threat-dragon), Apache-2.0.
 - ThreatSketch's diagram shapes are adapted from OWASP Threat Dragon (Apache-2.0); its web build
   bundles AntV X6 and Svelte (MIT) and Pyodide (MPL-2.0).
 
-Details in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). ThreatSketch and tdtm are not
+Details in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). ThreatSketch is not
 affiliated with Microsoft or OWASP.

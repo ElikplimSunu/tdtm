@@ -1,5 +1,5 @@
-from tdtm.boundaries import assign_crossings, assign_zones
-from tdtm.model import Diagram, Element, Kind, Point, Rect
+from threatsketch.boundaries import assign_crossings, assign_zones
+from threatsketch.model import Diagram, Element, Kind, Point, Rect
 
 
 def node(cid, x, y, w=20, h=20, kind=Kind.PROCESS):
@@ -90,7 +90,7 @@ def test_real_demo_model_crossings(fixtures):
     decision has at least 39 px of clearance, and none changes when the curves are smoothed the
     way Threat Dragon draws them. Update this docstring with the user's answer.
     """
-    from tdtm.td_adapter import load
+    from threatsketch.td_adapter import load
 
     model, _ = load(fixtures / "td" / "v2-threat-model.json")
     d = model.diagrams[0]

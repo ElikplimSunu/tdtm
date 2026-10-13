@@ -513,7 +513,7 @@
     <span class="engine {engineState.status}" data-testid="engine-status">
       <span class="pulse"></span>
       {#if engineState.status === "loading"}Starting the threat engine…
-      {:else if engineState.status === "ready"}SDL TM Knowledge Base · tdtm {engineState.version}
+      {:else if engineState.status === "ready"}SDL TM Knowledge Base · engine {engineState.version}
       {:else}Threat engine failed: {engineState.error}{/if}
     </span>
     {#if analysis}

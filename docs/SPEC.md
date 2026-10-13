@@ -1,4 +1,4 @@
-# tdtm design spec
+# ThreatSketch design spec
 
 Status markers used below:
 - **[confirmed]** checked against real files on 2026-10-12 (and locked in by `tests/test_spike_facts.py` where possible)
@@ -37,7 +37,7 @@ Source: `tests/fixtures/td/*.json` (from OWASP/threat-dragon `ThreatDragonModels
 
 Schema conformance: Threat Dragon's own sample files fail its v2 schema in exactly one way: cell
 `attrs.*.strokeDasharray` is `null` where the schema says string. Threat Dragon only warns on load.
-tdtm's "output validates" checks use the same tolerance (see `test_spike_facts.py`) and must not
+ThreatSketch's "output validates" checks use the same tolerance (see `test_spike_facts.py`) and must not
 introduce any other error. Fixture `version` values seen: `"2.0"`, `"2.1.3"`; accept any `2.x`.
 
 Load every diagram, but generate threats only on diagrams whose `diagramType` is `STRIDE` (or
@@ -48,7 +48,7 @@ diagrams are skipped with a warning and round-trip untouched.
 `threatTop` is the counter behind threat `number`s [confirmed in td.vue 2.6.2,
 `components/GraphMeta.vue:167-171`, `ThreatSuggestDialog.vue:193-209`]: a new threat gets
 `number = threatTop + 1`, then `threatTop` is incremented. Numbers are never reused. A model with
-no `threatTop` is given 100 when Threat Dragon opens it. tdtm does the same per new threat,
+no `threatTop` is given 100 when Threat Dragon opens it. ThreatSketch does the same per new threat,
 starting from `max(threatTop or 0, highest existing number)` so it never duplicates a number.
 
 Source facts in this section come from OWASP/threat-dragon commit `ff27a5e` (2.6.2), `td.vue/src`,
@@ -89,11 +89,11 @@ Common `data`: `type`, `name`, `description`, `outOfScope`, `reasonOutOfScope`, 
 | text | `name` only |
 
 `trustBoundaryIds`, `crossingFlows` and `containedElements` are recomputed by Threat Dragon on
-every save; tdtm ignores them (section 5). `isBidirectional: true` is drawn as a `block` marker on
+every save; ThreatSketch ignores them (section 5). `isBidirectional: true` is drawn as a `block` marker on
 `attrs.line.sourceMarker`.
 
 Out of scope: Threat Dragon hides the add-threat button on out-of-scope cells and draws them
-dashed. tdtm skips an interaction when the flow is out of scope or both its ends are. What TMT
+dashed. ThreatSketch skips an interaction when the flow is out of scope or both its ends are. What TMT
 does is **[assumed]** to be similar; only TMT can confirm (PLAN 3.4).
 
 ### 2.4 Threats [confirmed]
@@ -109,7 +109,7 @@ Preserve whatever keys exist.
   `Denial of service`, `Elevation of privilege` (`i18n/en.json:429-434`). Threat Dragon's UI
   offers only some types per kind (actor S,R; store T,R,I,D; flow T,I,D; process all), but keeps
   any stored type (`ThreatEditDialog.vue:300`). TMT attaches threats of every category to the
-  flow, so tdtm writes e.g. a Spoofing threat on a flow; Threat Dragon shows it.
+  flow, so ThreatSketch writes e.g. a Spoofing threat on a flow; Threat Dragon shows it.
 - `severity`: `TBD | Low | Medium | High | Critical`; new threats get `TBD`.
 - `status`: `NotApplicable | Open | Mitigated | Accepted | Transferred | Avoided | Eliminated`
   (`service/threats/status.js`); new threats get `Open`.
@@ -119,7 +119,7 @@ Preserve whatever keys exist.
 - `hasOpenThreats` = some threat's `status` equals `Open` case-insensitively
   (`threats/index.js:140-141`).
 - **Red outlines are stored, not computed on load** (`service/x6/graph/data-changed.js:48-66`;
-  x6 adds cells silently on `fromJSON`). After changing threats tdtm must set both
+  x6 adds cells silently on `fromJSON`). After changing threats ThreatSketch must set both
   `data.hasOpenThreats` and the stroke attrs, or the element opens black:
   open → `stroke: "red"`, `strokeWidth: 2.5`; otherwise `stroke: "#333333"`, `strokeWidth: 1.5`.
   Attr paths: actor and process `body`; store `topLine` and `bottomLine`; flow `line`.
@@ -139,9 +139,9 @@ sidecar file (section 6.3).
 
 ## 3. Microsoft template (`.tb7`) format [confirmed]
 
-File: `src/tdtm/data/templates/default.tb7`, the root `<KnowledgeBase>`, manifest
+File: `src/threatsketch/data/templates/default.tb7`, the root `<KnowledgeBase>`, manifest
 name `SDL TM Knowledge Base (Core)`, version `4.1.0.11`. This is the template TMT users pick as
-"SDL TM Knowledge Base", and the one tdtm must match.
+"SDL TM Knowledge Base", and the one ThreatSketch must match.
 
 Children: `Manifest`, `ThreatMetaData`, `GenericElements`, `StandardElements`,
 `ThreatCategories`, `ThreatTypes`.
@@ -276,7 +276,7 @@ TD false or missing properties do not set anything; the TMT default applies.
 
 ### 4.2a What Threat Dragon alone can reach
 
-`tdtm coverage` tries every element Threat Dragon's own properties can express (4.1, 4.2) in
+`threatsketch coverage` tries every element Threat Dragon's own properties can express (4.1, 4.2) in
 every source, flow, target and crossing combination. With default.tb7, **30 of the 41 non-legacy
 rules** can fire without tags. The other 11 need `@tmt`: T3, T4, I26 (process implements a
 protocol or authentication scheme), I2 (custom authorization), T7, T8 (SQL Database), T11, T12
@@ -305,7 +305,7 @@ Any line in an element's `description` that starts with `@tmt:` is parsed. Tags 
   element's when no stencil is tagged (so `HTTPOnly` needs `@tmt: Cookies` on the same element).
 - A stencil from the wrong kind (`@tmt: SQL Database` on a process) is an error naming both kinds.
 - Unknown stencil/attribute/value is an error with a "did you mean" suggestion, not a silent skip.
-- The description field is used because Threat Dragon is guaranteed to keep it. `tdtm stencils`
+- The description field is used because Threat Dragon is guaranteed to keep it. `threatsketch stencils`
   lists every valid stencil and attribute so users can copy tags.
 
 ## 5. Boundaries
@@ -335,7 +335,7 @@ changes when the curves are smoothed, so the polyline approximation holds there 
 
 Threat Dragon 2.6 computes its own `containedElements`/`crossingFlows`/`trustBoundaryIds` on
 save (`service/diagram/boundary-utils.js`): an element is inside only if its whole box is inside,
-and curves are judged by their bounding box. tdtm does not read those keys: TMT treats a line
+and curves are judged by their bounding box. ThreatSketch does not read those keys: TMT treats a line
 boundary as a line, which a bounding box cannot model.
 
 ## 6. Merge
@@ -344,13 +344,13 @@ boundary as a line, which a bounding box cannot model.
 
 Each generated threat gets `tdtm: {"key": "<pack>:<rule-id>:<cell-id>[:<direction>]",
 "fingerprint": "<sha1 of title|type|severity|status|description|mitigation as written>",
-"version": "<tdtm version>"}` and a deterministic `id` = UUIDv5(namespace, key), where namespace =
-UUIDv5(URL, `https://github.com/ElikplimSunu/tdtm`). The fingerprint is re-stamped whenever tdtm
+"version": "<ThreatSketch version>"}` and a deterministic `id` = UUIDv5(namespace, key), where namespace =
+UUIDv5(URL, `https://github.com/ElikplimSunu/tdtm`). The fingerprint is re-stamped whenever ThreatSketch
 itself rewrites the threat (refresh, `[stale]` prefix), so only human changes break it.
 
 ### 6.2 Re-run rules
 
-For each cell, compare generated keys G with existing tdtm-owned threats E (existing threats with a
+For each cell, compare generated keys G with existing ThreatSketch-owned threats E (existing threats with a
 `tdtm.key`; threats without one are human-written and never touched):
 
 | case | action |
@@ -364,14 +364,14 @@ For each cell, compare generated keys G with existing tdtm-owned threats E (exis
 Staleness only applies to keys of the packs run this time, so `--pack pytm` never marks `sdl`
 threats stale. A stale threat whose rule fires again is refreshed, which removes the prefix.
 
-After merging, every cell holding tdtm-owned threats gets `hasOpenThreats` and its outline attrs
+After merging, every cell holding ThreatSketch-owned threats gets `hasOpenThreats` and its outline attrs
 recomputed with Threat Dragon's rule (2.4). `threatTop` is written only when threats were added.
 
 ### 6.3 Sidecar fallback
 
 If Threat Dragon strips the `tdtm` key (2.5), write `<model>.tdtm.json` beside the model mapping
 threat `id` → `{key, fingerprint}`. Detect at load: a threat whose `id` is in the sidecar is
-tdtm-owned. Both modes are implemented: `merge(..., sidecar=dict)` uses the sidecar. Inline is
+ThreatSketch-owned. Both modes are implemented: `merge(..., sidecar=dict)` uses the sidecar. Inline is
 the default because the source reading (2.5) says Threat Dragon keeps unknown keys; PLAN 0.2
 confirms by hand. Either way the `id` fallback in 6.2 prevents duplicates.
 
@@ -399,7 +399,7 @@ pytm **1.4.0** is installed via the `pytm` extra (CI installs it; works on Pytho
 Confirmed API: `TM.reset()` first (elements and threats live in class-level state), build
 `TM(name, description=...)` and `Actor`/`Process`/`Server`/`Datastore`/`Dataflow(src, dst, name)`
 objects, call `tm.resolve()`, read `tm.findings`. Each finding has `element` (the pytm object, so
-tdtm maps back by object identity, not by name), `threat_id` (e.g. `INP03`), `description` (short),
+threatsketch maps back by object identity, not by name), `threat_id` (e.g. `INP03`), `description` (short),
 `details`, `severity`, `mitigations`. Findings attach to nodes as well as flows.
 
 Mapping: actor → `Actor`; process → `Process`, or `Server` if `isWebApplication`; store →
@@ -410,32 +410,32 @@ Mapping: actor → `Actor`; process → `Process`, or `Server` if `isWebApplicat
 Boundaries are not mapped: no condition in pytm 1.4.0's threat library reads `inBoundary`, so
 they would change nothing. Map zones (section 5) if a later pytm uses them.
 
-pytm has no STRIDE field. tdtm maps the SID prefix (`rules/pytm_pack.py CATEGORY_BY_PREFIX`):
+pytm has no STRIDE field. ThreatSketch maps the SID prefix (`rules/pytm_pack.py CATEGORY_BY_PREFIX`):
 INP, SC, API, LB, LLM → Tampering; AC → Elevation of privilege; AA, CR → Spoofing; DS, DE, DR, HA
-→ Information disclosure; DO → Denial of service. This is tdtm's judgement, not pytm's. Severity:
+→ Information disclosure; DO → Denial of service. This is ThreatSketch's judgement, not pytm's. Severity:
 Very High → Critical, Very Low → Low, others unchanged.
 
-pytm evaluates its conditions with `eval`; tdtm only lets it load its bundled library.
+pytm evaluates its conditions with `eval`; ThreatSketch only lets it load its bundled library.
 
 ## 8. CLI
 
 ```
-tdtm analyze MODEL [--pack sdl|pytm|all] [--template PATH] [--dry-run] [--prune]
+threatsketch analyze MODEL [--pack sdl|pytm|all] [--template PATH] [--dry-run] [--prune]
                    [--include-legacy] [--out PATH]   # default: overwrite MODEL after writing MODEL.bak
                    [--sidecar]   # tracking data in MODEL.tdtm.json instead of in the threats (6.3)
                    [--strict]    # exit 3 on @tmt tag errors, write nothing
                    [--watch]     # re-run whenever MODEL changes (polls once a second)
-tdtm inspect MODEL [--template PATH]   # elements, stencils/attributes, zones, crossings
-tdtm stencils [--kind process|store|...]   # valid @tmt stencils and attributes with allowed values
-tdtm report MODEL [--out report.html]       # TMT-style HTML report from what is in the model
-tdtm coverage [--template PATH]             # which rules can fire from TD props alone vs need tags
+threatsketch inspect MODEL [--template PATH]   # elements, stencils/attributes, zones, crossings
+threatsketch stencils [--kind process|store|...]   # valid @tmt stencils and attributes with allowed values
+threatsketch report MODEL [--out report.html]       # TMT-style HTML report from what is in the model
+threatsketch coverage [--template PATH]             # which rules can fire from TD props alone vs need tags
 ```
 
 Exit codes: 0 ok, 1 usage error, 2 model/template error, 3 tag errors (with `--strict`).
 
 ## 9. Report
 
-`tdtm report MODEL` writes one self-contained HTML file laid out like TMT's Full Report: model
+`threatsketch report MODEL` writes one self-contained HTML file laid out like TMT's Full Report: model
 details (name, owner, reviewer, contributors, description), a Threat Model Summary counting TMT
 states (Not Started, Not Applicable, Needs Investigation, Mitigation Implemented, Total, Total
 Migrated), then per diagram an SVG drawing of it (`diagram.py`, from the model's own geometry; red
@@ -447,26 +447,26 @@ a real TMT report and adjust.
 
 ### 9a. CSV export
 
-`tdtm report MODEL --out NAME.csv` writes TMT's CSV export exactly: columns `Id, Title, Category,
+`threatsketch report MODEL --out NAME.csv` writes TMT's CSV export exactly: columns `Id, Title, Category,
 Diagram, Interaction, Priority, State, Changed By, Description, Justification, Last Modified`,
 CRLF line endings, no byte-order mark. Category uses the template's names (`Denial Of Service`);
 State maps Open → `Not Started`, NotApplicable → `Not Applicable`; Last Modified is `Generated` for
-an untouched tdtm threat, else empty. [confirmed: reproduces a real TMT 7.3 export row for row.]
+an untouched ThreatSketch threat, else empty. [confirmed: reproduces a real TMT 7.3 export row for row.]
 
 ## 10. Testing strategy
 
 - Unit tests per module, fixtures in `tests/fixtures/`.
 - Golden test: `tests/fixtures/golden/` holds hand-built TD models with expected rule firings
   derived by reading the tb7 filters by hand.
-- **Parity test:** a model drawn in TMT, imported with `tdtm import`, must give exactly TMT's
+- **Parity test:** a model drawn in TMT, imported with `threatsketch import`, must give exactly TMT's
   threats. `test_tm7.py::test_parity_with_real_tmt_output` runs on any model in
   `tests/fixtures/private/` (gitignored: real coursework, never committed) and skips otherwise.
 
 Parity result, 2026-10-13. A real TMT 7.3 model built with SDL TM Knowledge Base 4.1.0.11 (the
-same template tdtm bundles): 4 external interactors and processes, 3 data stores, one boundary box,
-12 flows, 54 generated threats, none edited. tdtm produces **the same 54 threats**: identical rule
+same template ThreatSketch bundles): 4 external interactors and processes, 3 data stores, one boundary box,
+12 flows, 54 generated threats, none edited. ThreatSketch produces **the same 54 threats**: identical rule
 IDs per flow, identical titles and descriptions, identical category and priority, matching TMT's
-own CSV export row for row; `tdtm analyze` on the imported model reports 0 added, 54 unchanged.
+own CSV export row for row; `threatsketch analyze` on the imported model reports 0 added, 54 unchanged.
 This confirms: box crossings, actor/process/store rules, attribute defaults (3.1), legacy rules
 skipped (3.3), placeholder substitution, default priority High (6.4).
 
@@ -476,7 +476,7 @@ out-of-scope elements, bidirectional flows.
 
 ## 11. `.tm7` import
 
-`tdtm import MODEL.tm7 [--out PATH] [--force]` writes Threat Dragon JSON (default: same name,
+`threatsketch import MODEL.tm7 [--out PATH] [--force]` writes Threat Dragon JSON (default: same name,
 `.json`; never overwrites without `--force`). Format facts from a real TMT 7.3 file
 (`Version` 4.3), read by local element name so namespaces do not matter:
 
@@ -494,10 +494,10 @@ out-of-scope elements, bidirectional flows.
   `ModifiedAt` (`0001-01-01` until touched), and `Properties` with `Title`,
   `UserThreatCategory` (e.g. "Denial Of Service"), `UserThreatDescription`.
 
-Mapping: GUIDs become cell ids, so a TMT threat and tdtm's threat for the same rule and flow share
+Mapping: GUIDs become cell ids, so a TMT threat and ThreatSketch's threat for the same rule and flow share
 the key `sdl:<rule>:<flow guid>`. Non-generic stencil and every non-zero `SelectedIndex` become an
 `@tmt:` line. TMT's middle handle becomes one flow vertex (approximation; TMT draws a curve).
-TMT threats become tdtm-tracked threats; untouched ones get a normal fingerprint so `analyze`
+TMT threats become ThreatSketch-tracked threats; untouched ones get a normal fingerprint so `analyze`
 treats them as its own, triaged ones a fingerprint that never matches, so they are kept as edits.
 State `Mitigated`/`NotApplicable` map across, everything else is `Open`.
 
@@ -505,9 +505,9 @@ Unverified (no example in the sample file): line boundaries (`GE.TB.L`), annotat
 skipped with a warning), multiple drawing surfaces, user-added custom threats. A `.tm7` with a
 DOCTYPE or entity declarations is refused: TMT never writes one, and it is the usual XML attack.
 
-## 12. `tdtm open` and driving Threat Dragon (macOS)
+## 12. `threatsketch open` and driving Threat Dragon (macOS)
 
-`tdtm open MODEL [--reload] [--no-launch] [--pack ...] [--template ...]`: create a blank STRIDE
+`threatsketch open MODEL [--reload] [--no-launch] [--pack ...] [--template ...]`: create a blank STRIDE
 model if MODEL is missing, or import a `.tm7` to `<stem>.json` (reusing an existing `.json`, which
 may hold triage); analyze; write `<stem>.report.html` and `<stem>.csv`; open it in Threat Dragon;
 then watch and repeat on every save.
@@ -519,23 +519,23 @@ Threat Dragon 2.6.2 facts (td.vue/src at ff27a5e, and its log at
   `Open model confirmation from renderer for file name: FILE`. [confirmed]
 - On a cold start the same command crashes with a main-process `TypeError ... 'webContents'`
   dialog: the menu module only gets its window on `did-finish-load`. [confirmed, observed]
-  So tdtm launches the app empty, waits for `Checking for update` in the log (window created),
+  So ThreatSketch launches the app empty, waits for `Checking for update` in the log (window created),
   waits `LOAD_MARGIN` (4 s) more for the page, then sends the file. No log line marks page load,
   so the margin is a calibrated guess. [confirmed once on an Intel Mac running Threat Dragon 2.6.2: no dialog, the
   model opened]
 - An opened model lands on the model summary page, not the diagram. Because a reload while the
   user has unsaved edits makes Threat Dragon ask to discard them, automatic reload after each update
-  is opt-in (`--reload`); by default tdtm prints a reminder to reopen.
+  is opt-in (`--reload`); by default ThreatSketch prints a reminder to reopen.
 
 ## 13. Analysis view
 
-`tdtm view MODEL [--port N] [--no-browser]`, also started by `tdtm open` (unless `--no-view`):
+`threatsketch view MODEL [--port N] [--no-browser]`, also started by `threatsketch open` (unless `--no-view`):
 TMT's Analysis View as a local web page. Diagram drawings (foldable), a grid of every threat
 (ID, State, Title, Category, Interaction, Priority, Justification) with filters by state,
 category and priority and a text search, and a Threat Properties panel for the selected row.
 The page polls `/api/model` every 2 s and redraws when the file's mtime and size change.
 
-**Editing.** For threats tdtm generated, the properties panel sets State (TMT's four: Not
+**Editing.** For threats ThreatSketch generated, the properties panel sets State (TMT's four: Not
 Started, Needs Investigation, Not Applicable, Mitigated), Priority and Justification.
 `POST /api/threat` writes them into the model (status, severity, mitigation; Needs Investigation
 is status Open plus `tdtm.tmtState`), restyles the outlines, saves atomically, and records the
@@ -558,7 +558,7 @@ DOM through `textContent` only; the one `innerHTML` is the server-rendered SVG, 
 
 ## 14. `.tm7` export
 
-`tdtm export MODEL.json [--out MODEL.tm7] [--force] [--template PATH]` writes a TMT file. TMT reads
+`threatsketch export MODEL.json [--out MODEL.tm7] [--force] [--template PATH]` writes a TMT file. TMT reads
 `.tm7` with .NET's DataContractSerializer, which is strict about element names, order and
 namespaces, so `tm7_export.py` writes the exact text shape of a real TMT 7.3 file (section 11),
 including `z:Id` numbering and per-element namespace declarations.
@@ -574,7 +574,7 @@ including `z:Id` numbering and per-element namespace declarations.
   attributes (tags and Threat Dragon properties), `SelectedIndex` = position of the effective value.
   A standard stencil gets "Predefined Static Attributes", then "Configurable Attributes", then
   "As <generic name>" with the generic's dynamic attributes.
-- **TMT-only details** kept by `tdtm import` under `tdtm.tm7` (model, cell and threat level) are
+- **TMT-only details** kept by `threatsketch import` under `tdtm.tm7` (model, cell and threat level) are
   written back: diagram GUID and zoom, flow anchor points, ports and handle, threat order,
   ModifiedAt, ChangedBy. Without them they are derived: anchors where the flow meets the shape,
   ports from the side, handle from the middle vertex or midpoint, `0001-01-01` timestamps.

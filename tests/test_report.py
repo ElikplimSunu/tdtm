@@ -1,9 +1,9 @@
 import json
 import shutil
 
-from tdtm.cli import main
-from tdtm.report import render
-from tdtm.td_adapter import load
+from threatsketch.cli import main
+from threatsketch.report import render
+from threatsketch.td_adapter import load
 
 
 def analyzed(fixtures, tmp_path, name="2-actor-process-curve"):

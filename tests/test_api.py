@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from tdtm import api
-from tdtm.cli import main
+from threatsketch import api
+from threatsketch.cli import main
 
 ROOT = Path(__file__).parent.parent
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -154,7 +154,7 @@ def test_set_element_can_override_a_threat_dragon_property():
 
 def test_tm7_import_export_and_reports():
     data = (FIXTURES / "tm7" / "small.tm7").read_bytes()
-    from tdtm.tm7 import import_tm7
+    from threatsketch.tm7 import import_tm7
 
     imported = api.import_tm7(data, "small")
     assert (imported["model"], imported["warnings"]) == import_tm7(FIXTURES / "tm7" / "small.tm7")

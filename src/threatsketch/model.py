@@ -79,7 +79,7 @@ class Threat:
     description: str
     mitigation: str
     id: str | None = None
-    tdtm_key: str | None = None  # set only on threats tdtm generated (SPEC 6.1)
+    tdtm_key: str | None = None  # set only on threats threatsketch generated (SPEC 6.1)
     raw: dict = field(default_factory=dict)
 
 
