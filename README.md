@@ -48,7 +48,27 @@ tdtm follows these rules:
   is ever executed.
 - **No runtime dependencies.** The core uses only the Python standard library.
 
-## Install
+## Quick start on a Mac (instead of TMT)
+
+Install once (needs [Homebrew](https://brew.sh); `brew install uv` if you do not have uv):
+
+```bash
+brew install --cask threat-dragon
+uv tool install git+https://github.com/ElikplimSunu/tdtm
+```
+
+Then, for each model:
+
+1. Draw the diagram in Threat Dragon and save it, e.g. `model.json`. Already have a TMT model?
+   `tdtm import model.tm7` converts it, keeping TMT's threats and your triage.
+2. `tdtm analyze model.json` adds the threats TMT would generate.
+3. Reopen `model.json` in Threat Dragon and triage: status, priority, mitigation.
+4. `tdtm report model.json` writes a TMT-style HTML report;
+   `tdtm report model.json --out threats.csv` writes TMT's CSV export format.
+
+To update tdtm later: `uv tool upgrade tdtm`.
+
+## Install for development
 
 Requires Python 3.11 or newer and [uv](https://docs.astral.sh/uv/). There is no PyPI release yet.
 
