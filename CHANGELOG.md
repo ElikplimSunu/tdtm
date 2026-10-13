@@ -13,6 +13,8 @@ One version covers the app and the command-line tool. The format follows
 
 ### Fixed
 
+- A threat TMT stored with Id 0 now shows as TMT shows it, the highest Id + 1, in the list, the
+  report and the CSV. A real TMT model's CSV now matches TMT's own export row for row.
 - A `.tm7` export kept each flow's TMT Dataflow Order at 0; it now writes back the number TMT gave
   it, so a real TMT model exports back unchanged.
 

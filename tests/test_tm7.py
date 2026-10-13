@@ -308,3 +308,22 @@ def test_export_keeps_tmt_dataflow_order(tmp_path):
     assert main(["import", str(source), "--out", str(again)]) == 0
     assert main(["export", str(again), "--out", str(out)]) == 0
     assert canonical(out) == canonical(source)
+
+
+def test_tmt_threat_id_0_shows_as_the_next_free_id(tmp_path):
+    """TMT keeps a threat's Id 0 in the file but lists and exports it as the highest Id + 1 (a real
+    model: Id 0 among 1..241 is 242 in TMT's CSV). Export writes the 0 back."""
+    model, first = tmp_path / "small.json", tmp_path / "first.tm7"
+    assert main(["import", str(SMALL), "--out", str(model)]) == 0
+    assert main(["export", str(model), "--out", str(first)]) == 0
+    text = first.read_text(encoding="utf-8")
+    assert text.count("<b:Id>1</b:Id>") == 1
+    source = tmp_path / "zero.tm7"
+    source.write_text(text.replace("<b:Id>1</b:Id>", "<b:Id>0</b:Id>"), encoding="utf-8")
+    raw, _ = import_tm7(source)
+    threats = [t for c in cells_of(raw).values() for t in c["data"].get("threats", [])]
+    assert sorted(t["number"] for t in threats) == [2, 3] and raw["detail"]["threatTop"] == 3
+    again, out = tmp_path / "zero.json", tmp_path / "out.tm7"
+    assert main(["import", str(source), "--out", str(again)]) == 0
+    assert main(["export", str(again), "--out", str(out)]) == 0
+    assert canonical(out) == canonical(source)

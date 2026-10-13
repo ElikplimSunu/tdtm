@@ -401,7 +401,7 @@ def _threat(
         + _el("b:ChangedBy", keep.get("changedBy"))
         + _el("b:DrawingSurfaceGuid", surface)
         + _el("b:FlowGuid", flow)
-        + _el("b:Id", t.get("number", 0))
+        + _el("b:Id", keep.get("id", t.get("number", 0)))
         + _el("b:InteractionKey", f"{src}:{flow}:{tgt}")
         + _el("b:InteractionString", keep.get("interactionString"))
         + _el("b:ModifiedAt", keep.get("modifiedAt", "0001-01-01T00:00:00"))

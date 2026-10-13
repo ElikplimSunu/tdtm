@@ -501,6 +501,10 @@ out-of-scope elements, bidirectional flows.
   `ModifiedAt` (`0001-01-01` until touched), and `Properties` with `Title`,
   `UserThreatCategory` (e.g. "Denial Of Service"), `UserThreatDescription`.
 
+TMT lists and exports a threat stored with `Id` 0 as the highest `Id` + 1 (a real model: 0 among
+1..241 is 242 in TMT's CSV) and the file keeps 0. Import numbers it the same way and keeps the 0
+under `tdtm.tm7.id` for export.
+
 Mapping: GUIDs become cell ids, so a TMT threat and ThreatSketch's threat for the same rule and flow share
 the key `sdl:<rule>:<flow guid>`. Non-generic stencil and every non-zero `SelectedIndex` become an
 `@tmt:` line. TMT's middle handle becomes one flow vertex (approximation; TMT draws a curve).
