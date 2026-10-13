@@ -6,6 +6,16 @@ One version covers the app and the command-line tool. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Assumptions and External Dependencies, TMT's two other model fields: edited in the model's
+  properties, shown in the report, and kept through `.tm7` import and export.
+
+### Fixed
+
+- A `.tm7` export kept each flow's TMT Dataflow Order at 0; it now writes back the number TMT gave
+  it, so a real TMT model exports back unchanged.
+
 ## [0.5.1] - 2026-10-14
 
 ### Fixed

@@ -2,6 +2,7 @@
 
 import csv
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -118,12 +119,13 @@ def test_import_rejects_doctype(tmp_path):
     not (PRIVATE / "mobile-banking.tm7").exists(), reason="private TMT model absent"
 )
 def test_parity_with_real_tmt_output(tmp_path, capsys):
-    """PLAN 3.4. A real model drawn in TMT 7.3 with the SDL template: 7 elements, a boundary box,
-    12 flows, 54 generated threats, all untouched. We must generate exactly the same threats."""
+    """PLAN 3.4. A real model drawn in TMT 7.3 with the SDL template, its threats all untouched
+    (the first one had 54, a second 232). We must generate exactly the same threats."""
     path = tmp_path / "mb.json"
+    tmt = (PRIVATE / "mobile-banking.tm7").read_text(encoding="utf-8").count("<b:FlowGuid>")
     assert main(["import", str(PRIVATE / "mobile-banking.tm7"), "--out", str(path)]) == 0
     assert main(["analyze", str(path)]) == 0
-    assert "0 added, 0 refreshed, 54 unchanged, 0 kept" in capsys.readouterr().out
+    assert f"0 added, 0 refreshed, {tmt} unchanged, 0 kept" in capsys.readouterr().out
 
     raw = json.loads(path.read_text())
     flows = {c["id"]: c for c in cells_of(raw).values() if c["data"]["type"] == "tm.Flow"}
@@ -290,3 +292,19 @@ def test_export_refuses_to_overwrite(tmp_path, capsys):
     out.write_text("keep me")
     assert main(["export", str(model), "--out", str(out)]) == 2
     assert out.read_text() == "keep me" and "exists" in capsys.readouterr().err
+
+
+def test_export_keeps_tmt_dataflow_order(tmp_path):
+    """TMT numbers flows in `Dataflow Order` ("0" by default). A non-zero value survives."""
+    model, first = tmp_path / "small.json", tmp_path / "first.tm7"
+    assert main(["import", str(SMALL), "--out", str(model)]) == 0
+    assert main(["export", str(model), "--out", str(first)]) == 0
+    order = re.compile(r"(Dataflow Order</b:DisplayName>.*?<b:Value[^>]*>)0<")
+    text = first.read_text(encoding="utf-8")
+    assert order.search(text)
+    source = tmp_path / "ordered.tm7"
+    source.write_text(order.sub(r"\g<1>7<", text, count=1), encoding="utf-8")
+    again, out = tmp_path / "ordered.json", tmp_path / "out.tm7"
+    assert main(["import", str(source), "--out", str(again)]) == 0
+    assert main(["export", str(again), "--out", str(out)]) == 0
+    assert canonical(out) == canonical(source)

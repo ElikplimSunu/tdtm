@@ -303,7 +303,11 @@
     const m = editor.model;
     if (field === "title" || field === "owner" || field === "description") m.summary[field] = value;
     else if (field === "reviewer") m.detail.reviewer = value;
-    else if (field === "contributors") m.detail.contributors = value.split(",").map((n) => n.trim()).filter(Boolean).map((name) => ({ name }));
+    else if (field === "Assumptions" || field === "ExternalDependencies") {
+      // TMT-only fields; tm7 export and the report read them here (SPEC 11)
+      const tdtm = ((m as any).tdtm ??= {});
+      ((tdtm.tm7 ??= {}).meta ??= {})[field] = value;
+    } else if (field === "contributors") m.detail.contributors = value.split(",").map((n) => n.trim()).filter(Boolean).map((name) => ({ name }));
     model = { ...m } as Model; // new reference for the header; the editor keeps the same object
     editor.model = m;
     editor.modelEdited();

@@ -25,6 +25,7 @@ XSI_TYPE = "{http://www.w3.org/2001/XMLSchema-instance}type"
 XSI_NIL = "{http://www.w3.org/2001/XMLSchema-instance}nil"
 OUT_OF_SCOPE = "71f3d9aa-b8ef-4e54-8126-607a1d903103"  # TMT's fixed attribute names
 OUT_OF_SCOPE_REASON = "752473b6-52d4-4776-9a24-202153f7d579"
+DATAFLOW_ORDER = "15ccd509-98eb-49ad-b9c2-b4a2926d1780"
 GUID = re.compile(r"[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}")
 NODES = {  # GenericTypeId -> (Threat Dragon data.type, shape)
     "GE.P": ("tm.Process", "process"),
@@ -77,6 +78,15 @@ def _xsi_type(e: ET.Element) -> str:
 def _number(e: ET.Element, name: str) -> float | int:
     v = float(_text(e, name) or 0)
     return int(v) if v.is_integer() else v
+
+
+def _dataflow_order(v: ET.Element) -> str | None:
+    """TMT's Dataflow Order on flows and boundaries; None when it is the default "0"."""
+    props = _kid(v, "Properties")
+    for a in props if props is not None else []:
+        if _text(a, "Name") == DATAFLOW_ORDER:
+            return None if _text(a, "Value") in ("", "0") else _text(a, "Value")
+    return None
 
 
 def _read_properties(v: ET.Element) -> tuple[str, bool, str, list[str]]:
@@ -133,6 +143,7 @@ def _node(v: ET.Element, z: int) -> dict | None:
             "strokeThickness": _text(v, "StrokeThickness")
             if _text(v, "StrokeThickness") != "0"
             else None,
+            "dataflowOrder": _dataflow_order(v),
         },
     )
     if td_type == "tm.BoundaryBox":
@@ -231,6 +242,7 @@ def _line(v: ET.Element, z: int, ids: set[str]) -> dict:
             "ports": [_text(v, "PortSource"), _text(v, "PortTarget")],
             "source": [_number(v, "SourceX"), _number(v, "SourceY")],
             "target": [_number(v, "TargetX"), _number(v, "TargetY")],
+            "dataflowOrder": _dataflow_order(v),
         },
     )
     return cell
