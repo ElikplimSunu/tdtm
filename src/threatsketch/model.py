@@ -137,6 +137,8 @@ class Model:
     reviewer: str = ""
     description: str = ""
     contributors: list[str] = field(default_factory=list)
+    assumptions: str = ""  # TMT-only fields, kept in tdtm.tm7.meta (SPEC 11)
+    external_dependencies: str = ""
     warnings: list[str] = field(default_factory=list)
 
 

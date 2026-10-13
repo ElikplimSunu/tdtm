@@ -36,7 +36,6 @@ some import/export fidelity in `src/threatsketch/`.
 | Shapes | TMT stencil icons inside each shape; data store drawn as two lines with an icon | No icons; stores collapse and overlap on import |
 | Flow labels | Boxed labels with an icon, draggable | Plain text on the line |
 | Import geometry | Elements and boundaries laid out as drawn | Overlaps (SMS Provider / Inter-Bank Payment Network, the three stores in Bank Data Zone) |
-| Threat IDs | TMT's IDs: 1-based, with gaps (…9, 13…) | Renumbered from 0 |
 | Threat list columns | ID, Diagram, Changed By, Last Modified, State, Title, Category, Description, Justification, Interaction, Priority; filter on every column | ID, State, Title, Category, Interaction, Priority; three filters |
 | Threat properties | Pane under the list; title, category, description, justification all editable | Right-hand panel; only state, priority, justification |
 | Footer | "Export Csv"; "232 Threats Displayed, 232 Total" | Counts in the status bar |
@@ -60,12 +59,11 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 
 ### Phase 1: Engine and import fidelity (Python; small, easy-to-accept PRs)
 
-- [ ] **1.1 Threat IDs.** Keep TMT's threat IDs through import, analysis and export; new
-  threats take the next free ID, never reuse one. Done when: the reference model's list shows
-  1…9, 13… as in TMT, and the `.tm7` round-trips unchanged.
-- [ ] **1.2 Model properties.** Import and export Name, Owner, Reviewer, Contributors,
-  Description, Assumptions, External Dependencies. Done when: round-trip test; the name is no
-  longer the file name.
+- [x] **1.1 Threat IDs.** Checked: TMT's own IDs (0, 1…9, 13…, gaps included) already come
+  through import and export.
+- [x] **1.2 Model properties.** Assumptions and External Dependencies edited in the app, in the
+  report, kept in `.tm7`. (TMT's model name may be empty; the file name stands in, as before.)
+- [x] **1.2b Dataflow Order** written back on export (found by the reference model's round trip).
 - [ ] **1.3 Geometry.** Import element sizes, boundary boxes, flow handle points and label
   positions exactly; export them back. Done when: the reference model renders with nothing
   overlapping that doesn't overlap in TMT **[TMT]**.

@@ -85,12 +85,15 @@ def load_raw(raw: dict) -> tuple[Model, Document]:
     """Like `load`, for JSON already in memory. The Document wraps `raw` itself, not a copy."""
     doc = Document(raw=raw)
     summary, detail = raw.get("summary", {}), raw.get("detail", {})
+    tmt_meta = ((raw.get("tdtm") or {}).get("tm7") or {}).get("meta") or {}
     model = Model(
         title=summary.get("title", ""),
         owner=summary.get("owner") or "",
         description=summary.get("description") or "",
         reviewer=detail.get("reviewer") or "",
         contributors=[c.get("name", "") for c in detail.get("contributors") or [] if c],
+        assumptions=tmt_meta.get("Assumptions") or "",
+        external_dependencies=tmt_meta.get("ExternalDependencies") or "",
     )
     warn = model.warnings.append
 

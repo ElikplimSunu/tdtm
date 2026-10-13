@@ -240,6 +240,10 @@
           onchange={(e) => p.onmodel("contributors", e.currentTarget.value)} /></label>
       <label class="field"><span>Description</span>
         <textarea class="input" rows="4" value={p.model.summary.description ?? ""} onchange={(e) => p.onmodel("description", e.currentTarget.value)}></textarea></label>
+      <label class="field"><span>Assumptions</span>
+        <textarea class="input" rows="3" value={p.model.tdtm?.tm7?.meta?.Assumptions ?? ""} onchange={(e) => p.onmodel("Assumptions", e.currentTarget.value)} data-testid="model-assumptions"></textarea></label>
+      <label class="field"><span>External dependencies</span>
+        <textarea class="input" rows="3" value={p.model.tdtm?.tm7?.meta?.ExternalDependencies ?? ""} onchange={(e) => p.onmodel("ExternalDependencies", e.currentTarget.value)}></textarea></label>
       {#if p.review.length}
         <div class="section">Review before sharing</div>
         <ul class="review small" data-testid="review">
