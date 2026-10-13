@@ -1,6 +1,6 @@
 [project]
 name = "tdtm"
-version = "0.1.0"
+version = "0.2.0"
 description = "Microsoft TMT-style automatic threat generation for OWASP Threat Dragon models"
 readme = "README.md"
 requires-python = ">=3.11"
