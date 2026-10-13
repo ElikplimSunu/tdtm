@@ -227,3 +227,20 @@ test("private: the Mobile Banking model from real TMT gives TMT's 54 threats", a
   await chooser.setFiles(PRIVATE_TM7);
   await expect(page.getByTestId("threat-count")).toHaveText("54 threats");
 });
+
+test("works offline after the first visit", async ({ page, context }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("engine-status")).toContainText("tdtm");
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 30_000 }).catch(() => page.reload());
+  await page.evaluate(async () => {
+    const keys = await caches.keys();
+    const all = (await Promise.all(keys.map(async (k) => (await caches.open(k)).keys()))).flat();
+    if (!all.some((r) => r.url.includes("pyodide.asm.wasm"))) throw new Error("engine not cached");
+  });
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByTestId("engine-status")).toContainText("tdtm");
+  await page.getByRole("button", { name: /explore an example/ }).click();
+  await expect(page.getByTestId("threat-count")).toHaveText("38 threats");
+});

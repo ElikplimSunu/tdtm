@@ -45,6 +45,13 @@
       if (mod && e.key.toLowerCase() === "o") { e.preventDefault(); open(); }
     };
     const leave = (e: BeforeUnloadEvent) => { if (dirty) e.preventDefault(); };
+    // installed app: files opened with ThreatSketch from Finder or Explorer arrive here
+    (window as any).launchQueue?.setConsumer(async (params: { files: FileSystemFileHandle[] }) => {
+      const h = params.files[0];
+      if (!h) return;
+      const f = await h.getFile();
+      await openBytes({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()), handle: /\.json$/i.test(f.name) ? h : undefined });
+    });
     window.addEventListener("keydown", keys);
     window.addEventListener("beforeunload", leave);
     return () => { off(); window.removeEventListener("keydown", keys); window.removeEventListener("beforeunload", leave); };
@@ -349,7 +356,7 @@
 <div class="app" class:has-model={!!model} style="--threats: {threatHeight}px">
   <header class="top">
     <div class="brand">
-      <span class="mark"><Icon name="shield" size={16} /></span>
+      <img class="mark" src="{import.meta.env.BASE_URL}favicon.svg" alt="" width="26" height="26" />
       <span class="name">ThreatSketch</span>
     </div>
     {#if model}
@@ -474,7 +481,7 @@
   {#if !model}
     <div class="welcome">
       <div class="card">
-        <span class="bigmark"><Icon name="shield" size={28} /></span>
+        <img class="bigmark" src="{import.meta.env.BASE_URL}favicon.svg" alt="" width="64" height="64" />
         <h1>ThreatSketch</h1>
         <p class="lede">Draw a data-flow diagram and get Microsoft TMT's STRIDE threats as you draw, from the same SDL TM Knowledge Base template TMT uses.</p>
         <div class="start">
@@ -514,7 +521,7 @@
   .app > :global(.props) { grid-area: props; }
   .top { grid-area: top; display: flex; align-items: center; gap: 12px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--border); }
   .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; letter-spacing: -0.01em; padding-right: 12px; border-right: 1px solid var(--border); height: 28px; }
-  .mark { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: var(--accent); color: #fff; }
+  .mark { display: block; width: 28px; height: 28px; }
   .doc { display: flex; flex-direction: column; min-width: 0; }
   .doctitle { border: 0; background: none; padding: 0; font-weight: 600; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 360px; }
   .doctitle:hover { color: var(--accent-text); }
@@ -564,7 +571,7 @@
   .welcome { position: fixed; inset: 52px 0 28px; display: grid; place-items: center; padding: 24px; background:
     radial-gradient(circle at 1px 1px, var(--border-strong) 1px, transparent 0) 0 0 / 22px 22px, var(--bg); }
   .card { width: min(560px, 100%); padding: 36px 36px 28px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-lg); text-align: center; }
-  .bigmark { display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; background: var(--accent); color: #fff; box-shadow: var(--shadow); }
+  .bigmark { display: inline-block; width: 68px; height: 68px; }
   h1 { margin: 14px 0 6px; font-size: 26px; letter-spacing: -0.02em; }
   .lede { margin: 0 auto 22px; max-width: 440px; color: var(--muted); font-size: 14px; line-height: 1.55; }
   .start { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
