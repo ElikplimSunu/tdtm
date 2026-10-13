@@ -4,7 +4,7 @@
   import { tick } from "svelte";
   import { KIND_NAMES, type Kind } from "../lib/shapes";
   import { visibleDescription, withTags } from "../lib/sync";
-  import { PRIORITIES, STATES, type ElementInfo, type Model, type Palette, type ThreatRow } from "../lib/types";
+  import { PRIORITIES, STATES, type Attribute, type ElementInfo, type Model, type Palette, type ThreatEdit, type ThreatRow } from "../lib/types";
   import Icon from "./Icon.svelte";
   import type { LineStyle } from "../lib/editor";
 
@@ -22,7 +22,8 @@
     onupdate: (id: string, change: Record<string, any>) => void;
     online: (id: string, style: LineStyle) => void;
     onstencil: (id: string, stencil: string, attributes: Record<string, string>) => void;
-    onthreat: (key: string, state: string, priority: string, justification: string) => void;
+    onthreat: (key: string, edit: ThreatEdit) => void;
+    categories: string[];
     onselectthreat: (key: string) => void;
     onshowcell: (id: string) => void;
     ondelete: () => void;
@@ -36,6 +37,9 @@
   let justification = $state("");
   let tstate = $state("");
   let priority = $state("");
+  let ttitle = $state("");
+  let tcategory = $state("");
+  let tdescription = $state("");
   let lastId = "";
 
   $effect(() => {
@@ -49,6 +53,9 @@
     justification = p.threat?.justification ?? "";
     tstate = p.threat?.state ?? "";
     priority = p.threat?.priority ?? "";
+    ttitle = p.threat?.title ?? "";
+    tcategory = p.threat?.category ?? "";
+    tdescription = p.threat?.description ?? "";
   });
 
   $effect(() => {
@@ -82,13 +89,29 @@
   function triage() {
     const t = p.threat;
     if (!t) return;
-    if (tstate === t.state && priority === t.priority && justification === t.justification) return;
-    p.onthreat(t.key, tstate, priority, justification);
+    const edit = { state: tstate, priority, justification, title: ttitle, category: tcategory, description: tdescription };
+    if (edit.state === t.state && edit.priority === t.priority && edit.justification === t.justification
+      && edit.title === t.title && edit.category === t.category && edit.description === t.description) return;
+    p.onthreat(t.key, edit);
   }
   const cls = (s: string) => `state-${s.replaceAll(" ", "-")}`;
   const sourceNote: Record<string, string> = { static: "set by the stencil", TD: "from a Threat Dragon option", tag: "", default: "" };
   const enter = (e: KeyboardEvent) => e.key === "Enter" && (e.target as HTMLElement).blur();
 </script>
+
+{#snippet attr(a: Attribute)}
+  <label class="attr">
+    <span class="aname" title={a.name}>{a.label}</span>
+    {#if a.static}
+      <span class="fixed" title="Fixed by the {p.info?.stencilName} stencil"><Icon name="lock" size={12} />{a.value}</span>
+    {:else}
+      <select class="input compact" value={a.value} onchange={(e) => setAttribute(a.name, e.currentTarget.value)}>
+        {#each a.values as v}<option>{v}</option>{/each}
+      </select>
+    {/if}
+    {#if sourceNote[a.source]}<span class="src">{sourceNote[a.source]}</span>{/if}
+  </label>
+{/snippet}
 
 <aside class="props" aria-label="Properties">
   {#if p.threat}
@@ -104,6 +127,11 @@
         <span class="muted">· {t.interaction}</span>
       </button>
 
+      <!-- TMT's Threat Properties: every field can be edited -->
+      <label class="field">
+        <span>Title</span>
+        <input class="input" bind:value={ttitle} onblur={triage} onkeydown={enter} data-testid="threat-title" />
+      </label>
       <div class="grid2">
         <label class="field">
           <span>State</span>
@@ -119,14 +147,20 @@
         </label>
       </div>
       <label class="field">
+        <span>Category</span>
+        <select class="input" bind:value={tcategory} onchange={triage} data-testid="threat-category">
+          {#each p.categories.includes(tcategory) ? p.categories : [tcategory, ...p.categories] as c}<option>{c}</option>{/each}
+        </select>
+      </label>
+      <label class="field">
         <span>Justification</span>
         <textarea class="input" rows="4" placeholder="How is this mitigated, or why does it not apply?" bind:value={justification}
           onblur={triage} data-testid="threat-justification"></textarea>
       </label>
-      <div class="field">
+      <label class="field">
         <span>Description</span>
-        <p class="desc">{t.description}</p>
-      </div>
+        <textarea class="input" rows="5" bind:value={tdescription} onblur={triage} data-testid="threat-description"></textarea>
+      </label>
     </div>
   {:else if p.cell}
     {@const c = p.cell}
@@ -191,20 +225,19 @@
       {/if}
 
       {#if p.info && p.info.attributes.length && !isBoundary}
-        <div class="section">TMT properties</div>
-        {#each p.info.attributes as a (a.name)}
-          <label class="attr">
-            <span class="aname" title={a.name}>{a.label}</span>
-            {#if a.static}
-              <span class="fixed" title="Fixed by the {p.info.stencilName} stencil"><Icon name="lock" size={12} />{a.value}</span>
-            {:else}
-              <select class="input compact" value={a.value} onchange={(e) => setAttribute(a.name, e.currentTarget.value)}>
-                {#each a.values as v}<option>{v}</option>{/each}
-              </select>
-            {/if}
-            {#if sourceNote[a.source]}<span class="src">{sourceNote[a.source]}</span>{/if}
-          </label>
-        {/each}
+        {@const fixed = p.info.attributes.filter((a) => a.static)}
+        {@const free = p.info.attributes.filter((a) => !a.static)}
+        {@const generic = p.palette?.[c.kind as keyof typeof p.palette]?.find((s) => s.generic)}
+        <!-- TMT's grouping: what the stencil fixes, then what can be set, as the generic element -->
+        {#if fixed.length}
+          <div class="section">Predefined Static Attributes</div>
+          {#each fixed as a (a.name)}{@render attr(a)}{/each}
+        {/if}
+        {#if free.length}
+          <div class="section">Configurable Attributes</div>
+          {#if generic && generic.id !== p.info.stencil}<div class="sub">As {generic.name}</div>{/if}
+          {#each free as a (a.name)}{@render attr(a)}{/each}
+        {/if}
       {/if}
 
       {#if hasThreats}
@@ -256,6 +289,7 @@
 </aside>
 
 <style>
+  .sub { margin: calc(-1 * var(--s-1)) 0 var(--s-1); font-size: var(--fs-small); font-weight: 600; color: var(--muted); }
   .props { display: flex; flex-direction: column; min-height: 0; background: var(--panel); border-left: 1px solid var(--border); overflow: auto; }
   header { padding: var(--s-4) var(--s-4) var(--s-3); border-bottom: 1px solid var(--border); }
   .kind { font-size: var(--fs-small); color: var(--muted); }

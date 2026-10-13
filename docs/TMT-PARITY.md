@@ -87,10 +87,10 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 ### Phase 0: Setup
 
 - [x] **0.1** Fork, set remotes, branch `tmt-parity-0`. Done when: `git remote -v` shows both.
-- [x] **0.2 [TMT] Reference pack**: menus, reports, start page, Notes, DiagramReader; summed up
-  above. Still to capture: Analysis view, the Stencils and Element Properties panes, right-click
-  menus (canvas, element, flow, boundary, threat row), Options, Threat Model Information, the
-  template editor.
+- [x] **0.2 [TMT] Reference pack**: menus, reports, start page, Notes, DiagramReader, the Stencils
+  tree and Element Properties; summed up above. Still to capture: Analysis view, right-click menus
+  (canvas, element, flow, boundary, threat row), Options, Threat Model Information, the template
+  editor.
 
 ### Phase 1: Engine and import fidelity (Python; small, easy-to-accept PRs)
 
@@ -101,9 +101,11 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 - [x] **1.2b Dataflow Order** written back on export (found by the reference model's round trip).
 - [x] **1.3 Geometry.** Checked: positions and sizes come through exactly (shapes TMT placed 4px
   apart are 4px apart). What looked like overlaps is how shapes are drawn: phase 3.
-- [ ] **1.4 Threat fields.** Changed By and Last Modified are listed (as TMT's CSV: "Generated"
-  until triaged). **[TMT]** Does TMT show a date in Last Modified for a triaged threat? Edited
-  title/description/category, threats added by hand; round-trip through `.json` and `.tm7`.
+- [ ] **1.4 Threat fields.** Edited title/description/category: done. Changed By and Last
+  Modified are listed, "Generated" until triaged. **TMT checked:** a threat triaged in TMT shows
+  `MACHINE\user` and the local time (`13/10/2026 9:56:59 pm`) in both, so the CSV's empty Last
+  Modified for triaged threats is wrong. Needs a `.tm7` saved after triage, to see how TMT stores
+  `ModifiedAt` and map it. Then: record who/when on triage here too. Threats added by hand.
 - [x] **1.5 Stencil icons.** `api.palette()` gives each stencil's icon (a data URL; inherited from
   the parent when missing) and where TMT puts it (`iconAt`: center, lower-right, before-label).
 - [ ] **1.6 Notes** (the `.tm7`'s `Notes`: Id, text, date, added by): import, export, keep in
@@ -148,8 +150,8 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 - [x] **4.1 Columns**: all eleven of TMT's, resizable, sorted by clicking the header. *Not
   reorderable yet.*
 - [x] **4.2 Filters**: a drop-down filter on every column header, as TMT.
-- [ ] **4.3 Threat Properties pane** under the list: every field editable as in TMT; Notes tab
-  beside it (1.6).
+- [ ] **4.3 Threat Properties pane**: every field editable as in TMT *(done, in the properties
+  pane)*. Left: the pane under the list, as TMT places it; Notes tab beside it (1.6).
 - [ ] **4.4 Add/remove threats by hand** (if TMT 7.3 allows it **[TMT]**); multi-select rows to
   change state or priority at once.
 - [x] **4.5 Footer**: Export Csv button; "N Threats Displayed, N Total".

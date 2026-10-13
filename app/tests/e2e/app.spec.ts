@@ -510,3 +510,22 @@ test("the threat list has TMT's eleven columns, a filter on each, and its footer
   const csv = await download(page, () => page.getByRole("button", { name: "Export Csv" }).click());
   expect(csv.name).toMatch(/\.csv$/);
 });
+
+test("TMT's Threat Properties: title, category and description can be edited, and stay", async ({ page }) => {
+  await openExample(page);
+  await analysisView(page);
+  const row = page.getByTestId("threat-row").first();
+  await row.click();
+  await page.getByTestId("threat-title").fill("Customer impersonation");
+  await page.getByTestId("threat-title").press("Enter");
+  await expect(row).toContainText("Customer impersonation");
+  await page.getByTestId("threat-category").selectOption("Elevation Of Privilege");
+  await expect(row).toContainText("Elevation Of Privilege");
+  await page.getByTestId("threat-description").fill("Someone could pose as the customer.");
+  await page.getByTestId("threat-description").blur();
+  await expect(row).toContainText("Someone could pose as the customer.");
+  await page.getByTestId("threat-row").nth(3).click(); // another edit triggers another analysis
+  await page.getByTestId("threat-state").selectOption("Mitigated");
+  await expect(page.getByTestId("threat-row").nth(3)).toContainText("Mitigated");
+  await expect(row).toContainText("Customer impersonation");
+});

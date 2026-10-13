@@ -8,6 +8,11 @@ One version covers the app and the command-line tool. The format follows
 
 ### Added
 
+- A threat's title, category and description can be edited, as in TMT's Threat Properties. The
+  edits are kept by later analyses and written to `.tm7` exports.
+- Element properties are grouped as in TMT: Predefined Static Attributes (set by the stencil),
+  then Configurable Attributes, "As Generic Process" (or interactor, store, flow).
+
 - The threat list has TMT's eleven columns in TMT's order (ID, Diagram, Changed By, Last Modified,
   State, Title, Category, Description, Justification, Interaction, Priority), resizable, each
   with a filter drop-down of its values, as in TMT. Below it, as in TMT: Export Csv and
