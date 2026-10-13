@@ -39,7 +39,10 @@
   onMount(() => {
     const off = engine.onState(async (s) => {
       engineState = s;
-      if (s.status === "ready" && !palette) palette = await engine.palette();
+      if (s.status === "ready" && !palette) {
+        palette = await engine.palette();
+        editor?.setPalette(palette);
+      }
     });
     const keys = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
@@ -123,6 +126,7 @@
       failed: (m) => say(m, "error"),
       edit: () => focusName++,
     });
+    if (palette) editor.setPalette(palette);
     (window as any).threatsketch = { editor, engine }; // for automated tests and the browser console
     return editor;
   }

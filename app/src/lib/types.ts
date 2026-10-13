@@ -22,7 +22,7 @@ export type AnalyzeResult = {
   counts: { added: number; refreshed: number; unchanged: number; edited: number; stale: number };
 };
 
-export type Stencil = { id: string; name: string; generic: boolean };
+export type Stencil = { id: string; name: string; generic: boolean; icon: string; iconAt: "center" | "lower-right" | "before-label" };
 export type Palette = Record<"actor" | "process" | "store" | "flow" | "boundary_box" | "boundary_curve", Stencil[]>;
 
 export const STATES = ["Not Started", "Needs Investigation", "Not Applicable", "Mitigated"] as const;

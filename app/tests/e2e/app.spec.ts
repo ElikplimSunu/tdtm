@@ -429,3 +429,18 @@ test("TMT's assumptions and external dependencies reach the .tm7 and the saved m
   expect(tm7.text).toContain("<Assumptions>All traffic uses TLS 1.2+</Assumptions>");
   expect((await snapshot(page)).tdtm.tm7.meta.Assumptions).toBe("All traffic uses TLS 1.2+");
 });
+
+test("shapes and flows show TMT's stencil icons, which never reach the saved model", async ({ page }) => {
+  await openExample(page);
+  const hrefs = await page.evaluate(() => {
+    const g = (window as any).threatsketch.editor.graph;
+    return {
+      nodes: g.getNodes().filter((n: any) => n.shape !== "td-text-block").map((n: any) => n.getAttrByPath("icon/href") ?? ""),
+      flows: g.getEdges().map((e: any) => e.getLabels()[0]?.attrs?.icon?.href ?? ""),
+    };
+  });
+  expect(hrefs.nodes.length).toBeGreaterThan(0);
+  for (const h of [...hrefs.nodes, ...hrefs.flows]) expect(h).toMatch(/^data:image\/png;base64,/);
+  expect(JSON.stringify(await snapshot(page))).not.toContain("data:image/png");
+  await expect(page.locator(".palette img").first()).toHaveAttribute("src", /^data:image\/png;base64,/);
+});

@@ -144,12 +144,25 @@ def analyze(raw: dict) -> dict:
     }
 
 
+ICON_AT = {  # TMT's ImageLocation, as the app places the icon
+    "Centered on stencil": "center",
+    "Lower right of stencil": "lower-right",
+    "Before label": "before-label",
+}
+
+
 def palette() -> dict:
     """Kind -> stencils under it, generic element first, in template order."""
     tpl = template()
     return {
         kind.value: [
-            {"id": s.id, "name": s.name, "generic": s.id == root}
+            {
+                "id": s.id,
+                "name": s.name,
+                "generic": s.id == root,
+                "icon": f"data:image/png;base64,{s.image}",
+                "iconAt": ICON_AT.get(s.image_location, "center"),
+            }
             for s in sorted(
                 (s for s in tpl.stencils.values() if s.root == root), key=lambda s: s.id != root
             )
