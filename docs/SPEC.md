@@ -521,7 +521,7 @@ Threat Dragon 2.6.2 facts (td.vue/src at ff27a5e, and its log at
   dialog: the menu module only gets its window on `did-finish-load`. [confirmed, observed]
   So tdtm launches the app empty, waits for `Checking for update` in the log (window created),
   waits `LOAD_MARGIN` (4 s) more for the page, then sends the file. No log line marks page load,
-  so the margin is a calibrated guess. [confirmed once on a 2019 Intel MacBook Pro: no dialog, the
+  so the margin is a calibrated guess. [confirmed once on an Intel Mac running Threat Dragon 2.6.2: no dialog, the
   model opened]
 - An opened model lands on the model summary page, not the diagram. Because a reload while the
   user has unsaved edits makes Threat Dragon ask to discard them, automatic reload after each update
