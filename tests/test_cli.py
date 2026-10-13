@@ -71,7 +71,9 @@ def test_analyze_writes_threats_and_a_backup(model_copy, capsys):
     assert main(["analyze", str(model_copy)]) == 0
     out = capsys.readouterr().out
     assert "0 added" in out and "24 unchanged" in out
+    assert "no changes" in out and "wrote" not in out
     assert model_copy.read_bytes() == after
+    assert model_copy.with_name("model.json.bak").read_bytes() == original  # backup kept
 
 
 def test_analyze_dry_run_changes_nothing(model_copy, capsys):

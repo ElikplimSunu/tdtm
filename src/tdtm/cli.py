@@ -160,7 +160,9 @@ def _analyze_once(args: argparse.Namespace) -> int:
             if isinstance(m, dict) and "key" in m:
                 titles.setdefault(m["key"], t.get("title", ""))
 
+    before = json.dumps([doc.raw, sidecar], sort_keys=True)
     s = merge(doc, generated, packs=packs, prune=args.prune, sidecar=sidecar)
+    changed = json.dumps([doc.raw, sidecar], sort_keys=True) != before
     _report_problems(model, errors)
     if args.dry_run:
         for mark, keys in (("+", s.added), ("~", s.refreshed), ("!", s.stale), ("-", s.pruned)):
@@ -174,7 +176,11 @@ def _analyze_once(args: argparse.Namespace) -> int:
     if args.dry_run:
         return 0
 
-    if out.resolve() == Path(args.model).resolve():
+    in_place = out.resolve() == Path(args.model).resolve()
+    if in_place and not changed:  # keep the file, its timestamp and the previous .bak as they are
+        print(f"no changes; {out} left as it was")
+        return 0
+    if in_place:
         shutil.copyfile(args.model, f"{args.model}.bak")
     save(doc, out)
     if sidecar is not None:
