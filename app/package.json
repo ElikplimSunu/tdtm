@@ -1,0 +1,39 @@
+{
+  "name": "threatsketch",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "ThreatSketch: draw a data-flow diagram, get Microsoft TMT's STRIDE threats. Runs in the browser.",
+  "license": "MIT",
+  "scripts": {
+    "prepare-engine": "node scripts/prepare-engine.mjs",
+    "dev": "npm run prepare-engine && vite",
+    "build": "npm run prepare-engine && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@antv/x6": "2.19.2",
+    "@antv/x6-plugin-clipboard": "2.1.6",
+    "@antv/x6-plugin-history": "2.2.4",
+    "@antv/x6-plugin-keyboard": "2.2.3",
+    "@antv/x6-plugin-scroller": "2.0.10",
+    "@antv/x6-plugin-selection": "2.2.2",
+    "@antv/x6-plugin-snapline": "2.1.7",
+    "@antv/x6-plugin-transform": "2.1.8",
+    "pyodide": "314.0.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@tsconfig/svelte": "5.0.8",
+    "svelte": "5.57.2",
+    "svelte-check": "4.7.6",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vite-plugin-pwa": "2.0.0",
+    "vitest": "5.0.4"
+  }
+}
