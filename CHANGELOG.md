@@ -6,6 +6,25 @@ One version covers the app and the command-line tool. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Elbow lines: a data flow can be curved, as in TMT, or an elbow line that goes round shapes
+  (Line, in the flow's properties). New flows use the style chosen last. The report draws both.
+- A "Review before sharing" list, in the app and at the top of the report, that names what a
+  reader would trip over: elements still carrying a default name, no description, no trust
+  boundary, threats not triaged, and threats closed without a justification.
+
+### Changed
+
+- A data flow stays on the side of the shape it was drawn from and dropped on, and leaves and
+  enters square to that side. Flows that share a side are spaced apart, so two flows between the
+  same shapes, one each way, no longer draw on top of each other (in the report too).
+- Shapes added from the stencil list are placed further apart, and the canvas scrolls to them.
+
+### Fixed
+
+- A "+" under a data flow could not be clicked.
+
 ## [0.4.0] - 2026-10-13
 
 ### Added

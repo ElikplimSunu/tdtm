@@ -361,7 +361,7 @@
     if (!selectedCell || !editor) return null;
     const data = editor.dataOf(selectedCell);
     const kind = editor.kindOf(selectedCell);
-    return data && kind ? { id: selectedCell, kind, data } : null;
+    return data && kind ? { id: selectedCell, kind, data, line: editor.lineStyleOf(selectedCell) } : null;
   });
   const threat = $derived(analysis?.threats.find((t) => t.key === selectedThreat) ?? null);
   const cellThreats = $derived(analysis?.threats.filter((t) => t.cell === selectedCell) ?? []);
@@ -502,10 +502,11 @@
 
   {#if model}
     <Properties
-      {model} {cell} {threat} {cellThreats} {palette} {names} {focusName}
+      {model} {cell} {threat} {cellThreats} {palette} {names} {focusName} review={analysis?.review ?? []}
       info={selectedCell ? analysis?.elements[selectedCell] : undefined}
       onmodel={updateModel}
       onupdate={(id, change) => editor?.update(id, change)}
+      online={(id, style) => { editor?.setLineStyle(id, style); version++; }}
       onstencil={(id, s, a) => editor?.setElement(id, s, a)}
       onthreat={(key, s, pr, j) => editor?.setThreat(key, s, pr, j)}
       onselectthreat={selectThreat}

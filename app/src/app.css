@@ -212,7 +212,9 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
 .x6-graph-scroller { background-color: var(--canvas) !important; }
 .x6-graph text { font-family: var(--font); }
 .x6-port { visibility: hidden; }
-.x6-node.ts-hover .x6-port, .x6-node.x6-node-selected .x6-port { visibility: visible; }
+.x6-node.x6-node-selected .x6-port { visibility: visible; }
+/* a flow ending on a side runs over that side's "+": with the pointer on a "+", flows let it through */
+.ts-on-port .x6-edge { pointer-events: none; }
 /* the "+" keeps its size on screen at any zoom */
 .x6-port circle { r: calc(7px / var(--zoom, 1)); stroke-width: calc(1.5px / var(--zoom, 1)); }
 .x6-port path { transform: scale(calc(1 / var(--zoom, 1))); }

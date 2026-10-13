@@ -51,9 +51,23 @@ async function newModel(page: Page) {
 }
 
 async function plus(page: Page, cellId: string, side: string) {
+  // a person scrolls a shape into view before using its "+"; one at the canvas edge can sit under a panel
+  await page.evaluate((id) => {
+    const graph = (window as any).threatsketch.editor.graph;
+    const cell = graph.getCellById(id);
+    if (!graph.getGraphArea().containsRect(cell.getBBox().inflate(40))) graph.centerCell(cell);
+  }, cellId);
   const node = page.locator(`g.x6-node[data-cell-id="${cellId}"]`);
-  await node.hover({ force: true });
-  return node.locator(`[port-group="${side}"] circle`);
+  const handle = node.locator(`[port-group="${side}"] circle`);
+  // onto the "+", as a person would; if the canvas shifts under a still pointer (panels redraw
+  // when the analysis lands), the "+" moves away and hides, so aim again, as a person would
+  await expect(async () => {
+    await node.hover({ force: true });
+    const b = (await handle.boundingBox())!;
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+    await expect(handle).toBeVisible({ timeout: 1000 });
+  }).toPass({ timeout: 20_000 });
+  return handle;
 }
 
 test("opens the example: TMT's 38 threats, drawn TMT-style", async ({ page }) => {
@@ -80,6 +94,65 @@ test("a model saved without edits keeps every key of the original", async ({ pag
   await page.locator('g.x6-node[data-cell-id="customer"]').click(); // select, change nothing
   await page.locator(".canvas").click({ position: { x: 5, y: 5 } });
   expect(await snapshot(page)).toEqual(cliAnalyze(EXAMPLE));
+});
+
+/** The side of `id` that faces `other`, by their centres on the canvas. */
+async function facing(page: Page, id: string, other: string) {
+  const box = async (c: string) => (await page.locator(`g.x6-node[data-cell-id="${c}"]`).boundingBox())!;
+  const a = await box(id), b = await box(other);
+  const dx = (b.x + b.width / 2 - a.x - a.width / 2) / a.width, dy = (b.y + b.height / 2 - a.y - a.height / 2) / a.height;
+  return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : dy > 0 ? "bottom" : "top";
+}
+
+test("flows both ways between two shapes run side by side, not on top of each other", async ({ page }) => {
+  await newModel(page);
+  await page.getByRole("button", { name: /Generic External Interactor/ }).click();
+  await page.getByRole("button", { name: /^Generic Process/ }).click();
+  const [actor, proc] = (await snapshot(page)).detail.diagrams[0].cells.map((c: any) => c.id);
+  await (await plus(page, actor, "right")).click(); // actor -> process
+  await page.locator(".canvas").click({ position: { x: 5, y: 5 } });
+  await (await plus(page, proc, "left")).click(); // process -> actor
+  await expect(page.locator(".x6-edge")).toHaveCount(2);
+  const flows = (await snapshot(page)).detail.diagrams[0].cells.filter((c: any) => c.data.type === "tm.Flow");
+  expect(flows.map((f: any) => [f.source.cell, f.target.cell])).toEqual([[actor, proc], [proc, actor]]);
+  const ends = await page.evaluate((ids) => {
+    const graph = (window as any).threatsketch.editor.graph;
+    return ids.map((id: string) => {
+      const v = graph.findViewByCell(id);
+      return [v.sourcePoint.y, v.targetPoint.y];
+    });
+  }, flows.map((f: any) => f.id));
+  // each flow's ends sit apart from the other flow's, so the two lines never coincide
+  expect(Math.abs(ends[0][0] - ends[1][1])).toBeGreaterThan(8);
+  expect(Math.abs(ends[0][1] - ends[1][0])).toBeGreaterThan(8);
+});
+
+test("elbow lines: chosen per flow, saved in the file, and new flows follow the last choice", async ({ page }) => {
+  await newModel(page);
+  await page.getByRole("button", { name: /Generic External Interactor/ }).click();
+  await page.getByRole("button", { name: /^Generic Process/ }).click();
+  const [actor, proc] = (await snapshot(page)).detail.diagrams[0].cells.map((c: any) => c.id);
+  await page.evaluate((id) => { // put the process lower, so an elbow has to bend
+    const cell = (window as any).threatsketch.editor.graph.getCellById(id);
+    cell.translate(0, 160);
+  }, proc);
+  await (await plus(page, actor, "right")).click();
+  await page.getByTestId("line-style").selectOption("elbow");
+  const flowOf = async (from: string) =>
+    (await snapshot(page)).detail.diagrams[0].cells.find((c: any) => c.data.type === "tm.Flow" && c.source.cell === from);
+  await expect.poll(async () => (await flowOf(actor))?.router?.name).toBe("manhattan");
+  expect((await flowOf(actor)).connector.name).toBe("rounded");
+  const bends = await page.evaluate((id) => (window as any).threatsketch.editor.graph.findViewByCell(id).routePoints.length, (await flowOf(actor)).id);
+  expect(bends).toBeGreaterThanOrEqual(2);
+  if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT });
+
+  await page.keyboard.press("Escape");
+  await (await plus(page, proc, "left")).click(); // a new flow: elbow, like the last one chosen
+  await expect.poll(async () => (await flowOf(proc))?.router?.name).toBe("manhattan");
+
+  await page.getByTestId("line-style").selectOption("curved");
+  await expect.poll(async () => (await flowOf(proc))?.router).toBeUndefined();
+  expect((await flowOf(proc)).connector).toBe("smooth");
 });
 
 test("draw from scratch: palette, click + to connect, threats appear as you draw", async ({ page }) => {
@@ -112,6 +185,10 @@ test("click + where nothing is: a new process is added and linked", async ({ pag
   await expect(page.locator(".x6-edge")).toHaveCount(1);
   const types = (await snapshot(page)).detail.diagrams[0].cells.map((c: any) => c.data.type).sort();
   expect(types).toEqual(["tm.Actor", "tm.Flow", "tm.Process"]);
+  // nothing named yet: the model pane says so before anyone reads the report
+  await page.keyboard.press("Escape");
+  await page.locator(".canvas").click({ position: { x: 5, y: 5 } });
+  await expect(page.getByTestId("review")).toContainText("3 of 3 elements still have a default name");
 });
 
 test("drag a + onto another element to draw a flow", async ({ page }) => {
@@ -129,8 +206,10 @@ test("drag a + onto another element to draw a flow", async ({ page }) => {
   await page.mouse.up();
   await expect(page.locator(".x6-edge")).toHaveCount(1);
   const flow = (await snapshot(page)).detail.diagrams[0].cells.find((c: any) => c.data.type === "tm.Flow");
-  expect(flow.source).toEqual({ cell: proc }); // attached to the shape, not to the "+"
-  expect(flow.target).toEqual({ cell: store });
+  // attached to the shape's side, not to the "+"; dropped mid-shape, it lands on the side facing back
+  expect(flow.source).toEqual({ cell: proc, selector: "body", anchor: { name: "right" } }); // a circle
+  expect(flow.target.cell).toBe(store);
+  expect(flow.target.anchor.name).toBe(await facing(page, store, proc));
   await expect(page.getByTestId("threat-row").first()).toBeVisible();
 });
 
@@ -281,7 +360,12 @@ test("the first model in docs/coming-from-tmt.md works as written", async ({ pag
   );
   await expect(page.getByTestId("threat-count")).not.toHaveText("0 threats");
   // the customer's flows cross the boundary; the shop-to-orders flows do not
-  await page.locator(`g.x6-edge[data-cell-id="${flows.find((f: any) => f.source.cell === customer).id}"]`).click({ force: true });
+  const mid = await page.evaluate((id) => {
+    const graph = (window as any).threatsketch.editor.graph;
+    const path = graph.findViewByCell(id).getConnection();
+    return graph.localToClient(path.pointAtLength(path.length() / 2));
+  }, flows.find((f: any) => f.source.cell === customer).id);
+  await page.mouse.click(mid.x, mid.y); // on the line itself
   await expect(page.locator(".props")).toContainText("Crosses");
 });
 

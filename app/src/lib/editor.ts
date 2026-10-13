@@ -14,7 +14,7 @@ import { Selection } from "@antv/x6-plugin-selection";
 import { Snapline } from "@antv/x6-plugin-snapline";
 import { Transform } from "@antv/x6-plugin-transform";
 import { engine } from "../engine/client";
-import { KIND_OF_TYPE, newCell, registerShapes, type Kind } from "./shapes";
+import { ELBOW, KIND_OF_TYPE, newCell, registerShapes, type Kind } from "./shapes";
 import { forCanvas, fromCanvas, patchCell } from "./sync";
 import type { AnalyzeResult, Cell, Model } from "./types";
 
@@ -39,8 +39,17 @@ function canvasJSON(c: XCell): Record<string, any> {
   return j;
 }
 
+export type LineStyle = "curved" | "elbow";
+const LINE_KEY = "threatsketch.lineStyle";
+
+/** New flows take the line style last chosen, remembered in this browser. */
+function storedLineStyle(): LineStyle {
+  try { return localStorage.getItem(LINE_KEY) === "elbow" ? "elbow" : "curved"; } catch { return "curved"; }
+}
+
 export class Editor {
   graph: Graph;
+  lineStyle: LineStyle = storedLineStyle();
   model!: Model;
   diagram = 0;
   private baseline = new Map<string, string>(); // cell id -> its canvas JSON when last in step
@@ -65,7 +74,7 @@ export class Editor {
         allowBlank: false, allowLoop: false, allowMulti: true, allowNode: true, allowEdge: false,
         anchor: "center", connectionPoint: { name: "boundary", args: { selector: "body" } }, snap: { radius: 40 }, highlight: true,
         createEdge() {
-          const json = forCanvas(newCell("flow", DEFAULT_NAMES.flow, 0, 0));
+          const json = editor.styled(forCanvas(newCell("flow", DEFAULT_NAMES.flow, 0, 0)));
           delete json.source; delete json.target;
           return editor.graph.createEdge(json);
         },
@@ -102,13 +111,30 @@ export class Editor {
       for (const c of this.graph.getEdges()) this.edgeTools(c, selected.includes(c));
       this.on.selected(selected.length === 1 ? selected[0].id : null);
     });
-    this.graph.on("node:mouseenter", ({ view }) => view.container.classList.add("ts-hover"));
-    this.graph.on("node:mouseleave", ({ view }) => view.container.classList.remove("ts-hover"));
-    // flows attach to the shape's edge (as in TMT), not to the "+" they were drawn from
-    this.graph.on("edge:connected", ({ edge }) => {
-      const s = edge.getSourceCellId(), t = edge.getTargetCellId();
-      if (s && t) { edge.setSource({ cell: s }); edge.setTarget({ cell: t }); }
+    // a flow leaves from the side whose "+" it was drawn from and lands on the side it was dropped on
+    this.graph.on("edge:connected", ({ edge, e, type, isNew }) => {
+      const drop = this.graph.clientToLocal(e.clientX, e.clientY);
+      const moved = isNew ? "target" : type;
+      this.anchor(edge.id, { [moved]: drop });
     });
+    // Hover by position, not by DOM events: flows are drawn above shapes, and a flow ending on a side
+    // runs over that side's "+", so the shape would lose its hover (and its "+") just as the pointer
+    // reached it. Within 28px of a shape its "+" show; on a "+", flows let the pointer through.
+    // (A style rule, not a class on the shape: X6 redraws shapes, e.g. when the analysis lands.)
+    const hoverStyle = container.appendChild(document.createElement("style"));
+    const hover = (e: PointerEvent | null) => {
+      const p = e && this.graph.clientToLocal(e.clientX, e.clientY);
+      const node = p && this.graph.getNodes().filter((n) => n.getPorts().length && n.getBBox().inflate(28).containsPoint(p)).pop();
+      hoverStyle.textContent = node ? `.x6-node[data-cell-id="${CSS.escape(node.id)}"] .x6-port { visibility: visible; }` : "";
+      const view = node && this.graph.findViewByCell(node);
+      const onPort = !!e && !!view && [...view.container.querySelectorAll("[port-group] circle")].some((c) => {
+        const r = c.getBoundingClientRect();
+        return Math.hypot(e.clientX - r.x - r.width / 2, e.clientY - r.y - r.height / 2) <= r.width / 2 + 2;
+      });
+      container.classList.toggle("ts-on-port", onPort);
+    };
+    container.addEventListener("pointermove", hover);
+    container.addEventListener("pointerleave", () => hover(null));
     this.graph.on("scale", ({ sx }) => container.style.setProperty("--zoom", String(sx)));
     this.graph.on("node:magnet:click", ({ node, magnet }) => {
       const group = magnet.closest("[port-group]")?.getAttribute("port-group");
@@ -280,8 +306,7 @@ export class Editor {
     const p = at ?? this.freeSpot();
     const json = forCanvas(newCell(kind, DEFAULT_NAMES[kind], Math.round(p.x / 10) * 10, Math.round(p.y / 10) * 10));
     const cell = json.source ? this.graph.addEdge(json) : this.graph.addNode(json);
-    this.graph.cleanSelection();
-    this.graph.select(cell);
+    this.select(cell.id); // and scroll to it: the free spot can be off screen
     if (stencil) {
       clearTimeout(this.timer);
       this.setElement(cell.id, stencil, {});
@@ -297,6 +322,28 @@ export class Editor {
     if (change.name !== undefined) setLabel(c, change.name);
     if (change.isBidirectional !== undefined) c.setAttrByPath("line/sourceMarker", { name: change.isBidirectional ? "block" : "" });
     this.graph.stopBatch("update");
+  }
+
+  /** A new flow's JSON in the current line style. */
+  styled(json: Record<string, any>) {
+    return this.lineStyle === "elbow" ? { ...json, ...structuredClone(ELBOW) } : json;
+  }
+
+  lineStyleOf(cellId: string): LineStyle {
+    const r = this.graph.getCellById(cellId)?.prop("router");
+    return (typeof r === "string" ? r : r?.name) === "manhattan" ? "elbow" : "curved";
+  }
+
+  /** Curved (TMT's look) or elbow lines for a flow; new flows follow the last choice. */
+  setLineStyle(cellId: string, style: LineStyle) {
+    const c = this.graph.getCellById(cellId);
+    if (!c?.isEdge()) return;
+    this.graph.startBatch("line-style");
+    if (style === "elbow") { c.setRouter(ELBOW.router); c.setConnector(ELBOW.connector); }
+    else { c.removeRouter(); c.prop("connector", "smooth"); } // as Threat Dragon writes it
+    this.graph.stopBatch("line-style");
+    this.lineStyle = style;
+    try { localStorage.setItem(LINE_KEY, style); } catch { /* private window: not remembered */ }
   }
 
   dataOf(cellId: string): Record<string, any> | null {
@@ -342,14 +389,70 @@ export class Editor {
       const json = forCanvas(newCell(kind, DEFAULT_NAMES[kind], Math.round(x / 10) * 10, Math.round(y / 10) * 10));
       targetId = this.graph.addNode(json).id;
     }
-    const flow = forCanvas(newCell("flow", DEFAULT_NAMES.flow, 0, 0));
-    flow.source = { cell: fromId };
-    flow.target = { cell: targetId };
+    const flow = this.styled(forCanvas(newCell("flow", DEFAULT_NAMES.flow, 0, 0)));
+    flow.source = { cell: fromId, anchor: { name: side } };
+    flow.target = { cell: targetId, anchor: { name: OPPOSITE[side as Side] } };
     const edge = this.graph.addEdge(flow);
+    this.anchor(edge.id);
     this.graph.stopBatch("quick-connect");
     this.graph.cleanSelection();
     this.graph.select(edge);
     return edge.id;
+  }
+
+  /**
+   * Pin each end of a flow to a side of its shape: the "+" it was drawn from or dropped on, else the
+   * side nearest `drop` (where that end was let go, unless mid-shape), else the side it already had or that faces the
+   * other end. Then spread the flows sharing a side so two flows between the same shapes, in either
+   * direction, run side by side instead of on top of each other.
+   */
+  anchor(edgeId: string, drop: Partial<Record<"source" | "target", { x: number; y: number }>> = {}) {
+    const edge = this.graph.getCellById(edgeId);
+    if (!edge?.isEdge()) return;
+    const s = edge.getSourceCell(), t = edge.getTargetCell();
+    if (!s?.isNode() || !t?.isNode()) return;
+    this.graph.startBatch("anchor");
+    for (const [end, node, other] of [["source", s, t], ["target", t, s]] as const) {
+      const term = edge[end === "source" ? "getSource" : "getTarget"]() as Record<string, any>;
+      const side = (term.port && node.getPort(term.port)?.group)
+        || (drop[end] && sideNearest(node, drop[end], true))
+        || term.anchor?.name
+        || sideNearest(node, other.getBBox().getCenter())!;
+      edge[end === "source" ? "setSource" : "setTarget"](terminal(node, { name: side }));
+    }
+    this.spread(s);
+    this.spread(t);
+    this.graph.stopBatch("anchor");
+  }
+
+  /** Space out the flows that meet `node` on the same side, ordered by where their other end is. */
+  private spread(node: XCell) {
+    const bySide = new Map<Side, { edge: XCell; end: "source" | "target"; at: number }[]>();
+    for (const edge of this.graph.getConnectedEdges(node)) {
+      if (!edge.isEdge()) continue;
+      for (const end of ["source", "target"] as const) {
+        const term = (end === "source" ? edge.getSource() : edge.getTarget()) as Record<string, any>;
+        const side = term.anchor?.name as Side | undefined;
+        if (term.cell !== node.id || !side || !(side in OPPOSITE)) continue;
+        const other = (end === "source" ? edge.getTargetCell() : edge.getSourceCell())?.getBBox().getCenter();
+        const at = !other ? 0 : side === "top" || side === "bottom" ? other.x : other.y;
+        bySide.set(side, [...(bySide.get(side) ?? []), { edge, end, at }]);
+      }
+    }
+    const box = node.getBBox();
+    for (const [side, list] of bySide) {
+      list.sort((a, b) => a.at - b.at || (a.edge.id < b.edge.id ? -1 : 1));
+      const length = side === "top" || side === "bottom" ? box.width : box.height;
+      const gap = Math.min(SPREAD, (length * 0.7) / list.length);
+      list.forEach(({ edge, end }, i) => {
+        const offset = Math.round((i - (list.length - 1) / 2) * gap);
+        const args = offset ? (side === "top" || side === "bottom" ? { dx: offset } : { dy: offset }) : undefined;
+        const term = (end === "source" ? (edge as any).getSource() : (edge as any).getTarget()) as Record<string, any>;
+        const anchor = args ? { name: side, args } : { name: side };
+        if (JSON.stringify(term.anchor) === JSON.stringify(anchor)) return;
+        (edge as any)[end === "source" ? "setSource" : "setTarget"](terminal(node, anchor));
+      });
+    }
   }
 
   removeSelected() {
@@ -375,7 +478,8 @@ export class Editor {
   private freeSpot() {
     const p = this.centre();
     const taken = this.graph.getNodes().filter((n) => n.shape !== "trust-boundary-box").map((n) => n.getBBox());
-    for (let i = 0; i < 12 && taken.some((b) => b.isIntersectWithRect({ x: p.x - 20, y: p.y - 20, width: 190, height: 140 })); i++) p.x += 200;
+    // leave a 110px gap: room for a flow, its name and the "+" on both sides
+    for (let i = 0; i < 12 && taken.some((b) => b.isIntersectWithRect({ x: p.x - 100, y: p.y - 40, width: 270, height: 180 })); i++) p.x += 260;
     return p;
   }
 
@@ -415,6 +519,33 @@ export class Editor {
     });
     g.bindKey("escape", () => g.cleanSelection());
   }
+}
+
+type Side = "top" | "right" | "bottom" | "left";
+const OPPOSITE: Record<Side, Side> = { top: "bottom", right: "left", bottom: "top", left: "right" };
+const SPREAD = 18; // px between flows that share a side
+
+/**
+ * A flow end pinned to a point on `node`'s outline. Rectangles and stores end exactly there (their
+ * sides are straight; a line running along one would otherwise slide to the corner); a circle's
+ * outline curves away from the side's bounding line, so the flow meets the curve instead.
+ */
+function terminal(node: XCell, anchor: Record<string, any>) {
+  const t: { cell: string } & Record<string, any> = { cell: node.id, selector: "body", anchor };
+  if (node.shape !== "process") t.connectionPoint = { name: "anchor" };
+  return t;
+}
+
+/**
+ * The side of `node` facing `p`, measured against the shape's proportions; with `edgeOnly`, null
+ * when `p` is in the middle of the shape (dropped on the body: no side was aimed at).
+ */
+function sideNearest(node: XCell, p: { x: number; y: number }, edgeOnly = false): Side | null {
+  const b = node.getBBox(), c = b.getCenter();
+  const dx = (p.x - c.x) / (b.width || 1), dy = (p.y - c.y) / (b.height || 1);
+  if (edgeOnly && Math.abs(dx) < 0.3 && Math.abs(dy) < 0.3) return null;
+  if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? "right" : "left";
+  return dy > 0 ? "bottom" : "top";
 }
 
 function isNode(c: XCell) {

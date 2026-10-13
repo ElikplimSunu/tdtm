@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from .merge import merge
 from .model import KIND_ROOT, Kind, Model
-from .report import generated_by, render, render_csv, tmt_category, tmt_state
+from .report import generated_by, render, render_csv, review, tmt_category, tmt_state
 from .resolve import resolve
 from .rules.engine import run_sdl
 from .rules.tb7 import load_template
@@ -133,6 +133,7 @@ def analyze(raw: dict) -> dict:
         "threats": threat_rows(merged, tpl),
         "elements": _elements(merged, tpl),
         "warnings": model.warnings + [f"tag error: {e}" for e in errors],
+        "review": review(merged, tpl),
         "counts": {
             "added": len(s.added),
             "refreshed": len(s.refreshed),

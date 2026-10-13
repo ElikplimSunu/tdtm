@@ -102,6 +102,7 @@ class Element:
     source_id: str | None = None  # flows: connected cell ids
     target_id: str | None = None
     points: list[Point] = field(default_factory=list)  # curves: source, vertices..., target
+    elbow: bool = False  # flows: drawn as elbow lines (X6's manhattan router)
 
     # filled in by later stages
     stencil: str | None = None  # TMT stencil ID, e.g. "SE.P.TMCore.WebApp"
