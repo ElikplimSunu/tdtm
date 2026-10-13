@@ -6,7 +6,8 @@
 - Only STRIDE diagrams; others are skipped with a warning (SPEC 2.1).
 - One interaction per flow; bidirectional flows give two (direction "fwd"/"rev").
 - An interaction is skipped when the flow, or both its ends, are out of scope.
-- Placeholders {source.Name}, {target.Name}, {flow.Name} substituted case-insensitively.
+- Placeholders {source.Name}, {target.Name}, {flow.Name} substituted case-insensitively; a
+  bidirectional flow's titles end with "(source → target)".
 - Output order: diagram, flow (file order), direction, rule (template order). Deterministic.
 """
 
@@ -51,6 +52,8 @@ def run_sdl(model: Model, template, *, include_legacy: bool = False) -> list[Gen
         for s, f, t, direction in interactions(d):
             ctx = Context(template, s, f, t, [d.elements[b].stencil for b in f.crosses])
             names = {"source": s.label, "target": t.label, "flow": f.label}
+            # both directions of a bidirectional flow land on one cell: say which is which
+            suffix = f" ({s.label} → {t.label})" if direction else ""
             for tt, include, exclude in rules:
                 if evaluate(include, ctx) and not (exclude and evaluate(exclude, ctx)):
                     out.append(
@@ -60,7 +63,7 @@ def run_sdl(model: Model, template, *, include_legacy: bool = False) -> list[Gen
                             cell_id=f.cell_id,
                             direction=direction,
                             category=tt.category,
-                            title=fill_placeholders(tt.short_title, names),
+                            title=fill_placeholders(tt.short_title, names) + suffix,
                             description=fill_placeholders(tt.description, names),
                             severity=tt.priority or "TBD",
                         )

@@ -52,7 +52,7 @@ Work top to bottom. One task per commit. Tick the box when its acceptance criter
   (web app + DB across a box; actor → process across a curve; unencrypted vs encrypted flow;
   `@tmt` tags changing the outcome). Expected firings are worked out by reading the filters by
   hand and written into `*.expected.json`. Engine output must match exactly.
-- [ ] **2.4 `merge`** (SPEC 6), in whichever mode 0.2 chose.
+- [x] **2.4 `merge`** (SPEC 6), in whichever mode 0.2 chose.
   *Done when:* running twice changes nothing; editing a generated threat's mitigation then
   re-running keeps the edit; deleting a tag makes threats `[stale]`; `--prune` removes unedited
   stale ones; `hasOpenThreats` is correct; output validates against the v2 schema.

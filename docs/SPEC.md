@@ -332,7 +332,9 @@ boundary as a line, which a bounding box cannot model.
 
 Each generated threat gets `tdtm: {"key": "<pack>:<rule-id>:<cell-id>[:<direction>]",
 "fingerprint": "<sha1 of title|type|severity|status|description|mitigation as written>",
-"version": "<tdtm version>"}` and a deterministic `id` = UUIDv5(namespace, key).
+"version": "<tdtm version>"}` and a deterministic `id` = UUIDv5(namespace, key), where namespace =
+UUIDv5(URL, `https://github.com/ElikplimSunu/tdtm`). The fingerprint is re-stamped whenever tdtm
+itself rewrites the threat (refresh, `[stale]` prefix), so only human changes break it.
 
 ### 6.2 Re-run rules
 
@@ -345,18 +347,30 @@ For each cell, compare generated keys G with existing tdtm-owned threats E (exis
 | key in G and E, fingerprint unchanged | refresh text (template wording may have changed) |
 | key in G and E, fingerprint changed | the human edited it: leave untouched |
 | key in E and not in G | do not delete; prefix title with `[stale] ` unless the human edited it; `--prune` removes unedited stale threats |
+| key in G, no E, but a threat on the cell has `id` = UUIDv5(key) | ours with the `tdtm` key stripped: treat as edited, never duplicate it |
+
+Staleness only applies to keys of the packs run this time, so `--pack pytm` never marks `sdl`
+threats stale. A stale threat whose rule fires again is refreshed, which removes the prefix.
+
+After merging, every cell holding tdtm-owned threats gets `hasOpenThreats` and its outline attrs
+recomputed with Threat Dragon's rule (2.4). `threatTop` is written only when threats were added.
 
 ### 6.3 Sidecar fallback
 
 If Threat Dragon strips the `tdtm` key (2.5), write `<model>.tdtm.json` beside the model mapping
 threat `id` → `{key, fingerprint}`. Detect at load: a threat whose `id` is in the sidecar is
-tdtm-owned. The adapter must work in both modes. Choose per the Phase 0 manual result.
+tdtm-owned. Both modes are implemented: `merge(..., sidecar=dict)` uses the sidecar. Inline is
+the default because the source reading (2.5) says Threat Dragon keeps unknown keys; PLAN 0.2
+confirms by hand. Either way the `id` fallback in 6.2 prevents duplicates.
 
 ### 6.4 Defaults for new threats
 
 `status: "Open"`, `severity`: from rule pack (SDL template has empty Priority → `"TBD"`;
 pytm severity maps directly), `modelType: "STRIDE"`, `mitigation`: pack text or `""`,
-`type`: category mapped to TD STRIDE strings (Abuse → keep `"Abuse"`, flag in report).
+`type`: category mapped to TD STRIDE strings (Abuse → keep `"Abuse"`, flag in report),
+`new: false`, `number`: `threatTop + 1` per threat in output order, `score: ""`. Threats on a
+bidirectional flow get `(source → target)` appended to the title, since both directions land on
+the same cell.
 
 ## 7. Rule packs
 
