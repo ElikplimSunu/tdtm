@@ -253,6 +253,32 @@ test("triage a threat: state, priority and justification are saved TMT's way", a
   expect([second.status, second.severity, second.mitigation]).toEqual(["NotApplicable", "High", ""]);
 });
 
+test("an edit saved while an analysis is running stays in the model", async ({ page }) => {
+  await openExample(page);
+  // a slow engine, so the save lands while an analysis is in flight
+  await page.evaluate(() => {
+    const engine = (window as any).threatsketch.engine;
+    const analyze = engine.analyze.bind(engine);
+    engine.analyze = async (m: unknown) => {
+      const sent = structuredClone(m); // the worker gets a copy of the model as it is now
+      await new Promise((r) => setTimeout(r, 800));
+      return analyze(sent);
+    };
+  });
+  const position = async (id: string) =>
+    (await snapshot(page)).detail.diagrams[0].cells.find((c: any) => c.id === id).position;
+  await page.evaluate(() => (window as any).threatsketch.editor.graph.getCellById("audit").translate(0, 40));
+  await page.waitForTimeout(400); // the analysis for that move is now running
+  await page.evaluate(() => (window as any).threatsketch.editor.graph.getCellById("orders").translate(0, 40));
+  const moved = await position("orders"); // what Save writes (it syncs the canvas first)
+  await page.getByTestId("model-title").fill("Online shop v2"); // a model field, edited meanwhile
+  await page.getByTestId("model-title").press("Enter");
+  await page.waitForTimeout(3000); // the slow analyses finish and are applied
+  expect(await position("orders")).toEqual(moved);
+  expect((await position("orders")).y).toBe(510);
+  expect((await snapshot(page)).summary.title).toBe("Online shop v2");
+});
+
 test("delete and undo", async ({ page }) => {
   await openExample(page);
   await page.locator('g.x6-node[data-cell-id="audit"]').click();

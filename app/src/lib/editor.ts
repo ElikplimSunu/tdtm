@@ -57,6 +57,7 @@ export class Editor {
   private loaded = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private chain: Promise<unknown> = Promise.resolve();
+  private version = 0; // bumped whenever the model changes outside an engine call
 
   constructor(container: HTMLElement, private on: EditorEvents) {
     registerShapes();
@@ -149,6 +150,7 @@ export class Editor {
   open(model: Model) {
     this.loaded = false; // a different model: nothing on the canvas belongs to it
     this.model = model;
+    this.version++; // and a result still coming for the previous one must not land on it
     this.diagram = 0;
     this.loadDiagram(0);
     return this.analyse();
@@ -223,7 +225,13 @@ export class Editor {
       this.baseline.delete(id);
       changed = true;
     }
+    if (changed) this.version++;
     return changed;
+  }
+
+  /** The model's own fields (title, owner, ...) were edited: an engine result in flight is stale. */
+  modelEdited() {
+    this.version++;
   }
 
   private schedule() {
@@ -240,10 +248,23 @@ export class Editor {
     return next;
   }
 
+  /**
+   * An engine call on the current model, made again if the model changed while it ran (a save
+   * synced the canvas, or the title was edited): its result, computed from the older model, would
+   * otherwise replace the newer one and lose those edits.
+   */
+  private async fresh<T>(call: () => Promise<T>): Promise<T> {
+    for (;;) {
+      this.sync();
+      const version = this.version;
+      const result = await call();
+      if (version === this.version) return result;
+    }
+  }
+
   analyse() {
     return this.run(async () => {
-      this.sync();
-      const r = await engine.analyze(this.model);
+      const r = await this.fresh(() => engine.analyze(this.model));
       this.apply(r.model);
       this.on.analysed(r);
     });
@@ -251,10 +272,9 @@ export class Editor {
 
   setElement(cellId: string, stencil: string, attributes: Record<string, string>) {
     return this.run(async () => {
-      this.sync();
-      const m = await engine.setElement(this.model, cellId, stencil, attributes);
+      const m = await this.fresh(() => engine.setElement(this.model, cellId, stencil, attributes));
       this.apply(m, true);
-      const r = await engine.analyze(this.model);
+      const r = await this.fresh(() => engine.analyze(this.model));
       this.apply(r.model);
       this.on.analysed(r);
       this.on.changed();
@@ -263,10 +283,9 @@ export class Editor {
 
   setThreat(key: string, state: string, priority: string, justification: string) {
     return this.run(async () => {
-      this.sync();
-      const m = await engine.setThreat(this.model, key, state, priority, justification);
+      const m = await this.fresh(() => engine.setThreat(this.model, key, state, priority, justification));
       this.apply(m);
-      const r = await engine.analyze(this.model);
+      const r = await this.fresh(() => engine.analyze(this.model));
       this.apply(r.model);
       this.on.analysed(r);
       this.on.changed();
