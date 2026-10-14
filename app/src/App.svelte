@@ -391,6 +391,7 @@
     ((m.tdtm ??= {}).tm7 ??= {}).notes = next;
     model = { ...m } as Model;
     editor.model = m;
+    editor.modelEdited(); // an engine result in flight is stale now: it must not drop the note
     dirty = true;
     files.saveDraft({ model: m, name: fileName });
   }

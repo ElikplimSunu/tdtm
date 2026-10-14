@@ -71,6 +71,12 @@ def _text(e: ET.Element, name: str) -> str:
     return (k.text or "").strip() if k is not None else ""
 
 
+def _free(e: ET.Element, name: str) -> str:
+    """Free text (a justification, a note) exactly as written: line breaks and outer spaces kept."""
+    k = _kid(e, name)
+    return (k.text or "") if k is not None else ""
+
+
 def _xsi_type(e: ET.Element) -> str:
     return (e.get(XSI_TYPE) or "").rsplit(":", 1)[-1]
 
@@ -266,7 +272,8 @@ def _threat(v: ET.Element, position: int) -> tuple[str, dict]:
     props = {}
     properties = _kid(v, "Properties")
     for kv in properties if properties is not None else []:
-        props[_text(kv, "Key")] = _text(kv, "Value")
+        key = _text(kv, "Key")
+        props[key] = _free(kv, "Value") if key == "StateInformation" else _text(kv, "Value")
     flow, rule, state = _text(v, "FlowGuid"), _text(v, "TypeId"), _text(v, "State")
     category = props.get("UserThreatCategory", "")
     key = f"sdl:{rule}:{flow}"
@@ -277,7 +284,7 @@ def _threat(v: ET.Element, position: int) -> tuple[str, dict]:
         "severity": _text(v, "Priority") or props.get("Priority") or "High",
         "type": next((s for s in STRIDE_TYPES.values() if s.lower() == category.lower()), category),
         "description": props.get("UserThreatDescription", ""),
-        "mitigation": _text(v, "StateInformation") or props.get("StateInformation", ""),
+        "mitigation": _free(v, "StateInformation") or props.get("StateInformation", ""),
         "modelType": "STRIDE",
         "new": False,
         "number": int(_text(v, "Id") or 0),
@@ -416,7 +423,13 @@ def parse_tm7(data: bytes, title: str = "", path: str = "model") -> tuple[dict, 
     notes = _kid(root, "Notes")
     if notes is not None and len(notes):  # TMT's Notes pane: Id, Message, Date, AddedBy
         raw["tdtm"]["tm7"]["notes"] = [
-            {k: _text(n, k) for k in ("Id", "Message", "Date", "AddedBy")} for n in notes
+            {
+                "Id": _text(n, "Id"),
+                "Message": _free(n, "Message"),
+                "Date": _text(n, "Date"),
+                "AddedBy": _nil_or_text(n, "AddedBy"),
+            }  # fmt: skip
+            for n in notes
         ]
     if _text(root, "ThreatGenerationEnabled") == "false":
         raw["tdtm"]["tm7"]["threatGenerationEnabled"] = False

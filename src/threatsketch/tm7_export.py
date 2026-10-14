@@ -48,8 +48,13 @@ GUID = re.compile(r"[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}")
 NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "https://github.com/ElikplimSunu/tdtm/tm7")  # frozen
 
 
+# characters XML 1.0 cannot hold (a pasted vertical tab): dropped, or TMT could not read the file
+NOT_XML = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+
 def _t(text) -> str:
-    return escape(str(text))
+    # a carriage return as a character reference: written raw, a reader turns it into a line feed
+    return escape(NOT_XML.sub("", str(text))).replace("\r", "&#xD;")
 
 
 def _el(tag: str, text, ns: str | None = None) -> str:
