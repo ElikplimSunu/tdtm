@@ -574,10 +574,17 @@ test("TMT's Threat Properties: title, category and description can be edited, an
   await page.getByTestId("threat-description").fill("Someone could pose as the customer.");
   await page.getByTestId("threat-description").blur();
   await expect(row).toContainText("Someone could pose as the customer.");
-  await page.getByTestId("threat-row").nth(3).click(); // another edit triggers another analysis
+  const fourth = page.getByTestId("threat-row").nth(3); // on the same flow
+  const ownTitle = (await fourth.textContent())!;
+  await fourth.click(); // another edit triggers another analysis
+  await expect(page.getByTestId("threat-title")).not.toHaveValue("Customer impersonation"); // its own values
   await page.getByTestId("threat-state").selectOption("Mitigated");
-  await expect(page.getByTestId("threat-row").nth(3)).toContainText("Mitigated");
+  await expect(fourth).toContainText("Mitigated");
   await expect(row).toContainText("Customer impersonation");
+  // the first threat's edits stayed on it: the fourth keeps its own title and category
+  await expect(fourth).not.toContainText("Customer impersonation");
+  await expect(fourth).not.toContainText("Someone could pose");
+  expect(ownTitle).not.toContain("Customer impersonation");
 });
 
 test("TMT's Notes: add a note; it is saved with the model and written to the .tm7", async ({ page }) => {

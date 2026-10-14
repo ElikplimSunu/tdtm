@@ -231,8 +231,21 @@ def test_set_threat_edits_title_category_and_description_as_tmt_allows():
     )
     tm7 = api.export_tm7(raw)["text"]
     assert "Customer impersonation" in tm7 and "Someone could pose as the customer." in tm7
+    after = tm7[
+        tm7.index("<a:Value>Customer impersonation</a:Value>") :
+    ]  # the threat's own properties
+    assert after.split("<a:Key>UserThreatCategory</a:Key><a:Value>")[1].startswith(
+        "Elevation Of Privilege<"
+    )
     with pytest.raises(ValueError):
         api.set_threat(raw, key, "Not Started", "High", "", category="Not a category")
+    # a threat whose type is no template category (hand-written, or a Threat Dragon CIA one) can
+    # still be triaged: the app sends the category only when it was changed
+    threat = next(t for d in raw["detail"]["diagrams"] for c in d["cells"]
+                  for t in c["data"].get("threats", []) if t["tdtm"]["key"] == key)  # fmt: skip
+    threat["type"] = "Confidentiality"
+    api.set_threat(raw, key, "Mitigated", "High", "Encrypted at rest.")
+    assert threat["status"] == "Mitigated" and threat["type"] == "Confidentiality"
     assert api.categories()[-2:] == ["Elevation Of Privilege", "Abuse"]  # SDL: STRIDE, then Abuse
 
 

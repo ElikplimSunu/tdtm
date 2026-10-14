@@ -11,7 +11,8 @@ is dropped.
 - `palette()`: every stencil per element kind, for the app's stencil palette.
 - `set_element(raw, cell_id, stencil, attributes)`: record a stencil and attribute choice in the
   element's hidden `@tmt:` line (SPEC 4.3), so files stay readable by the CLI and Threat Dragon.
-- `set_threat(raw, key, state, priority, justification)`: triage one threat, TMT's way.
+- `set_threat(raw, key, state, priority, justification, title=None, category=None,
+  description=None)`: triage one threat, TMT's way; title, category and description only if given.
 - `import_tm7(data, title)`, `export_tm7(raw)`, `report_html(raw)`, `report_csv(raw)`.
 """
 
@@ -117,7 +118,9 @@ def _elements(model: Model, tpl) -> dict:
                         "values": a.values,
                         "source": e.attr_source[name],
                         "static": a.static,
+                        "generic": name in generic,  # inherited from the generic element
                     }
+                    for generic in [tpl.attributes_for(tpl.stencils[e.stencil].root)]
                     for name, a in tpl.attributes_for(e.stencil).items()
                 ],
             }

@@ -453,6 +453,7 @@ def export_tm7(raw: dict, template_path=None) -> tuple[str, list[str]]:
     warnings += [f"tag error (default used): {e}" for e in errors]
     keep = (raw.get("tdtm") or {}).get("tm7", {})
     letters = {c.findtext("Id"): c for c in tb7.findall("ThreatCategories/ThreatCategory")}
+    by_name = {(c.findtext("Name") or "").lower(): c for c in letters.values()}
     rule_category = {tt.id: tt.category for tt in template.threat_types}
 
     z, surfaces, threats = 1, [], []
@@ -508,7 +509,8 @@ def export_tm7(raw: dict, template_path=None) -> tuple[str, list[str]]:
                 if t.get("title", "").startswith("[stale] "):
                     continue
                 flow, src, tgt = flow_ids[(e.cell_id, direction)]
-                cat = letters[rule_category[rule]]
+                # the threat's category: the rule's, unless edited (TMT's Threat Properties)
+                cat = by_name.get((t.get("type") or "").lower(), letters[rule_category[rule]])
                 pos = ((t.get("tdtm") or {}).get("tm7") or {}).get("pos", 10**9)
                 threats.append(
                     (
