@@ -16,9 +16,11 @@ export type ThreatRow = {
 };
 
 /** What TMT's Threat Properties pane edits. */
-export type ThreatEdit = { state: string; priority: string; justification: string; title: string; category: string; description: string };
+// title, category and description are sent only when changed: a threat whose type is not a template
+// category (a hand-written or Threat Dragon one) can still be triaged
+export type ThreatEdit = { state: string; priority: string; justification: string; title?: string; category?: string; description?: string };
 
-export type Attribute = { name: string; label: string; value: string; values: string[]; source: string; static: boolean };
+export type Attribute = { name: string; label: string; value: string; values: string[]; source: string; static: boolean; generic: boolean };
 export type ElementInfo = { kind: string; stencil: string; stencilName: string; zone: string | null; crosses: string[]; attributes: Attribute[] };
 
 export type AnalyzeResult = {

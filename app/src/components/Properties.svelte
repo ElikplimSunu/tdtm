@@ -89,9 +89,12 @@
   function triage() {
     const t = p.threat;
     if (!t) return;
-    const edit = { state: tstate, priority, justification, title: ttitle, category: tcategory, description: tdescription };
+    const edit: ThreatEdit = { state: tstate, priority, justification };
+    if (ttitle !== t.title) edit.title = ttitle;
+    if (tcategory !== t.category) edit.category = tcategory;
+    if (tdescription !== t.description) edit.description = tdescription;
     if (edit.state === t.state && edit.priority === t.priority && edit.justification === t.justification
-      && edit.title === t.title && edit.category === t.category && edit.description === t.description) return;
+      && edit.title === undefined && edit.category === undefined && edit.description === undefined) return;
     p.onthreat(t.key, edit);
   }
   const cls = (s: string) => `state-${s.replaceAll(" ", "-")}`;
@@ -226,16 +229,18 @@
 
       {#if p.info && p.info.attributes.length && !isBoundary}
         {@const fixed = p.info.attributes.filter((a) => a.static)}
-        {@const free = p.info.attributes.filter((a) => !a.static)}
+        {@const own = p.info.attributes.filter((a) => !a.static && !a.generic)}
+        {@const free = p.info.attributes.filter((a) => !a.static && a.generic)}
         {@const generic = p.palette?.[c.kind as keyof typeof p.palette]?.find((s) => s.generic)}
         <!-- TMT's grouping: what the stencil fixes, then what can be set, as the generic element -->
         {#if fixed.length}
-          <div class="section">Predefined Static Attributes</div>
+          <div class="section">Predefined static attributes</div>
           {#each fixed as a (a.name)}{@render attr(a)}{/each}
         {/if}
-        {#if free.length}
-          <div class="section">Configurable Attributes</div>
-          {#if generic && generic.id !== p.info.stencil}<div class="sub">As {generic.name}</div>{/if}
+        {#if own.length || free.length}
+          <div class="section">Configurable attributes</div>
+          {#each own as a (a.name)}{@render attr(a)}{/each}
+          {#if free.length && generic && generic.id !== p.info.stencil}<div class="sub">As {generic.name}</div>{/if}
           {#each free as a (a.name)}{@render attr(a)}{/each}
         {/if}
       {/if}
@@ -299,7 +304,6 @@
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
   .link { display: flex; align-items: center; gap: var(--s-2); width: 100%; margin: 0 0 var(--s-4); padding: 6px var(--s-2); border: 1px solid var(--border-strong); border-radius: var(--r-1); background: none; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .link:hover { border-color: var(--accent); color: var(--accent-text); }
-  .desc { margin: 0; white-space: pre-wrap; line-height: 1.55; }
   .section { margin: var(--s-6) 0 var(--s-2); padding-top: var(--s-4); border-top: 1px solid var(--border); font-size: var(--fs-small); font-weight: 600; color: var(--muted); }
   .attr { display: grid; grid-template-columns: 1fr 1fr; gap: 2px var(--s-3); align-items: center; margin-bottom: var(--s-1); }
   .aname { font-size: var(--fs-small); overflow: hidden; text-overflow: ellipsis; }
