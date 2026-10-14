@@ -531,27 +531,34 @@ test("TMT's menus and views: Design shows stencils, Analysis the threat list; pa
   await expect(page.locator(".app.has-model")).toHaveCount(0);
 });
 
-test("the threat list has TMT's eleven columns, a filter on each, and its footer", async ({ page }) => {
+test("the threat list has TMT's columns, a filter on each, and its footer", async ({ page }) => {
   await openExample(page);
   const headers = page.getByRole("columnheader");
-  await expect(headers).toHaveText(["ID", "Diagram", "Changed By", "Last Modified", "State", "Title", "Category",
-    "Description", "Justification", "Interaction", "Priority"].map((h) => new RegExp(`^${h}`)));
-  await expect(page.getByTestId("threat-row").first()).toContainText("Generated");
-  await expect(page.getByTestId("threats-displayed")).toHaveText("38 Threats Displayed, 38 Total");
+  // a fresh one-diagram model: no Diagram, Changed by or Last modified column yet
+  await expect(headers).toHaveText(["ID", "State", "Title", "Category", "Description", "Justification", "Interaction",
+    "Priority"].map((h) => new RegExp(`^${h}`)));
+  // and it fits the pane: Priority, the last column, is in view without scrolling sideways
+  const table = await page.locator(".threats .table").boundingBox();
+  const priority = await headers.last().boundingBox();
+  expect(priority!.x + priority!.width).toBeLessThanOrEqual(table!.x + table!.width + 1);
+  await expect(page.getByTestId("threats-displayed")).toHaveText("38 threats displayed, 38 total");
 
   await page.getByRole("button", { name: "Filter Category" }).click();
-  await page.getByRole("menu", { name: "Filter Category" }).getByRole("button", { name: "Clear" }).click();
-  await page.getByRole("menu", { name: "Filter Category" }).getByLabel("Spoofing").check();
+  const pop = page.getByRole("dialog", { name: "Filter Category" });
+  await pop.getByRole("button", { name: "None" }).click();
+  await pop.getByLabel("Spoofing").check();
+  await pop.getByLabel("Spoofing").press("ArrowDown"); // moves in the list, not the threat selection
+  await expect(page.locator(".row.sel")).toHaveCount(0);
   await page.keyboard.press("Escape");
   const spoofing = await page.getByTestId("threat-row").count();
   expect(spoofing).toBeGreaterThan(0);
   expect(spoofing).toBeLessThan(38);
   for (const row of await page.getByTestId("threat-row").all()) await expect(row).toContainText("Spoofing");
-  await expect(page.getByTestId("threats-displayed")).toHaveText(`${spoofing} Threats Displayed, 38 Total`);
+  await expect(page.getByTestId("threats-displayed")).toHaveText(`${spoofing} threats displayed, 38 total`);
 
   await page.getByRole("button", { name: "Clear column filters" }).click();
   await expect(page.getByTestId("threat-row")).toHaveCount(38);
-  const csv = await download(page, () => page.getByRole("button", { name: "Export Csv" }).click());
+  const csv = await download(page, () => page.getByRole("button", { name: "Export CSV" }).click());
   expect(csv.name).toMatch(/\.csv$/);
 });
 

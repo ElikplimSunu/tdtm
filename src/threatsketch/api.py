@@ -91,8 +91,7 @@ def threat_rows(model: Model, tpl) -> list[dict]:
                         "description": t.description,
                         "justification": t.mitigation,
                         "priority": t.severity,
-                        "changedBy": tmt_changed(t)[0],
-                        "lastModified": tmt_changed(t)[1],
+                        **dict(zip(("changedBy", "lastModified"), tmt_changed(t), strict=True)),
                         "generatedBy": generated_by(t),
                         "editable": bool(t.tdtm_key),
                     }

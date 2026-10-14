@@ -455,7 +455,9 @@ report and adjust.
 Diagram, Interaction, Priority, State, Changed By, Description, Justification, Last Modified`,
 CRLF line endings, no byte-order mark. Category uses the template's names (`Denial Of Service`);
 State maps Open → `Not Started`, NotApplicable → `Not Applicable`; Last Modified is `Generated` for
-an untouched ThreatSketch threat, else empty. [confirmed: reproduces a real TMT 7.3 export row for row.]
+an untouched ThreatSketch threat, else empty. [confirmed: reproduces a real TMT 7.3 export row for row,
+for models whose threats are all untouched.] Changed By and Last Modified of a threat triaged in TMT
+come from its `.tm7` (`ChangedBy`, `ModifiedAt`) [unverified: no TMT CSV with a triaged threat seen].
 
 ## 10. Testing strategy
 
