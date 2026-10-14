@@ -34,7 +34,9 @@ ThreatSketch.
   draw a data flow, or click it to link the nearest element on that side. Flows stay on the sides
   you chose, curved as in TMT or as elbow lines.
 - **Triage.** Not Started, Needs Investigation, Not Applicable and Mitigated, with priority and
-  justification.
+  justification; edit a threat's title, category and description, and keep notes, as in TMT.
+- **TMT's layout, if you want it.** TMT's menu bar, toolbar and Design and Analysis views are a
+  click away; the default layout keeps everything in view.
 - **Hand-ins.** A report laid out like TMT's Full Report (HTML or PDF), the threat list in TMT's
   CSV format, or a `.tm7` for TMT. A review list flags what a reader would trip over first, such
   as elements still named Process or Data flow.
@@ -65,13 +67,18 @@ list; the ones you have decided on stand out.
 
 **Report.** The threat report follows TMT's Full Report: a summary by state and by STRIDE
 category, the diagram, then every interaction, the boundaries it crosses, and its threats. It
-prints to A4 with page numbers; Reports > Save Full Report as PDF saves it as a PDF
-([example PDF](docs/example-report.pdf)). Reports also saves the HTML report and TMT's CSV;
-File > Export as TMT Model writes a `.tm7`.
+prints to A4 with page numbers; Export > Threat report (PDF) saves it as a PDF
+([example PDF](docs/example-report.pdf)). Export also saves the HTML report, TMT's CSV and a
+`.tm7` for TMT.
 
 ![The threat report: model details and the Threat Model Summary by state and by STRIDE category](docs/img/threatsketch-report.jpg)
 
 ![Threats in the report: each with its state, category, priority, rule, description and justification](docs/img/threatsketch-report-threats.jpg)
+
+**TMT's layout.** The layout button in the header switches to TMT's menu bar, toolbar, and Design
+and Analysis views, for those who know TMT; it remembers your choice.
+
+![ThreatSketch in TMT's layout: menu bar, toolbar, Analysis view with the threat list](docs/img/threatsketch-tmt-layout.jpg)
 
 **Dark mode** follows your system. Files, reports and exports stay black on white, as in TMT.
 

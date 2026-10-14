@@ -6,58 +6,43 @@ One version covers the app and the command-line tool. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-14
+
+Most of this release is TMT parity work by @josetseph, reviewed and finished here.
+
 ### Added
 
-- TMT's Notes pane (View > Notes, or the toolbar): notes for the whole model, with Id, date and
-  author, kept in `.tm7` imports and exports, tabbed with the threat list as in TMT.
-
-- A threat's title, category and description can be edited, as in TMT's Threat Properties. The
-  edits are kept by later analyses and written to `.tm7` exports.
-- Element properties are grouped as in TMT: Predefined Static Attributes (set by the stencil),
-  then Configurable Attributes, "As Generic Process" (or interactor, store, flow).
-
-- The threat list has TMT's eleven columns in TMT's order (ID, Diagram, Changed By, Last Modified,
-  State, Title, Category, Description, Justification, Interaction, Priority), resizable, each
-  with a filter drop-down of its values, as in TMT. Below it, as in TMT: Export Csv and
-  "N Threats Displayed, M Total". The column filters replace the category and priority menus.
-
-- TMT's menu bar: File, Edit, View, Diagram, Reports and Help, with TMT's items and shortcuts.
-  New, Open, Export and Report moved into it (exports under File and Reports, as in TMT). File
-  also has Save As, Threat Model Information and Close Model; Help links to TMT's and the SDL's
-  pages.
-- TMT's toolbar, in TMT's order: Open; Design and Analysis view; add and delete diagram; copy,
-  cut, paste; undo, redo; zoom.
-- Design and Analysis views, as in TMT: Design shows the stencils, Analysis the threat list. View
-  shows or hides each pane; selecting a threat, or the threat count, opens the Analysis view.
-- Cut (Ctrl+X), and Ctrl+N, Ctrl+Shift+S and Ctrl+plus/minus for new, save as and zoom.
-
-- TMT's stencil icons, from the template: faded inside processes (centred), interactors and data
-  stores (lower right), before each trust boundary's name, and in the stencil list.
-- Flow names in TMT's pale green box with the flow stencil's icon before the name.
-
-- Assumptions and External Dependencies, TMT's two other model fields: edited in the model's
-  properties, shown in the report, and kept through `.tm7` import and export.
+- **TMT's layout, as an option.** TMT's menu bar (File, Edit, View, Diagram, Reports, Help, with
+  TMT's items and shortcuts), its toolbar in TMT's order, and Design and Analysis views. Switch
+  with the layout button in the header or View > TMT layout; the choice is remembered. The default
+  layout is unchanged: every pane in view, so threats appear as you draw.
+- **TMT's stencil icons** on the canvas and in the stencil list, and flow names in TMT's pale green
+  box with the flow stencil's icon.
+- **TMT's threat list columns**: ID, Diagram, Changed by, Last modified, State, Title, Category,
+  Description, Justification, Interaction, Priority, resizable, each with a filter of its values,
+  and Export CSV with "N threats displayed, M total" below. Columns with nothing to show yet (one
+  diagram, nothing triaged) stay out of the way.
+- **Editing a threat's title, category and description**, as in TMT's Threat Properties. Later
+  analyses keep the edits, and `.tm7` exports carry them.
+- **Last modified**: when a threat was triaged, in the list, the CSV and `.tm7` exports.
+- **TMT's Notes pane**: notes about the model, kept through `.tm7` import and export.
+- **Assumptions and External Dependencies**, TMT's other two model fields, in the model's
+  properties, the report and `.tm7` files.
+- Cut, Close model, Save as, and (desktop app) Cmd/Ctrl+N and zoom shortcuts.
 
 ### Changed
 
-- Names wrap inside their shape between words, as in TMT, instead of breaking mid-word or
-  running past the edge. Trust boundary names are no longer bold, as in TMT.
+- Element properties are grouped as in TMT: predefined static attributes, then configurable ones.
+- Names wrap inside their shape between words, as in TMT. Trust boundary names are not bold.
 
 ### Fixed
 
-- A `.tm7` imported from TMT and then renamed, or given other contributors, exported with the old
-  name and contributors; edits are now exported, and an unedited model still exports unchanged.
-- Justifications typed in TMT 7.3 were lost on `.tm7` import: TMT keeps them in the threat's
-  properties, not where import looked. A model triaged in TMT, with notes, now exports back
-  unchanged.
-
-- Last Modified shows when a threat was triaged, as TMT does ("13/10/2026 9:56:59 pm"), in the
-  list and the CSV; it was empty. Triage here stamps the time too, and `.tm7` exports carry it.
-
-- A threat TMT stored with Id 0 now shows as TMT shows it, the highest Id + 1, in the list, the
-  report and the CSV. A real TMT model's CSV now matches TMT's own export row for row.
-- A `.tm7` export kept each flow's TMT Dataflow Order at 0; it now writes back the number TMT gave
-  it, so a real TMT model exports back unchanged.
+- `.tm7` imports from TMT 7.3 lost justifications: TMT keeps them in the threat's properties.
+  Justifications and notes now round-trip exactly, line breaks included.
+- A `.tm7` export wrote every flow's Dataflow Order as 0, and the model's original name and
+  contributors even after they were edited. A real TMT model now exports back unchanged, and
+  edits are exported.
+- A threat TMT stored with Id 0 is numbered as TMT numbers it, so TMT's CSV matches row for row.
 
 ## [0.5.1] - 2026-10-14
 
