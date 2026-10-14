@@ -62,6 +62,8 @@ function canvasJSON(c: XCell): Record<string, any> {
   return j;
 }
 
+const CLOSED = new Error("the model was closed"); // ends an engine task quietly
+
 export type LineStyle = "curved" | "elbow";
 const LINE_KEY = "threatsketch.lineStyle";
 
@@ -81,6 +83,7 @@ export class Editor {
   private timer: ReturnType<typeof setTimeout> | undefined;
   private chain: Promise<unknown> = Promise.resolve();
   private version = 0; // bumped whenever the model changes outside an engine call
+  private closed = false; // File > Close: the model is gone until the next open()
   private icons = new Map<string, string>(); // stencil id -> its icon (data URL)
   private elements: Record<string, ElementInfo> = {}; // the engine's last word on each cell
 
@@ -174,6 +177,8 @@ export class Editor {
 
   open(model: Model) {
     this.loaded = false; // a different model: nothing on the canvas belongs to it
+    this.closed = false;
+    this.graph.enableKeyboard();
     this.model = model;
     this.version++; // and a result still coming for the previous one must not land on it
     this.diagram = 0;
@@ -260,7 +265,16 @@ export class Editor {
     this.version++;
   }
 
+  /** File > Close: no shortcut, pending analysis or engine result in flight touches it again. */
+  close() {
+    this.closed = true;
+    clearTimeout(this.timer);
+    this.graph.disableKeyboard(); // X6's keyboard is global: Backspace or Cmd+Z would edit it unseen
+    this.graph.cleanSelection();
+  }
+
   private schedule() {
+    if (this.closed) return;
     this.on.changed();
     clearTimeout(this.timer);
     this.timer = setTimeout(() => this.analyse(), 250);
@@ -270,8 +284,8 @@ export class Editor {
 
   private run<T>(task: () => Promise<T>): Promise<T> {
     const next = this.chain.then(task);
-    this.chain = next.catch((e) => this.on.failed(String(e?.message ?? e)));
-    return next;
+    this.chain = next.catch((e) => { if (e !== CLOSED) this.on.failed(String(e?.message ?? e)); });
+    return next.catch((e) => { if (e === CLOSED) return undefined as T; throw e; });
   }
 
   /**
@@ -281,9 +295,11 @@ export class Editor {
    */
   private async fresh<T>(call: () => Promise<T>): Promise<T> {
     for (;;) {
+      if (this.closed) throw CLOSED;
       this.sync();
       const version = this.version;
       const result = await call();
+      if (this.closed) throw CLOSED; // closed meanwhile: nothing to apply it to
       if (version === this.version) return result;
     }
   }
