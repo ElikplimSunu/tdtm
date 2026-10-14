@@ -16,7 +16,7 @@
   // TMT's columns, in its order. Each takes at least `min` px and a share (`fr`) of the room left,
   // until it is resized by hand; columns with nothing to say yet stay out (see `cols`).
   const ALL: { col: Col; label: string; min: number; fr: number }[] = [
-    { col: "id", label: "ID", min: 48, fr: 0 },
+    { col: "id", label: "ID", min: 76, fr: 0 },
     { col: "diagram", label: "Diagram", min: 100, fr: 0.6 },
     { col: "changedBy", label: "Changed by", min: 90, fr: 0.5 },
     { col: "lastModified", label: "Last modified", min: 150, fr: 0 },
@@ -26,7 +26,7 @@
     { col: "description", label: "Description", min: 110, fr: 2 },
     { col: "justification", label: "Justification", min: 90, fr: 1 },
     { col: "interaction", label: "Interaction", min: 120, fr: 1 },
-    { col: "priority", label: "Priority", min: 64, fr: 0 },
+    { col: "priority", label: "Priority", min: 92, fr: 0 },
   ];
   // Diagram once there are two; Changed by and Last modified once something has been triaged
   const cols = $derived(ALL.filter(({ col }) =>
