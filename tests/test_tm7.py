@@ -391,3 +391,32 @@ def test_export_writes_title_and_contributors_edited_after_import(tmp_path):
     text = out.read_text(encoding="utf-8")
     assert "<ThreatModelName>Edited name</ThreatModelName>" in text
     assert "<Contributors>Ama, Kofi</Contributors>" in text
+
+
+def test_notes_and_justifications_round_trip_exactly(tmp_path):
+    """Free text keeps its line breaks (CR as TMT writes it) and outer spaces, and a nil Added By
+    stays nil; a character XML cannot hold is dropped rather than breaking the file."""
+    model, first = tmp_path / "small.json", tmp_path / "first.tm7"
+    assert main(["import", str(SMALL), "--out", str(model)]) == 0
+    assert main(["export", str(model), "--out", str(first)]) == 0
+    note = ('<Notes><Note><AddedBy i:nil="true"/><Date>2026-10-01T10:00:00+00:00</Date><Id>1</Id>'
+            "<Message>  one&#xD;&#xA;two  </Message></Note></Notes>")  # fmt: skip
+    text = first.read_text(encoding="utf-8")
+    assert "<Notes/>" in text
+    source = tmp_path / "notes.tm7"
+    source.write_text(text.replace("<Notes/>", note), encoding="utf-8")
+    again, out = tmp_path / "notes.json", tmp_path / "out.tm7"
+    assert main(["import", str(source), "--out", str(again)]) == 0
+    raw = json.loads(again.read_text())
+    assert raw["tdtm"]["tm7"]["notes"][0]["Message"] == "  one\r\ntwo  "
+    assert main(["export", str(again), "--out", str(out)]) == 0
+    assert canonical(out) == canonical(source)
+
+    raw["tdtm"]["tm7"]["notes"][0]["Message"] = "tab\x0bhere"
+    again.write_text(json.dumps(raw))
+    out.unlink()
+    assert main(["export", str(again), "--out", str(out)]) == 0
+    import xml.etree.ElementTree as ET
+
+    ET.fromstring(out.read_bytes())  # still well-formed
+    assert "<Message>tabhere</Message>" in out.read_text(encoding="utf-8")

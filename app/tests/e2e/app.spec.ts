@@ -590,11 +590,19 @@ test("TMT's Threat Properties: title, category and description can be edited, an
 test("TMT's Notes: add a note; it is saved with the model and written to the .tm7", async ({ page }) => {
   await openExample(page);
   await page.getByRole("button", { name: "Notes", exact: true }).click();
-  await page.getByRole("button", { name: "Add New Note" }).click();
+  await page.getByRole("button", { name: "Add new note" }).click();
   await page.getByLabel("Note 1", { exact: true }).fill("Payment provider reviewed separately");
-  await page.getByLabel("Note 1", { exact: true }).press("Enter");
-  await expect(page.getByRole("tab", { name: "Notes - 1 entry" })).toBeVisible();
+  await page.getByLabel("Note 1", { exact: true }).blur();
+  // a second note on two lines keeps both, and clicking into it and out changes nothing
+  await page.getByRole("button", { name: "Add new note" }).click();
+  await page.getByLabel("Note 2", { exact: true }).fill("Line one\nLine two");
+  await page.getByLabel("Note 2", { exact: true }).blur();
+  await page.getByLabel("Note 2", { exact: true }).click();
+  await page.getByLabel("Note 2", { exact: true }).blur();
+  await expect.poll(async () => (await snapshot(page)).tdtm.tm7.notes[1]?.Message).toBe("Line one\nLine two");
+  await expect(page.getByRole("tab", { name: "Notes - 2 entries" })).toBeVisible();
   expect((await snapshot(page)).tdtm.tm7.notes[0]).toMatchObject({ Id: "1", Message: "Payment provider reviewed separately" });
   const tm7 = await download(page, async () => (await exportItem(page, /Microsoft TMT model/)).click());
-  expect(tm7.text).toContain("<Id>1</Id><Message>Payment provider reviewed separately</Message></Note></Notes>");
+  expect(tm7.text).toContain("<Id>1</Id><Message>Payment provider reviewed separately</Message></Note>");
+  expect(tm7.text).toContain("<Id>2</Id><Message>Line one\nLine two</Message></Note></Notes>");
 });
