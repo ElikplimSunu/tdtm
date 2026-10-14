@@ -39,7 +39,8 @@
   let lastId = "";
 
   $effect(() => {
-    const id = p.cell?.id ?? p.threat?.key ?? "";
+    // a selected threat comes with its flow selected, and a flow has several threats: key on both
+    const id = `${p.cell?.id ?? ""}|${p.threat?.key ?? ""}`;
     if (id === lastId) return;
     lastId = id;
     name = p.cell?.data?.name ?? "";

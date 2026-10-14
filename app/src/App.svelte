@@ -123,7 +123,7 @@
       failed: (m) => say(m, "error"),
       edit: () => focusName++,
     });
-    (window as any).threatsketch = { editor }; // for automated tests and the browser console
+    (window as any).threatsketch = { editor, engine }; // for automated tests and the browser console
     return editor;
   }
 
@@ -306,6 +306,7 @@
     else if (field === "contributors") m.detail.contributors = value.split(",").map((n) => n.trim()).filter(Boolean).map((name) => ({ name }));
     model = { ...m } as Model; // new reference for the header; the editor keeps the same object
     editor.model = m;
+    editor.modelEdited();
     dirty = true;
     files.saveDraft({ model: m, name: fileName });
   }

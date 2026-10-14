@@ -6,6 +6,16 @@ One version covers the app and the command-line tool. The format follows
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-14
+
+### Fixed
+
+- Selecting a second threat on the same data flow kept the first threat's priority and
+  justification in the triage form, and changing the second threat's state saved them onto it.
+- An edit could be lost from the saved file: saving, exporting or editing the model's title while
+  the threat engine was still working let the engine's older copy of the model replace the newer
+  one. Results computed from an older model are now recomputed instead.
+
 ## [0.5.0] - 2026-10-13
 
 ### Added
