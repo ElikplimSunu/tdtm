@@ -57,6 +57,22 @@
     panes.notes = on;
     if (on) bottom = "notes";
   }
+
+  // TMT's window (menu bar, toolbar, Design and Analysis views) is an option. The default layout
+  // keeps the stencils, threat list and properties in view, so threats appear as you draw.
+  type Layout = "simple" | "tmt";
+  const LAYOUT_KEY = "threatsketch.layout";
+  let layout = $state<Layout>(storedLayout());
+  function storedLayout(): Layout {
+    try { return localStorage.getItem(LAYOUT_KEY) === "tmt" ? "tmt" : "simple"; } catch { return "simple"; }
+  }
+  function setLayout(l: Layout) {
+    layout = l;
+    try { localStorage.setItem(LAYOUT_KEY, l); } catch { /* a private window: not remembered */ }
+    setView(view);
+  }
+  const shown = $derived(layout === "tmt" ? panes : { stencils: true, threats: true, props: true, notes: panes.notes });
+  let exportOpen = $state(false);
   const REPO = "https://github.com/ElikplimSunu/threatsketch";
 
   onMount(() => {
@@ -72,9 +88,10 @@
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); if (model) save(e.shiftKey); }
       if (mod && e.key.toLowerCase() === "o") { e.preventDefault(); open(); }
-      if (mod && e.key.toLowerCase() === "n") { e.preventDefault(); newModel(); } // the desktop app; browsers keep Ctrl+N
-      if (mod && model && (e.key === "=" || e.key === "+")) { e.preventDefault(); editor?.zoom(0.1); }
-      if (mod && model && e.key === "-") { e.preventDefault(); editor?.zoom(-0.1); }
+      // the desktop app only: a browser keeps Ctrl+N for a new window and Ctrl+/- for page zoom
+      if (files.isDesktop && mod && e.key.toLowerCase() === "n") { e.preventDefault(); newModel(); }
+      if (files.isDesktop && mod && model && (e.key === "=" || e.key === "+")) { e.preventDefault(); editor?.zoom(0.1); }
+      if (files.isDesktop && mod && model && e.key === "-") { e.preventDefault(); editor?.zoom(-0.1); }
     };
     const leave = (e: BeforeUnloadEvent) => { if (dirty) e.preventDefault(); };
     if (files.isDesktop) selftest().then((testing) => { if (!testing) updates.checkDesktop().then((u) => (update = u)); });
@@ -234,6 +251,7 @@
 
   async function closeModel() {
     if (!(await confirmDiscard())) return;
+    editor?.close(); // no shortcut or engine result brings the closed model back
     model = analysis = null;
     fileName = "";
     handle = undefined;
@@ -274,6 +292,7 @@
   }
 
   async function exportAs(kind: "json" | "tm7" | "csv" | "html" | "pdf") {
+    exportOpen = false;
     if (!editor) return;
     const m = editor.snapshot();
     try {
@@ -332,7 +351,7 @@
   }
 
   function selectThreat(key: string) {
-    if (!panes.threats) setView("analysis");
+    if (layout === "tmt" && !panes.threats) setView("analysis");
     const t = analysis?.threats.find((x) => x.key === key);
     if (t && editor) {
       const d = editor.model.detail.diagrams.findIndex((dg) => dg.cells.some((c) => c.id === t.cell));
@@ -448,16 +467,16 @@
     version;
     const none = !model;
     const file: Menu = { label: "File", items: [
-      { label: "New Model", shortcut: `${MOD}N`, action: newModel },
+      { label: "New model", shortcut: `${MOD}N`, action: newModel },
       { label: "Open…", shortcut: `${MOD}O`, action: open },
       { label: "Save", shortcut: `${MOD}S`, action: () => save(), disabled: none },
-      { label: "Save As…", shortcut: `${MOD}Shift+S`, action: () => save(true), disabled: none },
+      { label: "Save as…", shortcut: `${MOD}Shift+S`, action: () => save(true), disabled: none },
       "-",
-      { label: "Export as TMT Model (.tm7)…", action: () => exportAs("tm7"), disabled: none },
-      { label: "Save a Copy (.json)…", action: () => exportAs("json"), disabled: none },
+      { label: "Export as TMT model (.tm7)…", action: () => exportAs("tm7"), disabled: none },
+      { label: "Save a copy (.json)…", action: () => exportAs("json"), disabled: none },
       "-",
-      { label: "Threat Model Information…", action: modelInfo, disabled: none },
-      { label: "Close Model", action: closeModel, disabled: none },
+      { label: "Threat model information…", action: modelInfo, disabled: none },
+      { label: "Close model", action: closeModel, disabled: none },
     ] };
     if (none) return [file, help()];
     const many = diagrams.length > 1;
@@ -472,35 +491,37 @@
         { label: "Paste", shortcut: `${MOD}V`, action: () => editor?.paste() },
         { label: "Delete", shortcut: "Del", action: () => editor?.removeSelected() },
         "-",
-        { label: "Select All", shortcut: `${MOD}A`, action: () => editor?.selectAll() },
+        { label: "Select all", shortcut: `${MOD}A`, action: () => editor?.selectAll() },
       ] },
       { label: "View", items: [
-        { label: "Design View", action: () => setView("design"), checked: view === "design" },
-        { label: "Analysis View", action: () => setView("analysis"), checked: view === "analysis" },
+        { label: "Design view", action: () => setView("design"), checked: view === "design", radio: true },
+        { label: "Analysis view", action: () => setView("analysis"), checked: view === "analysis", radio: true },
         "-",
-        { label: "Zoom In", shortcut: `${MOD}+`, action: () => editor?.zoom(0.1) },
-        { label: "Zoom Out", shortcut: `${MOD}-`, action: () => editor?.zoom(-0.1) },
-        { label: "Fit to Window", action: () => editor?.fit() },
+        { label: "Zoom in", shortcut: `${MOD}+`, action: () => editor?.zoom(0.1) },
+        { label: "Zoom out", shortcut: `${MOD}-`, action: () => editor?.zoom(-0.1) },
+        { label: "Fit to window", action: () => editor?.fit() },
         "-",
         { label: "Stencils", action: () => (panes.stencils = !panes.stencils), checked: panes.stencils },
-        { label: "Threat List", action: () => (panes.threats = !panes.threats), checked: panes.threats },
+        { label: "Threat list", action: () => (panes.threats = !panes.threats), checked: panes.threats },
         { label: "Properties", action: () => (panes.props = !panes.props), checked: panes.props },
         { label: "Notes", action: () => showNotes(), checked: panes.notes },
-        { label: "Reset Window Layout", action: () => { setView(view); threatHeight = 280; } },
+        { label: "Reset window layout", action: () => { setView(view); threatHeight = 280; } },
+        "-",
+        { label: "TMT layout (menus, toolbar, views)", action: () => setLayout("simple"), checked: true },
       ] },
       { label: "Diagram", items: [
-        { label: "Add New Diagram", action: addDiagram },
-        { label: "Delete Diagram", action: () => deleteDiagram(diagram), disabled: !many },
-        { label: "Rename Diagram…", action: () => (renaming = diagram) },
+        { label: "Add new diagram", action: addDiagram },
+        { label: "Delete diagram", action: () => deleteDiagram(diagram), disabled: !many },
+        { label: "Rename diagram…", action: () => (renaming = diagram) },
         "-",
-        ...diagrams.map((title, i) => ({ label: title, action: () => switchDiagram(i), checked: i === diagram })),
+        ...diagrams.map((title, i) => ({ label: title, action: () => switchDiagram(i), checked: i === diagram, radio: true })),
       ] },
       { label: "Reports", items: [
-        { label: "Create Full Report…", action: report },
-        { label: "Save Full Report (.html)…", action: () => exportAs("html") },
-        { label: "Save Full Report as PDF…", action: () => exportAs("pdf") },
+        { label: "Create full report…", action: report },
+        { label: "Save full report (.html)…", action: () => exportAs("html") },
+        { label: "Save full report as PDF (print dialog)…", action: () => exportAs("pdf") },
         "-",
-        { label: "Export Threat List (.csv)…", action: () => exportAs("csv") },
+        { label: "Export threat list (.csv)…", action: () => exportAs("csv") },
       ] },
       help(),
     ];
@@ -511,7 +532,7 @@
       { label: "Coming from Microsoft TMT", action: () => files.openUrl(`${REPO}/blob/main/docs/coming-from-tmt.md`) },
       { label: "Microsoft Threat Modeling Tool", action: () => files.openUrl("https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool") },
       { label: "Microsoft Security Development Lifecycle (SDL)", action: () => files.openUrl("https://www.microsoft.com/en-us/securityengineering/sdl") },
-      { label: "Report an Issue…", action: () => files.openUrl(`${REPO}/issues`) },
+      { label: "Report an issue…", action: () => files.openUrl(`${REPO}/issues`) },
       "-",
       { label: "About ThreatSketch", action: () => say(`ThreatSketch, engine ${engineState.status === "ready" ? engineState.version : "starting"}. Threats from Microsoft TMT's SDL TM Knowledge Base template. MIT licence.`) },
     ] };
@@ -548,39 +569,68 @@
 />
 
 <div class="app" class:has-model={!!model}
-  style="--threats: {panes.threats || panes.notes ? threatHeight : 0}px; --pal: {panes.stencils ? 240 : 0}px; --props: {panes.props ? 320 : 0}px">
+  style="--threats: {shown.threats || shown.notes ? threatHeight : 0}px; --pal: {shown.stencils ? 240 : 0}px; --props: {shown.props ? 320 : 0}px; --tool: {model && layout === "tmt" ? 36 : 0}px">
   <header class="top">
     <div class="brand">
       <img class="mark" src="{import.meta.env.BASE_URL}favicon.svg" alt="" width="22" height="22" />
       <span class="name">ThreatSketch</span>
     </div>
-    <MenuBar {menus} />
+    {#if layout === "tmt"}<MenuBar {menus} />{/if}
     {#if model}
       <div class="doc">
-        <button class="doctitle" onclick={() => { editor?.graph.cleanSelection(); selectedThreat = null; focusTitle(); }} title="Model properties">
+        <button class="doctitle" onclick={modelInfo} title="Model properties">
           {model.summary.title || "Untitled threat model"}
         </button>
         <span class="file">{fileName || "not saved yet"}{#if dirty}<span class="dirty" title="Unsaved changes">•</span>{/if}</span>
       </div>
+      {#if layout === "simple"}
+        <div class="tools">
+          <button class="btn icon" onclick={() => editor?.undo()} title={`Undo (${MOD}Z)`} aria-label="Undo"><Icon name="undo" /></button>
+          <button class="btn icon" onclick={() => editor?.redo()} title={`Redo (${MOD}Shift+Z)`} aria-label="Redo"><Icon name="redo" /></button>
+          <button class="btn icon" class:on={panes.notes} onclick={() => showNotes()} title="Notes" aria-label="Notes" aria-pressed={panes.notes}><Icon name="note" /></button>
+        </div>
+      {/if}
     {/if}
     <div class="actions">
       <button class="btn icon" onclick={toggleTheme} title="Light or dark" aria-label="Toggle theme"><Icon name={theme === "dark" ? "sun" : "moon"} /></button>
+      <button class="btn icon" class:on={layout === "tmt"} onclick={() => setLayout(layout === "tmt" ? "simple" : "tmt")}
+        title={layout === "tmt" ? "Back to the simple layout" : "TMT's layout: menu bar, toolbar, Design and Analysis views"}
+        aria-label="TMT layout" aria-pressed={layout === "tmt"}><Icon name="panel" /></button>
+      {#if model && layout === "simple"}
+        <button class="btn" onclick={newModel}><Icon name="new" />New</button>
+        <button class="btn" onclick={open}><Icon name="open" />Open</button>
+        <div class="menu">
+          <button class="btn" onclick={() => (exportOpen = !exportOpen)} aria-expanded={exportOpen} aria-haspopup="menu"><Icon name="export" />Export</button>
+          {#if exportOpen}
+            <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+            <div class="scrim" onclick={() => (exportOpen = false)}></div>
+            <div class="dropdown" role="menu">
+              <button role="menuitem" onclick={() => exportAs("tm7")}><b>Microsoft TMT model</b><span>.tm7, opens in TMT 7</span></button>
+              <button role="menuitem" onclick={() => exportAs("pdf")}><b>Threat report (PDF)</b><span>opens the print dialog: choose Save as PDF</span></button>
+              <button role="menuitem" onclick={() => exportAs("html")}><b>Threat report</b><span>.html, TMT's Full Report layout</span></button>
+              <button role="menuitem" onclick={() => exportAs("csv")}><b>Threat list</b><span>.csv, TMT's export columns</span></button>
+              <button role="menuitem" onclick={() => exportAs("json")}><b>Save a copy</b><span>.json, opens in Threat Dragon too</span></button>
+            </div>
+          {/if}
+        </div>
+        <button class="btn outline" onclick={report}><Icon name="report" />Report</button>
+      {/if}
       {#if model}
         <button class="btn primary" onclick={() => save()} title={`Save (${MOD}S)`}><Icon name="save" />Save</button>
       {/if}
     </div>
   </header>
 
-  {#if model}
+  {#if model && layout === "tmt"}
     <!-- TMT's toolbar, in its order -->
     <div class="toolbar" role="toolbar" aria-label="Tools">
       <button class="btn icon" onclick={open} title={`Open (${MOD}O)`} aria-label="Open"><Icon name="open" /></button>
       <span class="div"></span>
-      <button class="btn icon" class:on={view === "design"} onclick={() => setView("design")} title="Design View" aria-label="Design View" aria-pressed={view === "design"}><Icon name="design" /></button>
-      <button class="btn icon" class:on={view === "analysis"} onclick={() => setView("analysis")} title="Analysis View" aria-label="Analysis View" aria-pressed={view === "analysis"}><Icon name="analysis" /></button>
+      <button class="btn icon" class:on={view === "design"} onclick={() => setView("design")} title="Design view" aria-label="Design view" aria-pressed={view === "design"}><Icon name="design" /></button>
+      <button class="btn icon" class:on={view === "analysis"} onclick={() => setView("analysis")} title="Analysis view" aria-label="Analysis view" aria-pressed={view === "analysis"}><Icon name="analysis" /></button>
       <span class="div"></span>
-      <button class="btn icon" onclick={addDiagram} title="Add New Diagram" aria-label="Add New Diagram"><Icon name="diagramadd" /></button>
-      <button class="btn icon" onclick={() => deleteDiagram(diagram)} disabled={diagrams.length < 2} title="Delete Diagram" aria-label="Delete Diagram"><Icon name="diagramdel" /></button>
+      <button class="btn icon" onclick={addDiagram} title="Add new diagram" aria-label="Add new diagram"><Icon name="diagramadd" /></button>
+      <button class="btn icon" onclick={() => deleteDiagram(diagram)} disabled={diagrams.length < 2} title="Delete diagram" aria-label="Delete diagram"><Icon name="diagramdel" /></button>
       <span class="div"></span>
       <button class="btn icon" onclick={() => editor?.copy()} title={`Copy (${MOD}C)`} aria-label="Copy"><Icon name="copy" /></button>
       <button class="btn icon" onclick={() => editor?.cut()} title={`Cut (${MOD}X)`} aria-label="Cut"><Icon name="cut" /></button>
@@ -589,15 +639,15 @@
       <button class="btn icon" onclick={() => editor?.undo()} title={`Undo (${MOD}Z)`} aria-label="Undo"><Icon name="undo" /></button>
       <button class="btn icon" onclick={() => editor?.redo()} title={`Redo (${MOD}Shift+Z)`} aria-label="Redo"><Icon name="redo" /></button>
       <span class="div"></span>
-      <button class="btn icon" onclick={() => editor?.zoom(0.1)} aria-label="Zoom in" title={`Zoom In (${MOD}+)`}><Icon name="zoomin" /></button>
-      <button class="btn icon" onclick={() => editor?.zoom(-0.1)} aria-label="Zoom out" title={`Zoom Out (${MOD}-)`}><Icon name="zoomout" /></button>
-      <button class="btn icon" onclick={() => editor?.fit()} aria-label="Fit to screen" title="Fit to Window"><Icon name="fit" /></button>
+      <button class="btn icon" onclick={() => editor?.zoom(0.1)} aria-label="Zoom in" title={`Zoom in (${MOD}+)`}><Icon name="zoomin" /></button>
+      <button class="btn icon" onclick={() => editor?.zoom(-0.1)} aria-label="Zoom out" title={`Zoom out (${MOD}-)`}><Icon name="zoomout" /></button>
+      <button class="btn icon" onclick={() => editor?.fit()} aria-label="Fit to screen" title="Fit to window"><Icon name="fit" /></button>
       <span class="div"></span>
       <button class="btn icon" class:on={panes.notes} onclick={() => showNotes()} title="Notes" aria-label="Notes" aria-pressed={panes.notes}><Icon name="note" /></button>
     </div>
   {/if}
 
-  {#if model && panes.stencils}
+  {#if model && shown.stencils}
     <Palette {palette} onadd={(k, s) => add(k, s)} />
   {/if}
 
@@ -632,16 +682,23 @@
           <span>Click or drag a stencil from the left. Hover an element and drag its <i>+</i> to draw a data flow.</span>
         </div>
       {/if}
+      {#if layout === "simple"}
+        <div class="zoom">
+          <button class="btn icon" onclick={() => editor?.zoom(-0.1)} aria-label="Zoom out" title={`Zoom out (${MOD}scroll)`}><Icon name="zoomout" /></button>
+          <button class="btn icon" onclick={() => editor?.fit()} aria-label="Fit to screen" title="Fit to screen"><Icon name="fit" /></button>
+          <button class="btn icon" onclick={() => editor?.zoom(0.1)} aria-label="Zoom in" title={`Zoom in (${MOD}scroll)`}><Icon name="zoomin" /></button>
+        </div>
+      {/if}
     </div>
   </main>
 
-  {#if model && (panes.threats || panes.notes)}
+  {#if model && (shown.threats || shown.notes)}
     {@const notes = (model as any).tdtm?.tm7?.notes ?? []}
-    {@const front = panes.threats && panes.notes ? bottom : panes.notes ? "notes" : "threats"}
-    <section class="threatpane" class:tabbed={panes.threats && panes.notes}>
+    {@const front = shown.threats && shown.notes ? bottom : shown.notes ? "notes" : "threats"}
+    <section class="threatpane" class:tabbed={shown.threats && shown.notes}>
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="resizer" onpointerdown={resize} title="Drag to resize"></div>
-      {#if panes.threats && panes.notes}
+      {#if shown.threats && shown.notes}
         <div class="panetabs" role="tablist" aria-label="Bottom panes">
           <button role="tab" class:on={front === "threats"} aria-selected={front === "threats"} onclick={() => (bottom = "threats")}>Threat List</button>
           <button role="tab" class:on={front === "notes"} aria-selected={front === "notes"} onclick={() => (bottom = "notes")}>Notes - {notes.length ? `${notes.length} ${notes.length === 1 ? "entry" : "entries"}` : "no entries"}</button>
@@ -655,7 +712,7 @@
     </section>
   {/if}
 
-  {#if model && panes.props}
+  {#if model && shown.props}
     <Properties
       {model} {cell} {threat} {cellThreats} {palette} {names} {focusName} review={analysis?.review ?? []}
       info={selectedCell ? analysis?.elements[selectedCell] : undefined}
@@ -679,7 +736,11 @@
       {:else}Threat engine failed: {engineState.error}{/if}
     </span>
     {#if analysis}
-      <button class="count" onclick={() => setView("analysis")} title="Analysis View" data-testid="threat-count">{analysis.threats.length} threats</button>
+      {#if layout === "tmt"}
+        <button class="count" onclick={() => setView("analysis")} title="Analysis view" data-testid="threat-count">{analysis.threats.length} threats</button>
+      {:else}
+        <span data-testid="threat-count">{analysis.threats.length} threats</span>
+      {/if}
       <span>{open_} open</span>
     {/if}
     {#if warnings.length}
@@ -730,13 +791,13 @@
     height: 100%;
     display: grid;
     grid-template-columns: var(--pal) minmax(0, 1fr) var(--props);
-    grid-template-rows: 44px 36px minmax(0, 1fr) var(--threats) 28px;
+    grid-template-rows: 44px var(--tool) minmax(0, 1fr) var(--threats) 28px;
     grid-template-areas: "top top top" "tool tool tool" "pal stage props" "threats threats props" "status status status";
   }
   .app:not(.has-model) { grid-template-rows: 44px 0 minmax(0, 1fr) 0 28px; grid-template-areas: "top top top" "tool tool tool" "stage stage stage" "threats threats threats" "status status status"; }
   .toolbar { grid-area: tool; display: flex; align-items: center; gap: 2px; padding: 0 var(--s-2); background: var(--panel); border-bottom: 1px solid var(--border); }
   .toolbar .div { width: 1px; height: 18px; margin: 0 var(--s-1); background: var(--border); }
-  .toolbar .on { background: var(--hover); color: var(--accent-text); }
+  .on { background: var(--hover); color: var(--text); }
   .count { border: 0; background: none; padding: 0; color: inherit; font: inherit; }
   .count:hover { color: var(--text); text-decoration: underline; }
   .app > :global(.palette) { grid-area: pal; }
@@ -752,6 +813,14 @@
   .file { font-size: var(--fs-caption); color: var(--muted); }
   .dirty { color: var(--accent); margin-left: var(--s-1); }
   .actions { margin-left: auto; display: flex; align-items: center; gap: var(--s-1); }
+  .tools { display: flex; gap: 2px; margin-left: var(--s-2); }
+  .menu { position: relative; }
+  .scrim { position: fixed; inset: 0; z-index: 20; }
+  .dropdown { position: absolute; right: 0; top: 32px; z-index: 21; width: 264px; padding: var(--s-1); background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--r-2); box-shadow: var(--shadow-pop); }
+  .dropdown button { display: grid; width: 100%; padding: 6px var(--s-2); border: 0; border-radius: var(--r-1); background: none; text-align: left; }
+  .dropdown button:hover { background: var(--hover); }
+  .dropdown b { font-weight: 500; }
+  .dropdown span { font-size: var(--fs-small); color: var(--muted); }
 
   .stage { grid-area: stage; display: grid; grid-template-rows: 32px minmax(0, 1fr); min-height: 0; min-width: 0; }
   .stage.hidden { visibility: hidden; }
@@ -768,6 +837,7 @@
   .hint { position: absolute; left: var(--s-6); top: var(--s-5); display: grid; gap: var(--s-1); max-width: 340px; color: var(--muted); pointer-events: none; }
   .hint b { color: var(--text); font-weight: 600; font-size: var(--fs-h3); }
   .hint i { font-style: normal; font-weight: 600; color: var(--accent-text); }
+  .zoom { position: absolute; right: var(--s-3); bottom: var(--s-3); display: flex; gap: 2px; padding: 2px; background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--r-2); }
 
   .threatpane { grid-area: threats; position: relative; min-height: 0; border-top: 1px solid var(--border-strong); }
   .threatpane.tabbed { display: grid; grid-template-rows: 30px minmax(0, 1fr); }

@@ -115,8 +115,10 @@ Each task lists how we know it's done. **[TMT]** means it needs a check against 
 
 ### Phase 2: The TMT window (structure and behaviour, in the current visual style)
 
-- [x] **2.1 Menu bar**: File, Edit, View, Diagram, Reports, Help with TMT's items and shortcuts.
-  Settings and DiagramReader join when 1.7 and 2.7 exist; File > Apply Template with 6.3. On the desktop app, use native menus (Tauri) on macOS; in-window elsewhere.
+- [x] **2.1 Menu bar** (in the TMT layout, an option; the default layout keeps its header):
+  File, Edit, View, Diagram, Reports, Help with TMT's items and shortcuts. Settings and
+  DiagramReader join when 1.7 and 2.7 exist; File > Apply Template with 6.3. Still to do: native
+  menus (Tauri) on macOS in the desktop app.
 - [x] **2.2 Icon toolbar** with TMT's buttons and order (Save stays the primary button; Notes
   joins with 1.6).
 - [ ] **2.3 Docking panes**: Stencils, Properties, Threat List, Threat Properties, Messages,

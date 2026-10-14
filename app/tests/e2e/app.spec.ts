@@ -46,12 +46,14 @@ async function download(page: Page, click: () => Promise<void>) {
 /** Click a menu bar menu, then return one of its items. */
 async function menu(page: Page, top: string, item: string | RegExp) {
   await page.getByRole("menuitem", { name: top, exact: true }).click();
-  return page.getByRole("menu", { name: top }).getByRole("menuitem", { name: item });
+  // checkable items are menuitemcheckbox or menuitemradio to assistive tech
+  return page.getByRole("menu", { name: top }).locator('[role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]').filter({ hasText: item });
 }
 
-/** TMT's Analysis view: the threat list and threat properties. */
-async function analysisView(page: Page) {
-  await page.getByRole("button", { name: "Analysis View" }).click();
+/** An item of the Export menu (the default layout's header). */
+async function exportItem(page: Page, item: RegExp) {
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  return page.getByRole("menuitem", { name: item });
 }
 
 async function newModel(page: Page) {
@@ -87,7 +89,6 @@ test("opens the example: TMT's 38 threats, drawn TMT-style", async ({ page }) =>
   await openExample(page);
   await expect(page.locator(".x6-node")).toHaveCount(6);
   await expect(page.locator(".x6-edge")).toHaveCount(7);
-  await analysisView(page);
   await expect(page.getByTestId("threat-row")).toHaveCount(38);
   // trust boundaries are red dashed, as in TMT; open-threat outlines are not drawn
   const box = page.locator('g[data-cell-id="backend"] rect').first();
@@ -199,7 +200,6 @@ test("draw from scratch: palette, click + to connect, threats appear as you draw
 
   await (await plus(page, actor, "right")).click();
   await expect(page.locator(".x6-edge")).toHaveCount(1);
-  await analysisView(page);
   await expect(page.getByTestId("threat-row").first()).toBeVisible();
   const flow = (await snapshot(page)).detail.diagrams[0].cells.find((c: any) => c.data.type === "tm.Flow");
   expect([flow.source.cell, flow.target.cell]).toEqual([actor, proc]);
@@ -246,7 +246,6 @@ test("drag a + onto another element to draw a flow", async ({ page }) => {
   expect(flow.source).toEqual({ cell: proc, selector: "body", anchor: { name: "right" } }); // a circle
   expect(flow.target.cell).toBe(store);
   expect(flow.target.anchor.name).toBe(await facing(page, store, proc));
-  await analysisView(page);
   await expect(page.getByTestId("threat-row").first()).toBeVisible();
 });
 
@@ -263,7 +262,6 @@ test("choosing a stencil changes the threats, as in TMT", async ({ page }) => {
 
 test("triage a threat: state, priority and justification are saved TMT's way", async ({ page }) => {
   await openExample(page);
-  await analysisView(page);
   await page.getByTestId("threat-row").first().click();
   await page.getByTestId("threat-state").selectOption("Needs Investigation");
   await expect(page.getByTestId("threat-row").first()).toContainText("Needs Investigation");
@@ -327,18 +325,17 @@ test("import a TMT .tm7, then export .tm7, report and CSV", async ({ page }) => 
   await expect(page.getByTestId("engine-status")).toContainText("Knowledge Base", { timeout: 30_000 });
   const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.getByRole("button", { name: /Open a file/ }).click()]);
   await chooser.setFiles(SMALL_TM7);
-  await analysisView(page);
   await expect(page.getByTestId("threat-row").first()).toBeVisible();
   const expected = JSON.parse(execFileSync("uv", ["run", "--project", REPO, "python", "-c",
     `import json,sys; from threatsketch.tm7 import import_tm7; from threatsketch import api; print(json.dumps(len(api.analyze(import_tm7(sys.argv[1])[0])["threats"])))`, SMALL_TM7]).toString());
   await expect(page.getByTestId("threat-row")).toHaveCount(expected);
 
-  const tm7 = await download(page, async () => (await menu(page, "File", /TMT Model \(\.tm7\)/)).click());
+  const tm7 = await download(page, async () => (await exportItem(page, /Microsoft TMT model/)).click());
   expect(tm7.name).toBe("small.tm7");
   expect(tm7.text).toContain("<ThreatModel");
-  const html = await download(page, async () => (await menu(page, "Reports", /Full Report \(\.html\)/)).click());
+  const html = await download(page, async () => (await exportItem(page, /^Threat report \.html/)).click());
   expect(html.text).toContain("Threat Model Summary");
-  const csv = await download(page, async () => (await menu(page, "Reports", /Threat List \(\.csv\)/)).click());
+  const csv = await download(page, async () => (await exportItem(page, /Threat list/)).click());
   expect(csv.text.split("\r\n")[0]).toBe("Id,Title,Category,Diagram,Interaction,Priority,State,Changed By,Description,Justification,Last Modified");
 });
 
@@ -439,7 +436,7 @@ test("the first model in docs/coming-from-tmt.md works as written", async ({ pag
 
 test("PDF export opens the styled report with the print dialog", async ({ page }) => {
   await openExample(page);
-  const item = await menu(page, "Reports", /Full Report as PDF/);
+  const item = await exportItem(page, /Threat report \(PDF\)/);
   const [popup] = await Promise.all([page.waitForEvent("popup"), item.click()]);
   await popup.waitForLoadState();
   await expect(popup.locator("h1")).toHaveText("Online shop");
@@ -451,7 +448,7 @@ test("TMT's assumptions and external dependencies reach the .tm7 and the saved m
   await openExample(page);
   await page.getByTestId("model-assumptions").fill("All traffic uses TLS 1.2+");
   await page.getByTestId("model-assumptions").blur();
-  const tm7 = await download(page, async () => (await menu(page, "File", /TMT Model \(\.tm7\)/)).click());
+  const tm7 = await download(page, async () => (await exportItem(page, /Microsoft TMT model/)).click());
   expect(tm7.text).toContain("<Assumptions>All traffic uses TLS 1.2+</Assumptions>");
   expect((await snapshot(page)).tdtm.tm7.meta.Assumptions).toBe("All traffic uses TLS 1.2+");
 });
@@ -471,12 +468,29 @@ test("shapes and flows show TMT's stencil icons, which never reach the saved mod
   await expect(page.locator(".palette img").first()).toHaveAttribute("src", /^data:image\/png;base64,/);
 });
 
-test("TMT's menus and views: Design shows stencils, Analysis the threat list; panes toggle; Close Model", async ({ page }) => {
+test("the default layout keeps every pane in view; TMT's layout is a switch away and remembered", async ({ page }) => {
   await openExample(page);
+  await expect(page.getByRole("menubar")).toHaveCount(0);
+  await expect(page.locator(".palette")).toBeVisible();
+  await expect(page.getByTestId("threat-row")).toHaveCount(38); // threats appear as you draw
+  await expect(page.getByRole("button", { name: "Export", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "TMT layout" }).click();
+  await expect(page.getByRole("menubar")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Export", exact: true })).toHaveCount(0);
+  await page.reload();
+  await page.getByRole("button", { name: /Open the example/ }).click();
+  await expect(page.getByRole("menubar")).toBeVisible();
+  await (await menu(page, "View", /TMT layout/)).click(); // and back
+  await expect(page.getByRole("menubar")).toHaveCount(0);
+});
+
+test("TMT's menus and views: Design shows stencils, Analysis the threat list; panes toggle; Close model", async ({ page }) => {
+  await openExample(page);
+  await page.getByRole("button", { name: "TMT layout" }).click();
   await expect(page.locator(".palette")).toBeVisible();
   await expect(page.getByTestId("threat-row")).toHaveCount(0); // Design view, as TMT opens
 
-  await (await menu(page, "View", "Analysis View")).click();
+  await (await menu(page, "View", "Analysis view")).click();
   await expect(page.getByTestId("threat-row")).toHaveCount(38);
   await expect(page.locator(".palette")).toHaveCount(0);
 
@@ -484,7 +498,7 @@ test("TMT's menus and views: Design shows stencils, Analysis the threat list; pa
   await expect(page.locator(".palette")).toBeVisible();
   await expect(page.getByRole("menu", { name: "View" })).toHaveCount(0); // menus close after a pick
 
-  await page.getByRole("button", { name: "Design View" }).click();
+  await page.getByRole("button", { name: "Design view" }).click();
   await expect(page.getByTestId("threat-row")).toHaveCount(0);
   await page.getByTestId("threat-count").click(); // the status bar count opens the threat list
   await expect(page.getByTestId("threat-row")).toHaveCount(38);
@@ -497,15 +511,28 @@ test("TMT's menus and views: Design shows stencils, Analysis the threat list; pa
   await expect(page.getByRole("menu", { name: "View" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("menu")).toHaveCount(0);
+  await expect(page.getByRole("menuitem", { name: "View", exact: true })).toBeFocused(); // back on its title
+
+  // with a menu open, pointing at another opens that one
+  await page.getByRole("menuitem", { name: "Edit", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Diagram", exact: true }).hover();
+  await expect(page.getByRole("menu", { name: "Diagram" })).toBeVisible();
+  await expect(page.getByRole("menuitemradio", { name: "Online shop" })).toHaveAttribute("aria-checked", "true");
+  await page.keyboard.press("Escape");
 
   page.once("dialog", (d) => d.accept()); // "Discard unsaved changes?" when there are any
-  await (await menu(page, "File", "Close Model")).click();
+  await (await menu(page, "File", "Close model")).click();
   await expect(page.getByRole("button", { name: /Open the example/ })).toBeVisible();
+  // the closed model stays closed: no shortcut or late analysis brings it back
+  await page.keyboard.press("Backspace");
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+z" : "Control+z");
+  await page.waitForTimeout(1500);
+  await expect(page.getByRole("button", { name: /Open the example/ })).toBeVisible();
+  await expect(page.locator(".app.has-model")).toHaveCount(0);
 });
 
 test("the threat list has TMT's eleven columns, a filter on each, and its footer", async ({ page }) => {
   await openExample(page);
-  await analysisView(page);
   const headers = page.getByRole("columnheader");
   await expect(headers).toHaveText(["ID", "Diagram", "Changed By", "Last Modified", "State", "Title", "Category",
     "Description", "Justification", "Interaction", "Priority"].map((h) => new RegExp(`^${h}`)));
@@ -530,7 +557,6 @@ test("the threat list has TMT's eleven columns, a filter on each, and its footer
 
 test("TMT's Threat Properties: title, category and description can be edited, and stay", async ({ page }) => {
   await openExample(page);
-  await analysisView(page);
   const row = page.getByTestId("threat-row").first();
   await row.click();
   await page.getByTestId("threat-title").fill("Customer impersonation");
@@ -553,10 +579,8 @@ test("TMT's Notes: add a note; it is saved with the model and written to the .tm
   await page.getByRole("button", { name: "Add New Note" }).click();
   await page.getByLabel("Note 1", { exact: true }).fill("Payment provider reviewed separately");
   await page.getByLabel("Note 1", { exact: true }).press("Enter");
-  await analysisView(page); // the threat list comes back; Notes is one View click away
-  await (await menu(page, "View", "Notes")).click();
   await expect(page.getByRole("tab", { name: "Notes - 1 entry" })).toBeVisible();
   expect((await snapshot(page)).tdtm.tm7.notes[0]).toMatchObject({ Id: "1", Message: "Payment provider reviewed separately" });
-  const tm7 = await download(page, async () => (await menu(page, "File", /TMT Model \(\.tm7\)/)).click());
+  const tm7 = await download(page, async () => (await exportItem(page, /Microsoft TMT model/)).click());
   expect(tm7.text).toContain("<Id>1</Id><Message>Payment provider reviewed separately</Message></Note></Notes>");
 });

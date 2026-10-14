@@ -26,13 +26,16 @@
       "identifier": "opener:allow-open-url",
       "allow": [
         {
-          "url": "https://github.com/ElikplimSunu/threatsketch*"
+          "url": "https://github.com/ElikplimSunu/threatsketch/blob/main/docs/coming-from-tmt.md"
         },
         {
-          "url": "https://learn.microsoft.com/*"
+          "url": "https://github.com/ElikplimSunu/threatsketch/issues"
         },
         {
-          "url": "https://www.microsoft.com/*"
+          "url": "https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool"
+        },
+        {
+          "url": "https://www.microsoft.com/en-us/securityengineering/sdl"
         }
       ]
     },
