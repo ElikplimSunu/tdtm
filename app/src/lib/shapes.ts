@@ -42,9 +42,8 @@ const LABEL_ICON = 18;
 const ICON_IMG = { tagName: "image", selector: "icon" };
 const lowerRight = { refX: "100%", refY: "100%", x: -ICON - 4, y: -ICON - 4, width: ICON, height: ICON, opacity: ICON_FADE, pointerEvents: "none" };
 const centred = { refX: "50%", refY: "50%", x: -ICON / 2, y: -ICON / 2, width: ICON, height: ICON, opacity: ICON_FADE, pointerEvents: "none" };
-// TMT's flow label: a pale green box with a dark outline, the flow stencil's icon before the name
-export const LABEL_FILL = "#dde8c6";
-export const LABEL_STROKE = "#5b6150";
+// TMT's flow label: a pale green box with a dark outline, the flow stencil's icon before the name.
+// Its colours are the --flow-label tokens in app.css (light and dark), applied by class.
 const HALO = { tagName: "rect", selector: "halo" };
 const halo = { refX: -28, refY: -28, refWidth: "100%", refWidth2: 56, refHeight: "100%", refHeight2: 56, fill: "transparent", stroke: "none" };
 
@@ -105,6 +104,8 @@ export function wrapWords(text: string, width: number, widthOf: (s: string) => n
   }).join("\n");
 }
 
+let canvasFont: string | null = null;
+
 /** X6's textWrap, but breaking only between words (X6 2.x splits words and ignores `breakWord`). */
 const textWrap = {
   qualify: (v: unknown) => !!v && typeof v === "object",
@@ -112,9 +113,11 @@ const textWrap = {
     const w = val.width ?? 0;
     const width = typeof w === "string" && w.endsWith("%") ? (refBBox.width * parseFloat(w)) / 100 : w <= 0 ? refBBox.width + w : w;
     const txt = String(attrs.text ?? elem?.textContent ?? "");
-    const style = elem ? getComputedStyle(elem) : null;
-    const size = attrs.fontSize ?? attrs["font-size"] ?? parseFloat(style?.fontSize ?? "13");
-    if (measure) measure.font = `${attrs.fontWeight ?? style?.fontWeight ?? 400} ${size}px ${style?.fontFamily ?? "sans-serif"}`;
+    // the canvas font, read once: getComputedStyle on every name drawn forces a style recalc each time
+    const style = elem && !canvasFont ? getComputedStyle(elem) : null;
+    canvasFont ??= style?.fontFamily || null;
+    const size = attrs.fontSize ?? attrs["font-size"] ?? 13;
+    if (measure) measure.font = `${attrs.fontWeight ?? 400} ${size}px ${canvasFont ?? "sans-serif"}`;
     const wrapped = wrapWords(txt, width, (s) => measure?.measureText(s).width ?? s.length * size * 0.55);
     (Registry.Attr.presets as any).text.set.call(this, wrapped, { view, elem, attrs, refBBox, cell: view.cell });
   },
@@ -181,11 +184,11 @@ export function registerShapes() {
     },
   }, true);
   const label = {
-    markup: [{ tagName: "rect", selector: "body" }, { tagName: "image", selector: "icon" }, { tagName: "text", selector: "label" }],
+    markup: [{ tagName: "rect", selector: "body", className: "ts-flow-label" }, { tagName: "image", selector: "icon" }, { tagName: "text", selector: "label" }],
     attrs: {
       label: { fill: INK, fontSize: 12, textAnchor: "middle", textVerticalAnchor: "middle" },
       body: {
-        ref: "label", fill: LABEL_FILL, stroke: LABEL_STROKE, strokeWidth: 1,
+        ref: "label", strokeWidth: 1,
         refWidth: "100%", refWidth2: LABEL_ICON + 14, refHeight: "100%", refHeight2: 8, refX: -(LABEL_ICON + 9), refY: -4,
       },
       icon: { ref: "label", refX: 0, refY: "50%", x: -(LABEL_ICON + 5), y: -LABEL_ICON / 2, width: LABEL_ICON, height: LABEL_ICON, opacity: 0.6, pointerEvents: "none" },
@@ -206,11 +209,8 @@ export function registerShapes() {
     connector: "smooth",
     defaultLabel: {
       ...label,
-      attrs: {
-        ...label.attrs,
-        body: { ...label.attrs.body, fill: "#fbfcfc", stroke: "none" },
-        label: { ...label.attrs.label, fill: BOUNDARY, fontWeight: 600 },
-      },
+      markup: [{ tagName: "rect", selector: "body", className: "ts-boundary-label" }, ...label.markup.slice(1)],
+      attrs: { ...label.attrs, label: { ...label.attrs.label, fill: BOUNDARY } },
     },
   };
   Graph.registerEdge("trust-boundary-curve", curve, true);

@@ -103,6 +103,23 @@ test("saving writes exactly what the threatsketch CLI writes", async ({ page }) 
   await expect(page.getByText("All changes saved")).toBeVisible();
 });
 
+test("a Threat Dragon file saved without edits keeps its styles and labels", async ({ page }) => {
+  const file = join(REPO, "tests/fixtures/td/v2-boundary-box.json"); // Threat Dragon's own sample
+  await page.goto("./");
+  await expect(page.getByTestId("engine-status")).toContainText("Knowledge Base", { timeout: 30_000 });
+  const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.getByRole("button", { name: /Open a file/ }).click()]);
+  await chooser.setFiles(file);
+  await expect(page.getByTestId("threat-count")).not.toHaveText("0 threats");
+  await page.waitForTimeout(500); // stencil icons are painted after the analysis
+  // the outline styles Threat Dragon wrote, and its plain string labels, come back unchanged
+  expect(await snapshot(page)).toEqual(cliAnalyze(file));
+  // its two unnamed flows show no empty label box
+  const boxes = await page.locator(".x6-edge-label").evaluateAll((ls) => ls.filter((l) => getComputedStyle(l).display !== "none").length);
+  const named = cliAnalyze(file).detail.diagrams[0].cells.filter((c: any) => c.shape?.includes("flow") || c.shape?.includes("curve"))
+    .filter((c: any) => (c.labels ?? []).some((l: any) => (typeof l === "string" ? l : l?.attrs?.label?.text ?? l?.attrs?.text?.text)?.trim())).length;
+  expect(boxes).toBe(named);
+});
+
 test("a model saved without edits keeps every key of the original", async ({ page }) => {
   await openExample(page);
   await page.locator('g.x6-node[data-cell-id="customer"]').click(); // select, change nothing

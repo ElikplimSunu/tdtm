@@ -33,6 +33,15 @@ export type EditorEvents = {
   edit: (cellId: string) => void; // double-click: edit this element's name
 };
 
+// Threat Dragon writes a flow's name as a plain string label; painting the icon turns it into an
+// object, so these cells get their string back when saved.
+const STRING_LABELS = new WeakSet<XCell>();
+
+/** A label that is nothing but its text, as X6 turns a string label into an object. */
+const plainText = (l: any) =>
+  !!l && typeof l === "object" && Object.keys(l).join() === "attrs" && Object.keys(l.attrs ?? {}).join() === "label"
+  && Object.keys(l.attrs.label ?? {}).join() === "text";
+
 /** The cell as the model sees it: without tools and without the stencil icons the canvas paints. */
 function canvasJSON(c: XCell): Record<string, any> {
   const j = c.toJSON() as Record<string, any>;
@@ -40,12 +49,14 @@ function canvasJSON(c: XCell): Record<string, any> {
   if (j.attrs?.icon) {
     j.attrs = { ...j.attrs };
     delete j.attrs.icon;
+    if (!Object.keys(j.attrs).length) delete j.attrs; // only the icon was there: as before painting
   }
   if (Array.isArray(j.labels)) {
-    j.labels = j.labels.map((l: any) => {
+    j.labels = j.labels.map((l: any, i: number) => {
       if (!l?.attrs?.icon) return l;
       const { icon: _, ...attrs } = l.attrs;
-      return { ...l, attrs };
+      const label = { ...l, attrs };
+      return i === 0 && STRING_LABELS.has(c) && plainText(label) ? label.attrs.label.text : label;
     });
   }
   return j;
@@ -357,6 +368,7 @@ export class Editor {
         if (c.isNode()) {
           if (c.getAttrByPath("icon/href") !== href) c.setAttrByPath("icon/href", href);
         } else if (c.isEdge()) {
+          if (typeof c.getProp("labels")?.[0] === "string") STRING_LABELS.add(c);
           const first = c.getLabels()[0] as any;
           if (first && typeof first === "object" && first.attrs?.icon?.href !== href) {
             c.setLabelAt(0, { ...first, attrs: { ...first.attrs, icon: { href } } });
