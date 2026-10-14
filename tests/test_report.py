@@ -108,14 +108,16 @@ def test_review_flags_a_model_nobody_could_act_on(fixtures, tmp_path):
 def test_report_shows_tmt_assumptions_and_external_dependencies(fixtures, tmp_path):
     path = analyzed(fixtures, tmp_path)
     raw = json.loads(path.read_text())
-    meta = {"Assumptions": "TLS everywhere", "ExternalDependencies": "SMS"}
+    meta = {"Assumptions": "TLS everywhere\nAdmins use MFA", "ExternalDependencies": "SMS"}
     raw["tdtm"] = {"tm7": {"meta": meta}}
     path.write_text(json.dumps(raw))
     model, _ = load(path)
-    assert (model.assumptions, model.external_dependencies) == ("TLS everywhere", "SMS")
+    assert model.external_dependencies == "SMS"
     html = render(model)
-    assert "<dt>Assumptions</dt><dd>TLS everywhere</dd>" in html
-    assert "<dt>External Dependencies</dt><dd>SMS</dd>" in html
+    # paragraphs of their own, line breaks kept (white-space: pre-wrap), not in the details grid
+    assert "<h3>Assumptions</h3><p>TLS everywhere\nAdmins use MFA</p>" in html
+    assert "<h3>External Dependencies</h3><p>SMS</p>" in html
+    assert "<dt>Assumptions</dt>" not in html
 
 
 def test_tmt_time_is_shown_as_tmt_shows_it():

@@ -71,6 +71,11 @@ def _notes(notes: list[dict]) -> str:
     return f"<Notes>{inner}</Notes>" if inner else "<Notes/>"
 
 
+def _names(text: str) -> list[str]:
+    """TMT's Contributors text as import splits it into names."""
+    return [n.strip() for n in re.split(r"[;,\n]", text) if n.strip()]
+
+
 def _guid(cell_id: str) -> str:
     return cell_id if GUID.fullmatch(cell_id) else str(uuid.uuid5(NAMESPACE, cell_id))
 
@@ -525,18 +530,24 @@ def export_tm7(raw: dict, template_path=None) -> tuple[str, list[str]]:
 
     meta = keep.get("meta") or {}
     summary, detail = raw.get("summary", {}), raw.get("detail", {})
-    contributors = ", ".join(c.get("name", "") for c in detail.get("contributors") or [] if c)
+    names = [c.get("name", "") for c in detail.get("contributors") or [] if c]
+    contributors, title = ", ".join(names), summary.get("title") or ""
+    # TMT's own text while the model still says what it was imported with; the edit otherwise
+    if "Contributors" in meta and _names(meta["Contributors"]) == names:
+        contributors = meta["Contributors"]
+    if "ThreatModelName" in meta and title == keep.get("title", title):
+        title = meta["ThreatModelName"]
     xml = (
         '<ThreatModel xmlns="http://schemas.datacontract.org/2004/07/ThreatModeling.Model" '
         'xmlns:i="http://www.w3.org/2001/XMLSchema-instance">'
         f"<DrawingSurfaceList>{''.join(surfaces)}</DrawingSurfaceList><MetaInformation>"
         + _el("Assumptions", meta.get("Assumptions", ""))
-        + _el("Contributors", meta.get("Contributors", contributors))
+        + _el("Contributors", contributors)
         + _el("ExternalDependencies", meta.get("ExternalDependencies", ""))
         + _el("HighLevelSystemDescription", summary.get("description") or "")
         + _el("Owner", summary.get("owner") or "")
         + _el("Reviewer", detail.get("reviewer") or "")
-        + _el("ThreatModelName", meta.get("ThreatModelName", summary.get("title") or ""))
+        + _el("ThreatModelName", title)
         + "</MetaInformation>"
         + _notes(keep.get("notes") or [])
         + f'<ThreatInstances xmlns:a="{ARR}">{"".join(x for *_, x in sorted(threats))}'

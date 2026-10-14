@@ -375,3 +375,18 @@ def test_tmt_73_details_survive_import_and_export(tmp_path):
     assert main(["import", str(source), "--out", str(again)]) == 0
     assert main(["export", str(again), "--out", str(out)]) == 0
     assert canonical(out) == canonical(source)
+
+
+def test_export_writes_title_and_contributors_edited_after_import(tmp_path):
+    """Import keeps TMT's own Contributors and ThreatModelName text for an exact round trip; once
+    the model is edited, the edit is what TMT should get."""
+    model, out = tmp_path / "small.json", tmp_path / "out.tm7"
+    assert main(["import", str(SMALL), "--out", str(model)]) == 0
+    raw = json.loads(model.read_text())
+    raw["summary"]["title"] = "Edited name"
+    raw["detail"]["contributors"] = [{"name": "Ama"}, {"name": "Kofi"}]
+    model.write_text(json.dumps(raw))
+    assert main(["export", str(model), "--out", str(out)]) == 0
+    text = out.read_text(encoding="utf-8")
+    assert "<ThreatModelName>Edited name</ThreatModelName>" in text
+    assert "<Contributors>Ama, Kofi</Contributors>" in text

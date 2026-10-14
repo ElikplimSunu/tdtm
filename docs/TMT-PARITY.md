@@ -8,15 +8,16 @@ The app's visual design (blueprint blue, IBM Plex, the de-AI rules) is kept in t
 PRs. Restyling it after TMT (palette, font, chrome) is a separate, optional PR (phase 8) the
 maintainer can take or leave.
 
-The engine is not the problem. A real TMT model (University Mobile Banking App, 2 diagrams)
-imports and analyses to the same 232 threats TMT lists. Almost all the work is in `app/`, plus
+The engine is not the problem. The reference model (a real TMT 7.3 model, 2 diagrams) imports
+and analyses to the same 232 threats TMT lists. Almost all the work is in `app/`, plus
 some import/export fidelity in `src/threatsketch/`.
 
 ## How we work
 
-- **Fork and PRs.** Fork `ElikplimSunu/threatsketch` to `josetseph/threatsketch`. Remotes:
-  `origin` = fork, `upstream` = ElikplimSunu. One branch per phase below, each a PR to upstream
-  `main`. Upstream merges several PRs a day, so keep PRs small and rebase often.
+- **Small PRs**, one per phase below, rebased often.
+- **TMT's window is an option, not the default.** The menu bar, toolbar and Design/Analysis
+  views (phase 2) are a layout the user can switch to; the default stays the current layout,
+  where threats appear as you draw.
 - **New UI uses the existing tokens** in `app/src/app.css`, so phase 8 can restyle everything
   by changing tokens, not components.
 - **Upstream's rules still apply:** tests first; facts learned about the file formats go into
@@ -24,8 +25,8 @@ some import/export fidelity in `src/threatsketch/`.
 - **TMT is the reference, checked by hand.** For every phase, capture the TMT side (screenshots,
   `.tm7`, report HTML, CSV) on Windows and keep it in `tests/fixtures/private/` (not in git) or
   `temp/`. Anything not personal goes into `tests/fixtures/` as a golden file.
-- **The reference model** is `temp/New Threat Model.tm7` with TMT's screenshots and `m.html`
-  (TMT's Full Report) beside it.
+- **The reference model** is a real TMT model kept in `temp/` (git-ignored) with TMT's
+  screenshots and its Full Report beside it. It is coursework: nothing from it is committed.
 
 ## Gaps found (ThreatSketch 0.5.0 vs TMT 7.3, same model)
 

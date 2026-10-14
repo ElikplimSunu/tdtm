@@ -14,3 +14,6 @@ WORKLOG.md
 CLAUDE.md
 .claude/
 tests/fixtures/private/
+
+# TMT reference material for the parity work (docs/TMT-PARITY.md): coursework, never committed
+temp/
