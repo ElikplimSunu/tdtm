@@ -1,6 +1,6 @@
 [package]
 name = "threatsketch"
-version = "0.5.0"
+version = "0.5.1"
 description = "ThreatSketch: TMT-style threat modelling"
 authors = ["Eric Sunu"]
 license = "MIT"
