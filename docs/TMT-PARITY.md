@@ -35,7 +35,7 @@ some import/export fidelity in `src/threatsketch/`.
 | Window | Menu bar, icon toolbar, docked panes (Stencils, Properties, Threat List, Threat Properties, Messages, Notes) | Web-app header, fixed three-column layout |
 | Views | Design view and Analysis view | One combined view |
 | Shapes | TMT stencil icons inside each shape; data store drawn as two full-width lines with an icon; names wrap inside the shape | No icons; long names spill out of the shape |
-| Flow labels | Boxed labels with an icon, draggable | Plain text on the line |
+| Flow labels | Boxed labels with an icon, draggable | Boxed labels with the stencil's icon; not draggable |
 | Threat list columns | ID, Diagram, Changed By, Last Modified, State, Title, Category, Description, Justification, Interaction, Priority; filter on every column | ID, State, Title, Category, Interaction, Priority; three filters |
 | Threat properties | Pane under the list; title, category, description, justification all editable | Right-hand panel; only state, priority, justification |
 | Footer | "Export Csv"; "232 Threats Displayed, 232 Total" | Counts in the status bar |
