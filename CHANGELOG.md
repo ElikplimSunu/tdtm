@@ -45,6 +45,8 @@ One version covers the app and the command-line tool. The format follows
 
 ### Fixed
 
+- A `.tm7` imported from TMT and then renamed, or given other contributors, exported with the old
+  name and contributors; edits are now exported, and an unedited model still exports unchanged.
 - Justifications typed in TMT 7.3 were lost on `.tm7` import: TMT keeps them in the threat's
   properties, not where import looked. A model triaged in TMT, with notes, now exports back
   unchanged.

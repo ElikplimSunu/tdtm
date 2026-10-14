@@ -410,6 +410,7 @@ def parse_tm7(data: bytes, title: str = "", path: str = "model") -> tuple[dict, 
                 for k in ("Assumptions", "Contributors", "ExternalDependencies", "ThreatModelName")
             },
             "surfaces": surface_keep,
+            "title": raw["summary"]["title"],  # as imported: an edited title is exported instead
         }
     }
     notes = _kid(root, "Notes")

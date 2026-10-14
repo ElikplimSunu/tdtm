@@ -295,8 +295,6 @@ def render(model: Model, template=None) -> str:
         ("Owner", model.owner),
         ("Reviewer", model.reviewer),
         ("Contributors", ", ".join(model.contributors)),
-        ("Assumptions", model.assumptions),
-        ("External Dependencies", model.external_dependencies),
         ("Created", f"{created:%d %B %Y, %H:%M}"),
         ("Template", template.name or "SDL TM Knowledge Base"),
         ("Diagrams", str(len(model.diagrams))),
@@ -319,7 +317,16 @@ def render(model: Model, template=None) -> str:
         f'<p class="lede">{escape(model.description)}</p>' if model.description else "",
         '<dl class="meta">'
         + "".join(f"<div><dt>{k}</dt><dd>{escape(v)}</dd></div>" for k, v in meta if v)
-        + "</dl></header>",
+        + "</dl>"
+        + "".join(  # TMT's two free-text model fields: paragraphs, so not in the grid above
+            f'<div class="context"><h3>{k}</h3><p>{escape(v)}</p></div>'
+            for k, v in (
+                ("Assumptions", model.assumptions),
+                ("External Dependencies", model.external_dependencies),
+            )
+            if v.strip()
+        )
+        + "</header>",
         _review(model, template),
         "<h2>Threat Model Summary</h2>",
         _summary(threats, template),

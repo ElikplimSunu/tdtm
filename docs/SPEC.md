@@ -515,7 +515,10 @@ elements with `AddedBy`, `Date`, `Id`, `Message`; import keeps them in `tdtm.tm7
 
 TMT lists and exports a threat stored with `Id` 0 as the highest `Id` + 1 (a real model: 0 among
 1..241 is 242 in TMT's CSV) and the file keeps 0. Import numbers it the same way and keeps the 0
-under `tdtm.tm7.id` for export.
+under `tdtm.tm7.id` for export. [unverified: the reference model has one Id 0 threat; with
+several, import numbers them highest + 1, + 2, ... in file order; TMT's own numbering not seen.]
+Dataflow Order "" is read as the default and exported as "0" [unverified: no TMT file seen with
+an empty value].
 
 Mapping: GUIDs become cell ids, so a TMT threat and ThreatSketch's threat for the same rule and flow share
 the key `sdl:<rule>:<flow guid>`. Non-generic stencil and every non-zero `SelectedIndex` become an

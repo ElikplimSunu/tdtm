@@ -33,6 +33,9 @@ dl.meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 24px; 
 dl.meta div { min-width: 0; }
 dt { font-size: 11px; color: var(--muted); }
 dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+.context { margin: 18px 0 0; }
+.context h3 { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.context p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 h2 { margin: 40px 0 16px; font-size: 18px; font-weight: 600; }
 h3 { margin: 0; font-size: 14px; font-weight: 600; }
