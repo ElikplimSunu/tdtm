@@ -261,3 +261,27 @@ def test_triage_records_when_as_tmt_does():
                   for t in c["data"].get("threats", []) if t["tdtm"]["key"] == key)  # fmt: skip
     stamp = threat["tdtm"]["tm7"]["modifiedAt"]
     assert f"<b:ModifiedAt>{stamp}</b:ModifiedAt>" in api.export_tm7(raw)["text"]
+
+
+def test_triage_stamp_credits_no_one_else_and_goes_when_put_back():
+    """Re-triaging a threat triaged in TMT drops TMT's Changed By (it would credit this edit to
+    them); a threat put back to its generated values is untouched again, with no stamp."""
+    raw = api.analyze(shop())["model"]
+    key = next(t for t in api.analyze(raw)["threats"] if t["id"] == 1)["key"]
+    threat = next(t for d in raw["detail"]["diagrams"] for c in d["cells"]
+                  for t in c["data"].get("threats", []) if t["tdtm"]["key"] == key)  # fmt: skip
+    threat["tdtm"]["tm7"] = {
+        "changedBy": "LAB-PC\\someone",
+        "modifiedAt": "2026-10-01T10:00:00+00:00",
+    }
+    api.set_threat(raw, key, "Mitigated", "High", "TLS everywhere")
+    assert "changedBy" not in threat["tdtm"]["tm7"]
+    row = next(t for t in api.analyze(raw)["threats"] if t["key"] == key)
+    assert row["changedBy"] == "" and row["lastModified"] not in ("", "Generated")
+    generated = next(t for t in api.analyze(shop())["threats"] if t["id"] == 1)
+    api.set_threat(raw, key, "Not Started", generated["priority"], "")
+    assert "modifiedAt" not in threat["tdtm"]["tm7"]
+    assert (
+        next(t for t in api.analyze(raw)["threats"] if t["key"] == key)["lastModified"]
+        == "Generated"
+    )
