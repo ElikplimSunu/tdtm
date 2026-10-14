@@ -506,7 +506,12 @@ out-of-scope elements, bidirectional flows.
 Triage in TMT 7.3 sets `ChangedBy` to `MACHINE\user` and `ModifiedAt` to the time, ISO 8601 with
 7-digit fractions and an offset (`2026-10-13T22:39:44.6125953+00:00`). The threat list, Threat
 Properties and the CSV show both; the time as `13/10/2026 9:56:59 pm` (en-GB Windows; TMT follows
-the Windows locale). Import keeps them under `tdtm.tm7`; triage here stamps `modifiedAt`.
+the Windows locale). Import keeps them under `tdtm.tm7`. Triage here stamps `modifiedAt` (ISO 8601
+with an offset and six fraction digits, or none when they are zero; .NET reads either) and drops a
+kept `changedBy`, since who triaged is not known; putting a threat back to its generated values
+drops the stamp. [unverified: whether TMT shows ModifiedAt as stored or converts it to the
+reader's time zone; both triages seen were on a UTC machine. ThreatSketch shows the stored wall
+time.]
 
 TMT 7.3 keeps a threat's justification as the `StateInformation` entry of its `Properties`
 (after `UserThreatDescription`), with the `StateInformation` element nil; import reads either, and

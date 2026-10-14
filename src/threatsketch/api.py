@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from .merge import STRIDE_TYPES, merge
+from .merge import STRIDE_TYPES, fingerprint, merge
 from .model import KIND_ROOT, Kind, Model
 from .report import generated_by, render, render_csv, review, tmt_category, tmt_changed, tmt_state
 from .resolve import resolve
@@ -261,9 +261,6 @@ def set_threat(
     status, tmt = STATES[state]
     for t in found:
         t["status"], t["severity"], t["mitigation"] = status, priority, justification
-        # TMT stamps the time of every triage; export writes it as the threat's ModifiedAt
-        tm7 = t.setdefault("tdtm", {}).setdefault("tm7", {})
-        tm7["modifiedAt"] = datetime.now().astimezone().isoformat()
         if title is not None:
             t["title"] = title
         if description is not None:
@@ -276,6 +273,20 @@ def set_threat(
             t.setdefault("tdtm", {})["tmtState"] = tmt
         elif isinstance(t.get("tdtm"), dict):
             t["tdtm"].pop("tmtState", None)
+        # TMT stamps every triage with when and who; export writes them as ModifiedAt and
+        # ChangedBy. Who is not known here, so a name kept from a TMT triage goes (it would credit
+        # this edit to them). A threat put back as generated is untouched again: no stamp at all.
+        tm7 = t.setdefault("tdtm", {}).setdefault("tm7", {})
+        tm7.pop("changedBy", None)
+        meta = t["tdtm"]
+        if (
+            meta.get("fingerprint") == fingerprint(t)
+            and status == "Open"
+            and not meta.get("tmtState")
+        ):
+            tm7.pop("modifiedAt", None)
+        else:
+            tm7["modifiedAt"] = datetime.now().astimezone().isoformat()
     _, doc = load_raw(raw)
     merge(doc, [], packs=())  # recompute hasOpenThreats and the red outlines
     return raw
